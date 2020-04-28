@@ -1,0 +1,3 @@
+include lr1110evk/assets/geocoding_components.yaml
+include lr1110evk/assets/jobs.json
+include lr1110evk/assets/job_drive_test_gnss_single.json

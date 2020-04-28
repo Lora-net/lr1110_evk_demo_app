@@ -1,0 +1,22 @@
+{
+    "infinite_loops": true,
+    "jobs": [
+        {
+            "name": "GPS and Beidou assisted single",
+            "n_iterations": 1,
+            "reset_before_job_start": false,
+            "gnss_assisted_option": "best_effort",
+            "gnss_assisted_capture_mode": "single",
+            "gnss_assisted_nb_satellite": 0,
+            "gnss_assisted_antenna_selection": "no_selection",
+            "gnss_assisted_constellations": [
+                "gps", "beidou"
+            ],
+            "assisted_coordinate": {
+                "latitude": 0,
+                "longitude": 0,
+                "altitude": 0
+            }
+        }
+    ]
+}

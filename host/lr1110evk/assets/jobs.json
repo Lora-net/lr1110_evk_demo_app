@@ -1,0 +1,69 @@
+{
+    "infinite_loops": true,
+    "jobs": [
+        {
+            "name": "WiFi Scan",
+            "n_iterations": 1,
+            "reset_before_job_start": false,
+            "wifi_channels": [
+                "CHANNEL_1",
+                "CHANNEL_6",
+                "CHANNEL_11"
+            ],
+            "wifi_types": [
+                "TYPE_B"
+            ],
+            "wifi_nbr_retrial": 10,
+            "wifi_max_result_per_scan": 5,
+            "wifi_timeout": 110,
+            "wifi_mode": "beacon_and_packet",
+            "wifi_api": "wifi_scan"
+        },
+        {
+            "name": "GNSS autonomous",
+            "n_iterations": 1,
+            "reset_before_job_start": false,
+            "gnss_autonomous_option": "best_effort",
+            "gnss_autonomous_capture_mode": "single",
+            "gnss_autonomous_nb_satellite": 0,
+            "gnss_autonomous_antenna_selection": "no_selection",
+            "gnss_autonomous_constellations": [
+                "gps"
+            ]
+        },
+        {
+            "name": "GNSS assisted single",
+            "n_iterations": 1,
+            "reset_before_job_start": false,
+            "gnss_assisted_option": "best_effort",
+            "gnss_assisted_capture_mode": "single",
+            "gnss_assisted_nb_satellite": 0,
+            "gnss_assisted_antenna_selection": "no_selection",
+            "gnss_assisted_constellations": [
+                "gps"
+            ],
+            "assisted_coordinate": {
+                "latitude": 45.208091,
+                "longitude": 5.778892,
+                "altitude": 0
+            }
+        },
+        {
+            "name": "GNSS assisted dual",
+            "n_iterations": 1,
+            "reset_before_job_start": false,
+            "gnss_assisted_option": "best_effort",
+            "gnss_assisted_capture_mode": "dual",
+            "gnss_assisted_nb_satellite": 0,
+            "gnss_assisted_antenna_selection": "no_selection",
+            "gnss_assisted_constellations": [
+                "gps"
+            ],
+            "assisted_coordinate": {
+                "latitude": 45.208091,
+                "longitude": 5.778892,
+                "altitude": 0
+            }
+        }
+    ]
+}

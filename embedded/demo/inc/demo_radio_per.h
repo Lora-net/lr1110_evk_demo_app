@@ -1,0 +1,93 @@
+/**
+ * @file      demo_radio_per.h
+ *
+ * @brief     Definition of Packet Error Rate demo.
+ *
+ * Revised BSD License
+ * Copyright Semtech Corporation 2020. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the Semtech corporation nor the
+ *       names of its contributors may be used to endorse or promote products
+ *       derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL SEMTECH CORPORATION BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#ifndef __DEMO_RADIO_PER_H__
+#define __DEMO_RADIO_PER_H__
+
+#include "demo_base.h"
+#include "configuration.h"
+#include "environment_interface.h"
+#include "log.h"
+
+typedef enum
+{
+    DEMO_RADIO_PER_STATE_INIT,
+    DEMO_RADIO_PER_STATE_SEND,
+    DEMO_RADIO_PER_STATE_WAIT_FOR_TX_DONE,
+    DEMO_RADIO_PER_STATE_SET_RX,
+    DEMO_RADIO_PER_STATE_WAIT_FOR_RX_DONE,
+    DEMO_RADIO_PER_STATE_STOP,
+} demo_radio_per_state_t;
+
+typedef enum
+{
+    DEMO_RADIO_PER_MODE_TX,
+    DEMO_RADIO_PER_MODE_RX,
+} demo_radio_per_mode_t;
+
+typedef struct
+{
+    uint32_t count_rx_correct_packet;
+    uint32_t count_rx_wrong_packet;
+    uint32_t count_tx;
+    uint32_t count_rx_timeout;
+    int8_t   last_rssi;
+} demo_radio_per_results_t;
+
+class DemoRadioPer : public DemoBase
+{
+   public:
+    DemoRadioPer( radio_t* radio, SignalingInterface* signaling, EnvironmentInterface* environment );
+    virtual ~DemoRadioPer( );
+
+    void                            Configure( demo_radio_per_settings_t& settings );
+    bool                            HasIntermediateResults( ) const;
+    const demo_radio_per_results_t* GetResult( ) const;
+
+   protected:
+    virtual void SpecificRuntime( );
+    virtual void SpecificStop( );
+    virtual void SpecificInterruptHandler( );
+    void         LogInfo( ) const;
+    void         ClearRegisteredIrqs( ) const;
+
+   private:
+    EnvironmentInterface*     environment;
+    demo_radio_per_state_t    state;
+    demo_radio_per_settings_t settings;
+    demo_radio_per_results_t  results;
+    uint8_t                   buffer[255];
+    uint32_t                  nb_of_packets_remaining;
+    uint32_t                  last_event;
+    bool                      has_intermediate_results;
+};
+
+#endif  // __DEMO_RADIO_PER_H__

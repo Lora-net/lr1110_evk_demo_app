@@ -1,0 +1,8 @@
+---
+header-includes:
+- |
+  ```{=latex}
+  \usepackage{fvextra}
+  \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,breakanywhere=true,commandchars=\\\{\}}
+  ```
+...
