@@ -101,7 +101,7 @@ typedef enum
 class GuiCommon
 {
    public:
-    GuiCommon( );
+    GuiCommon( guiPageType_t pageType );
     virtual ~GuiCommon( );
 
     virtual void       init( ){};
@@ -143,13 +143,12 @@ class GuiCommon
     static lv_style_t table_cell1;
     static lv_style_t tab;
 
-    lv_obj_t* screen;
-
     static guiEvent_t _event;
     static bool       _is_gui_environment_init;
 
    protected:
     guiPageType_t _pageType;
+    lv_obj_t*     screen;
     static bool   _is_host_connected;
 };
 

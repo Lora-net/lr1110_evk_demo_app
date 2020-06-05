@@ -32,7 +32,6 @@
 #ifndef __COMMAND_GET_VERSION_H__
 #define __COMMAND_GET_VERSION_H__
 
-#include "configuration.h"
 #include "command_interface.h"
 #include "hci.h"
 #include "lr1110_system.h"
@@ -41,19 +40,18 @@
 class CommandGetVersion : public CommandInterface
 {
    public:
-    CommandGetVersion( radio_t* radio, Hci& hci );
+    CommandGetVersion( Hci& hci );
     virtual ~CommandGetVersion( );
 
     virtual uint16_t       GetComCode( );
     virtual bool           ConfigureFromPayload( const uint8_t* buffer, const uint16_t buffer_size );
     virtual CommandEvent_t Execute( );
 
-    void SetVersion( version_handler_t* version_handler );
+    void SetVersion( const version_handler_t* version_handler );
 
    private:
-    Hci*               hci;
-    radio_t*           radio;
-    version_handler_t* version_handler;
+    Hci*                     hci;
+    const version_handler_t* version_handler;
 };
 
 #endif  // __COMMAND_GET_VERSION_H__

@@ -33,11 +33,13 @@
 #define __DEMO_WIFI_COUNTRY_CODE_H__
 
 #include "demo_wifi_interface.h"
+#include "demo_configuration.h"
 
 class DemoWifiCountryCode : public DemoWifiInterface
 {
    public:
-    DemoWifiCountryCode( radio_t* radio, SignalingInterface* signaling );
+    DemoWifiCountryCode( DeviceTransceiver* device, SignalingInterface* signaling,
+                         CommunicationInterface* communication_interface );
     virtual ~DemoWifiCountryCode( );
 
     void Configure( demo_wifi_country_code_settings_t& config );

@@ -32,12 +32,14 @@
 #ifndef __DEMO_WIFI_SCAN_H__
 #define __DEMO_WIFI_SCAN_H__
 
+#include "demo_configuration.h"
 #include "demo_wifi_interface.h"
 
 class DemoWifiScan : public DemoWifiInterface
 {
    public:
-    DemoWifiScan( radio_t* radio, SignalingInterface* signaling );
+    DemoWifiScan( DeviceTransceiver* device, SignalingInterface* signaling,
+                  CommunicationInterface* communication_interface );
     virtual ~DemoWifiScan( );
 
     void Configure( demo_wifi_settings_t& config );
@@ -45,8 +47,13 @@ class DemoWifiScan : public DemoWifiInterface
    protected:
     virtual void ExecuteScan( radio_t* radio );
     virtual void FetchAndSaveResults( radio_t* radio );
+    virtual void FetchAndSaveBasicCompleteResults( radio_t* radio );
+    virtual void FetchAndSaveBasicMacChannelTypeResults( radio_t* radio );
     static void  AddScanToResults( const lr1110_system_reg_mode_t regMode, demo_wifi_scan_all_results_t& results,
                                    const lr1110_wifi_basic_complete_result_t* scan_result, const uint8_t nbr_results );
+    static void  AddScanToResults( const lr1110_system_reg_mode_t regMode, demo_wifi_scan_all_results_t& results,
+                                   const lr1110_wifi_basic_mac_type_channel_result_t* scan_result,
+                                   const uint8_t                                      nbr_results );
 
    private:
     demo_wifi_settings_t settings;

@@ -39,12 +39,24 @@
 class CommandStartDemo : public CommandBase
 {
    public:
-    explicit CommandStartDemo( radio_t* radio, Hci& hci );
+    explicit CommandStartDemo( DeviceBase* device, Hci& hci, Demo& demo_holder );
     virtual ~CommandStartDemo( );
 
     virtual uint16_t GetComCode( );
     virtual bool     ConfigureFromPayload( const uint8_t* buffer, const uint16_t buffer_size );
     virtual bool     Job( );
+
+   protected:
+    bool ConfigureWifiScan( const uint8_t* buffer, const uint16_t buffer_size );
+    bool ConfigureWifiCountryCode( const uint8_t* buffer, const uint16_t buffer_size );
+    bool ConfigureGnssAutonomous( const uint8_t* buffer, const uint16_t buffer_size );
+    bool ConfigureGnssAssisted( const uint8_t* buffer, const uint16_t buffer_size );
+    bool ConfigureGnss( demo_gnss_settings_t* gnss_setting, const uint8_t* buffer, const uint16_t buffer_size );
+
+   private:
+    CommandBaseDemoId_t demo_id_to_start;
+    demo_all_settings_t demo_settings;
+    Demo&               demo_holder;
 };
 
 #endif  // __COMMAND_START_DEMO_H__

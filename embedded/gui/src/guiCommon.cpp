@@ -59,8 +59,10 @@ lv_style_t GuiCommon::sw_indic;
 lv_style_t GuiCommon::table_cell1;
 lv_style_t GuiCommon::tab;
 
-GuiCommon::GuiCommon( )
+GuiCommon::GuiCommon( guiPageType_t pageType ) : _pageType( pageType )
 {
+    this->screen = lv_obj_create( NULL, NULL );
+
     if( GuiCommon::_is_gui_environment_init == false )
     {
         GuiCommon::_is_gui_environment_init = true;
@@ -134,9 +136,11 @@ GuiCommon::GuiCommon( )
         GuiCommon::tab.body.padding.top    = 10;
         GuiCommon::tab.body.padding.bottom = 10;
     }
+
+    lv_obj_set_style( this->screen, &( GuiCommon::screen_style ) );
 }
 
-GuiCommon::~GuiCommon( ) {}
+GuiCommon::~GuiCommon( ) { lv_obj_del( this->screen ); }
 
 guiEvent_t GuiCommon::getAndClearEvent( )
 {

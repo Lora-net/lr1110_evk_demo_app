@@ -33,9 +33,10 @@
 #include "lr1110_gnss.h"
 #define DEMO_GNSS_LIMIT_ALMANAC_AGE_DAYS ( 31 )
 
-DemoGnssAssisted::DemoGnssAssisted( radio_t* radio, SignalingInterface* signaling, EnvironmentInterface* environment,
-                                    AntennaSelectorInterface* antenna_selector, TimerInterface* timer )
-    : DemoGnssBase( radio, signaling, environment, antenna_selector, timer )
+DemoGnssAssisted::DemoGnssAssisted( DeviceTransceiver* device, SignalingInterface* signaling,
+                                    EnvironmentInterface* environment, AntennaSelectorInterface* antenna_selector,
+                                    TimerInterface* timer, CommunicationInterface* communication_interface )
+    : DemoGnssBase( device, signaling, environment, antenna_selector, timer, communication_interface )
 {
 }
 
@@ -50,10 +51,10 @@ void DemoGnssAssisted::CallScan( )
 
     if( !this->CheckAndStoreAlmanacAge( DEMO_GNSS_LIMIT_ALMANAC_AGE_DAYS ) )
     {
-        this->log.Log( "Almanac is too old ! (> %u days)\n", DEMO_GNSS_LIMIT_ALMANAC_AGE_DAYS );
+        this->communication_interface->Log( "Almanac is too old ! (> %u days)\n", DEMO_GNSS_LIMIT_ALMANAC_AGE_DAYS );
     }
 
-    lr1110_gnss_set_assistance_position( this->radio, &gnss_position );
+    lr1110_gnss_set_assistance_position( this->device->GetRadio( ), &gnss_position );
 
     if( this->GetSettings( ).capture_mode == LR1110_GNSS_DOUBLE_SCAN_MODE )
     {
@@ -61,7 +62,7 @@ void DemoGnssAssisted::CallScan( )
     }
 
     lr1110_gnss_scan_assisted(
-        this->radio, gnss_time, this->GetSettings( ).option,
+        this->device->GetRadio( ), gnss_time, this->GetSettings( ).option,
         LR1110_GNSS_BIT_CHANGE_MASK | LR1110_GNSS_DOPPLER_MASK | LR1110_GNSS_IRQ_PSEUDO_RANGE_MASK,
         this->GetSettings( ).nb_satellites );
 }

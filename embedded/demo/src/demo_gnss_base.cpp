@@ -29,18 +29,18 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <string.h>
 #include "demo_gnss_base.h"
 #include "lr1110_gnss.h"
-#include <string.h>
 #include "system_lptim.h"
 
 #define DEMO_GNSS_CONSUMPTION_DCDC_ACQUISITION_MA ( 11 )
 #define DEMO_GNSS_CONSUMPTION_DCDC_COMPUTATION_MA ( 6 )
 
-DemoGnssBase::DemoGnssBase( radio_t* radio, SignalingInterface* signaling, EnvironmentInterface* environment,
-                            AntennaSelectorInterface* antenna_selector, TimerInterface* timer )
-    : DemoBase( radio, signaling ),
-      log( "GNSS" ),
+DemoGnssBase::DemoGnssBase( DeviceTransceiver* device, SignalingInterface* signaling, EnvironmentInterface* environment,
+                            AntennaSelectorInterface* antenna_selector, TimerInterface* timer,
+                            CommunicationInterface* communication_interface )
+    : DemoTransceiverBase( device, signaling, communication_interface ),
       timer( timer ),
       gnss_irq( LR1110_SYSTEM_IRQ_GNSS_SCAN_DONE ),
       state( DEMO_GNSS_BASE_INIT ),
@@ -90,11 +90,12 @@ void DemoGnssBase::SpecificRuntime( )
     {
         uint32_t irq_to_en_dio1 = LR1110_SYSTEM_IRQ_GNSS_SCAN_DONE;
         uint32_t irq_to_en_dio2 = 0x00;
-        lr1110_system_set_dio_irq_params( this->radio, irq_to_en_dio1, irq_to_en_dio2 );
+        lr1110_system_set_dio_irq_params( this->device->GetRadio( ), irq_to_en_dio1, irq_to_en_dio2 );
 
-        lr1110_gnss_set_constellations_to_use( this->radio, this->settings.constellation_mask );
+        lr1110_gnss_set_constellations_to_use( this->device->GetRadio( ), this->settings.constellation_mask );
 
-        lr1110_gnss_set_scan_mode( this->radio, this->settings.capture_mode, &this->inter_capture_delay_s );
+        lr1110_gnss_set_scan_mode( this->device->GetRadio( ), this->settings.capture_mode,
+                                   &this->inter_capture_delay_s );
 
         this->SetAntennaSwitch( this->settings.antenna_selection );
 
@@ -105,13 +106,13 @@ void DemoGnssBase::SpecificRuntime( )
         if( !this->GetEnvironment( )->HasDate( ) )
         {
             this->JumpToErrorState( DEMO_GNSS_BASE_ERROR_NO_DATE );
-            this->log.Log( "No date available\n" );
+            this->communication_interface->Log( "No date available\n" );
             break;
         }
         if( !this->GetEnvironment( )->HasLocation( ) )
         {
             this->JumpToErrorState( DEMO_GNSS_BASE_ERROR_NO_LOCATION );
-            this->log.Log( "No location available\n" );
+            this->communication_interface->Log( "No location available\n" );
             break;
         }
         this->state = DEMO_GNSS_BASE_SCAN;
@@ -138,7 +139,7 @@ void DemoGnssBase::SpecificRuntime( )
         if( this->timer->is_timer_elapsed( ) == true )
         {
             this->timer->clear_timer( );
-            lr1110_gnss_scan_continuous( this->radio );
+            lr1110_gnss_scan_continuous( this->device->GetRadio( ) );
             this->instant_second_capture_ms = this->environment->GetLocalTimeMilliseconds( );
             this->SetWaitingForInterrupt( );
             this->state = DEMO_GNSS_BASE_WAIT_FOR_SECOND_SCAN;
@@ -155,7 +156,7 @@ void DemoGnssBase::SpecificRuntime( )
             lr1110_system_stat2_t stat2;
             uint32_t              irq_status;
 
-            lr1110_system_get_status( radio, &stat1, &stat2, &irq_status );
+            lr1110_system_get_status( this->device->GetRadio( ), &stat1, &stat2, &irq_status );
 
             if( ( irq_status & LR1110_SYSTEM_IRQ_GNSS_SCAN_DONE ) != 0 )
             {
@@ -185,7 +186,7 @@ void DemoGnssBase::SpecificRuntime( )
             lr1110_system_stat2_t stat2;
             uint32_t              irq_status;
 
-            lr1110_system_get_status( radio, &stat1, &stat2, &irq_status );
+            lr1110_system_get_status( this->device->GetRadio( ), &stat1, &stat2, &irq_status );
 
             if( ( irq_status & LR1110_SYSTEM_IRQ_GNSS_SCAN_DONE ) != 0 )
             {
@@ -221,15 +222,16 @@ void DemoGnssBase::SpecificRuntime( )
         uint8_t                          nb_sv_detected;
         lr1110_gnss_detected_satellite_t list_of_sv[30] = { 0 };
 
-        lr1110_gnss_get_result_size( this->radio, &this->result.nav_message.size );
+        lr1110_gnss_get_result_size( this->device->GetRadio( ), &this->result.nav_message.size );
         if( this->result.nav_message.size <= GNSS_DEMO_NAV_MESSAGE_MAX_LENGTH )
         {
-            lr1110_gnss_read_results( this->radio, this->result.nav_message.message, this->result.nav_message.size );
+            lr1110_gnss_read_results( this->device->GetRadio( ), this->result.nav_message.message,
+                                      this->result.nav_message.size );
         }
         else
         {
             this->JumpToErrorState( DEMO_GNSS_BASE_NAV_MESSAGE_TOO_LONG );
-            this->log.Log(
+            this->communication_interface->Log(
                 "Error when fetching NAV message: size too long (max is %u, "
                 "actual size is %u)\n",
                 GNSS_DEMO_NAV_MESSAGE_MAX_LENGTH, this->result.nav_message.size );
@@ -238,9 +240,9 @@ void DemoGnssBase::SpecificRuntime( )
 
         if( DemoGnssBase::CanFetchResults( this->result.nav_message ) )
         {
-            lr1110_gnss_get_nb_detected_satellites( this->radio, &nb_sv_detected );
-            lr1110_gnss_get_detected_satellites( this->radio, nb_sv_detected, list_of_sv );
-            lr1110_gnss_get_timings( this->radio, &this->result.timings );
+            lr1110_gnss_get_nb_detected_satellites( this->device->GetRadio( ), &nb_sv_detected );
+            lr1110_gnss_get_detected_satellites( this->device->GetRadio( ), nb_sv_detected, list_of_sv );
+            lr1110_gnss_get_timings( this->device->GetRadio( ), &this->result.timings );
 
             this->result.consumption_uas =
                 ( this->result.timings.radio_ms * DEMO_GNSS_CONSUMPTION_DCDC_ACQUISITION_MA +
@@ -272,7 +274,7 @@ void DemoGnssBase::SpecificRuntime( )
         {
             const demo_gnss_error_t error_code = DemoGnssBase::GetHostErrorFromResult( this->result.nav_message );
             this->JumpToErrorState( error_code );
-            this->log.Log( "Error during GNSS scan\n" );
+            this->communication_interface->Log( "Error during GNSS scan\n" );
         }
         break;
     }
@@ -322,7 +324,10 @@ void DemoGnssBase::Configure( demo_gnss_settings_t& config ) { this->settings = 
 
 const demo_gnss_all_results_t* DemoGnssBase::GetResult( ) const { return &this->result; }
 
-void DemoGnssBase::ClearRegisteredIrqs( ) const { lr1110_system_clear_irq_status( this->radio, this->gnss_irq ); }
+void DemoGnssBase::ClearRegisteredIrqs( ) const
+{
+    lr1110_system_clear_irq_status( this->device->GetRadio( ), this->gnss_irq );
+}
 
 void DemoGnssBase::SetAntennaSwitch( const demo_gnss_antenna_selection_t antenna_selection )
 {
@@ -358,10 +363,10 @@ void DemoGnssBase::AskAndStoreDate( )
     environment_location_t initial_position;
     lr1110_gnss_date_t     actual_time;
 
-    LoggingStatus_t status = this->log.GetDateAndApproximateLocation(
+    const bool success = this->communication_interface->GetDateAndApproximateLocation(
         actual_time, initial_position.latitude, initial_position.longitude, initial_position.altitude );
 
-    if( status == LOGGING_STATUS_OK )
+    if( success == true )
     {
         this->GetEnvironment( )->SetTimeFromGpsEpoch( actual_time );
         this->GetEnvironment( )->SetLocation( initial_position );
@@ -449,7 +454,7 @@ uint16_t DemoGnssBase::GetAlmanacAgeDaysSinceToday( ) const
 {
     // First, we get the age of the almanac of the satellite id 0
     uint16_t almanac_age = 0;
-    lr1110_gnss_get_almanac_age_for_satellite( this->radio, 0, &almanac_age );
+    lr1110_gnss_get_almanac_age_for_satellite( this->device->GetRadio( ), 0, &almanac_age );
 
     // Then we convert the age from almanac into number of days elapsed since
     // GPS epoch

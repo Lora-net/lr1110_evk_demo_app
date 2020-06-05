@@ -31,7 +31,6 @@
 
 #include "field_test_log.h"
 #include "com_code.h"
-#include <stdarg.h>
 #include <stdio.h>
 
 #define MIN( a, b ) ( ( a < b ) ? a : b )
@@ -53,15 +52,20 @@ FieldTestLog::~FieldTestLog( ) {}
 
 void FieldTestLog::TrySendLog( const char* fmt, ... )
 {
+    va_list args;
+    va_start( args, fmt );
+    FieldTestLog::vTrySendLog( fmt, args );
+    va_end( args );
+}
+
+void FieldTestLog::vTrySendLog( const char* fmt, va_list args )
+{
     const uint16_t max_response_buffer_size                  = MAX_TRANSMITION_BUFFER - 4;
     uint8_t        response_buffer[max_response_buffer_size] = { '\0' };
     if( FieldTestLog::instance != NULL )
     {
-        va_list args;
-        va_start( args, fmt );
         uint16_t char_count = vsnprintf( ( char* ) response_buffer, max_response_buffer_size, fmt, args );
         FieldTestLog::instance->SendLog( response_buffer, MIN( char_count, max_response_buffer_size ) );
-        va_end( args );
     }
 }
 

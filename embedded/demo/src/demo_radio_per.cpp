@@ -32,27 +32,19 @@
 #include "demo_radio_per.h"
 #include "lr1110_radio.h"
 
-DemoRadioPer::DemoRadioPer( radio_t* radio, SignalingInterface* signaling, EnvironmentInterface* environment )
-    : DemoBase( radio, signaling ),
+DemoRadioPer::DemoRadioPer( DeviceTransceiver* device, SignalingInterface* signaling, EnvironmentInterface* environment,
+                            CommunicationInterface* communication_interface, demo_radio_per_mode_t mode )
+    : DemoRadioInterface( device, signaling, communication_interface ),
       environment( environment ),
       state( DEMO_RADIO_PER_STATE_INIT ),
-      has_intermediate_results( false )
+      has_intermediate_results( false ),
+      mode( mode )
 {
     this->results  = {};
     this->settings = {};
 }
 
 DemoRadioPer::~DemoRadioPer( ) {}
-
-void DemoRadioPer::Configure( demo_radio_per_settings_t& settings )
-{
-    this->settings = settings;
-
-    this->settings.radio_settings->packet_lora.pld_len_in_bytes = this->settings.radio_settings->payload_length;
-    this->settings.radio_settings->packet_gfsk.pld_len_in_bytes = this->settings.radio_settings->payload_length;
-
-    this->settings.radio_settings->nb_of_packets = this->settings.radio_settings->nb_of_packets;
-}
 
 void DemoRadioPer::SpecificRuntime( )
 {
@@ -65,48 +57,51 @@ void DemoRadioPer::SpecificRuntime( )
     {
         this->has_intermediate_results = false;
 
-        DemoBase::ResetAndInitLr1110( this->radio );
-        lr1110_radio_set_pkt_type( this->radio, this->settings.radio_settings->pkt_type );
+        this->device->ResetAndInit( );
+        lr1110_radio_set_pkt_type( this->device->GetRadio( ), this->settings.pkt_type );
 
-        switch( this->settings.radio_settings->pkt_type )
+        switch( this->settings.pkt_type )
         {
         case LR1110_RADIO_PKT_TYPE_LORA:
         {
-            lr1110_radio_set_lora_mod_params( this->radio, &this->settings.radio_settings->modulation_lora );
-            lr1110_radio_set_lora_pkt_params( this->radio, &this->settings.radio_settings->packet_lora );
+            lr1110_radio_set_lora_mod_params( this->device->GetRadio( ), &this->settings.modulation_lora );
+            lr1110_radio_set_lora_pkt_params( this->device->GetRadio( ), &this->settings.packet_lora );
             break;
         }
         case LR1110_RADIO_PKT_TYPE_GFSK:
         {
-            lr1110_radio_set_gfsk_mod_params( this->radio, &this->settings.radio_settings->modulation_gfsk );
-            lr1110_radio_set_gfsk_pkt_params( this->radio, &this->settings.radio_settings->packet_gfsk );
+            lr1110_radio_set_gfsk_mod_params( this->device->GetRadio( ), &this->settings.modulation_gfsk );
+            lr1110_radio_set_gfsk_pkt_params( this->device->GetRadio( ), &this->settings.packet_gfsk );
             break;
         }
         }
 
-        lr1110_radio_set_rf_freq( this->radio, this->settings.radio_settings->rf_frequency );
+        lr1110_radio_set_rf_freq( this->device->GetRadio( ), this->settings.rf_frequency );
 
-        lr1110_radio_set_pa_cfg( this->radio, &this->settings.radio_settings->pa_configuration );
+        lr1110_radio_set_pa_cfg( this->device->GetRadio( ), &this->settings.pa_configuration );
 
-        lr1110_radio_set_tx_params( this->radio, this->settings.radio_settings->tx_power,
-                                    this->settings.radio_settings->pa_ramp_time );
+        lr1110_radio_set_tx_params( this->device->GetRadio( ), this->settings.tx_power, this->settings.pa_ramp_time );
 
         lr1110_system_set_dio_irq_params(
-            this->radio, LR1110_SYSTEM_IRQ_TX_DONE | LR1110_SYSTEM_IRQ_RX_DONE | LR1110_SYSTEM_IRQ_TIMEOUT, 0 );
-        lr1110_system_clear_irq_status( radio, LR1110_SYSTEM_IRQ_ALL_MASK );
+            this->device->GetRadio( ),
+            LR1110_SYSTEM_IRQ_TX_DONE | LR1110_SYSTEM_IRQ_RX_DONE | LR1110_SYSTEM_IRQ_TIMEOUT, 0 );
+        lr1110_system_clear_irq_status( this->device->GetRadio( ), LR1110_SYSTEM_IRQ_ALL_MASK );
 
-        if( this->settings.is_tx == true )
+        switch( mode )
         {
+        case DEMO_RADIO_PER_MODE_TX:
             this->state = DEMO_RADIO_PER_STATE_SEND;
-        }
-        else
-        {
+            break;
+        case DEMO_RADIO_PER_MODE_RX:
             this->state = DEMO_RADIO_PER_STATE_SET_RX;
+            break;
+        default:
+            break;
         }
 
-        this->nb_of_packets_remaining = this->settings.radio_settings->nb_of_packets;
+        this->nb_of_packets_remaining = this->settings.nb_of_packets;
 
-        for( uint16_t i = 0; i < this->settings.radio_settings->payload_length; i++ )
+        for( uint16_t i = 0; i < this->settings.payload_length; i++ )
         {
             this->buffer[i] = i;
         }
@@ -120,9 +115,9 @@ void DemoRadioPer::SpecificRuntime( )
         if( ( now_ms - this->last_event ) > 1000 )
         {
             this->SetWaitingForInterrupt( );
-            lr1110_regmem_write_buffer8( this->radio, this->buffer, this->settings.radio_settings->payload_length );
+            lr1110_regmem_write_buffer8( this->device->GetRadio( ), this->buffer, this->settings.payload_length );
             this->last_event = now_ms;
-            lr1110_radio_set_tx( radio, 0x00000000 );
+            lr1110_radio_set_tx( this->device->GetRadio( ), 0x00000000 );
             this->signaling->Tx( );
             this->nb_of_packets_remaining--;
             this->state = DEMO_RADIO_PER_STATE_WAIT_FOR_TX_DONE;
@@ -137,10 +132,10 @@ void DemoRadioPer::SpecificRuntime( )
             lr1110_system_stat2_t stat2;
             uint32_t              irq_status;
 
-            lr1110_system_get_status( this->radio, &stat1, &stat2, &irq_status );
+            lr1110_system_get_status( this->device->GetRadio( ), &stat1, &stat2, &irq_status );
             if( irq_status & LR1110_SYSTEM_IRQ_TX_DONE )
             {
-                lr1110_system_clear_irq_status( radio, LR1110_SYSTEM_IRQ_TX_DONE );
+                lr1110_system_clear_irq_status( this->device->GetRadio( ), LR1110_SYSTEM_IRQ_TX_DONE );
                 this->results.count_tx++;
                 this->has_intermediate_results = true;
                 this->state =
@@ -153,7 +148,7 @@ void DemoRadioPer::SpecificRuntime( )
 
     case DEMO_RADIO_PER_STATE_SET_RX:
     {
-        lr1110_radio_set_rx( radio, 0x00000000 );
+        lr1110_radio_set_rx( this->device->GetRadio( ), 0x00000000 );
         this->state = DEMO_RADIO_PER_STATE_WAIT_FOR_RX_DONE;
         break;
     }
@@ -166,10 +161,10 @@ void DemoRadioPer::SpecificRuntime( )
             lr1110_system_stat2_t stat2;
             uint32_t              irq_status;
 
-            lr1110_system_get_status( this->radio, &stat1, &stat2, &irq_status );
+            lr1110_system_get_status( this->device->GetRadio( ), &stat1, &stat2, &irq_status );
             if( ( irq_status & LR1110_SYSTEM_IRQ_CRC_ERROR ) || ( irq_status & LR1110_SYSTEM_IRQ_HEADER_ERROR ) )
             {
-                lr1110_system_clear_irq_status( radio, LR1110_SYSTEM_IRQ_ALL_MASK );
+                lr1110_system_clear_irq_status( this->device->GetRadio( ), LR1110_SYSTEM_IRQ_ALL_MASK );
                 this->results.count_rx_wrong_packet++;
                 this->has_intermediate_results = true;
                 this->state                    = DEMO_RADIO_PER_STATE_SET_RX;
@@ -177,7 +172,7 @@ void DemoRadioPer::SpecificRuntime( )
             else if( irq_status & LR1110_SYSTEM_IRQ_RX_DONE )
             {
                 this->signaling->Rx( );
-                lr1110_system_clear_irq_status( radio, LR1110_SYSTEM_IRQ_ALL_MASK );
+                lr1110_system_clear_irq_status( this->device->GetRadio( ), LR1110_SYSTEM_IRQ_ALL_MASK );
                 this->results.count_rx_correct_packet++;
                 this->has_intermediate_results = true;
                 this->state                    = DEMO_RADIO_PER_STATE_SET_RX;
@@ -203,7 +198,7 @@ void DemoRadioPer::SpecificRuntime( )
 
 void DemoRadioPer::SpecificStop( )
 {
-    lr1110_system_set_standby( this->radio, LR1110_SYSTEM_STANDBY_CFG_RC );
+    lr1110_system_set_standby( this->device->GetRadio( ), LR1110_SYSTEM_STANDBY_CFG_RC );
 
     this->results.count_tx                = 0;
     this->results.count_rx_correct_packet = 0;

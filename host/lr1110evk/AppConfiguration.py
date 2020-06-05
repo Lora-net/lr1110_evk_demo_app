@@ -1,5 +1,8 @@
 from .BaseTypes import Coordinate
-from .FieldTestPost.Core.GeoLocServiceClientBase import GeoLocServiceClientGnss, GeoLocServiceClientWifi
+from .FieldTestPost.Core.GeoLocServiceClientBase import (
+    GeoLocServiceClientGnss,
+    GeoLocServiceClientWifi,
+)
 from datetime import datetime
 
 
@@ -32,14 +35,14 @@ class AppConfigurationBase:
             args.gnss_server_base_url,
             args.gnss_server_port,
             GeoLocServiceClientGnss.get_default_url_version(),
-            GeoLocServiceClientGnss.get_default_url_path()
+            GeoLocServiceClientGnss.get_default_url_path(),
         )
         self.wifi_server = GeoLocServiceClientWifi.from_token_and_url_info(
             args.glsAuthenticationToken,
             args.wifi_server_base_url,
             args.wifi_server_port,
             GeoLocServiceClientWifi.get_default_url_version(),
-            GeoLocServiceClientWifi.get_default_url_path()
+            GeoLocServiceClientWifi.get_default_url_path(),
         )
         self.dry_run = args.dry_run
         self.verbosity = args.verbose
@@ -56,6 +59,7 @@ class AppConfigurationBase:
 
 class DemoAppConfiguration(AppConfigurationBase):
     PARSE_DATE_FORMAT = "%Y/%m/%d-%H:%M:%S"
+
     def __init__(self):
         self.fake_date = None
         self.device_address = None
@@ -75,13 +79,19 @@ class DemoAppConfiguration(AppConfigurationBase):
                 args.gnss_assisted_scan_approximate_localization
             )
         else:
-            self.approximate_gnss_lr1110_localization = self.approximate_gnss_server_localization
+            self.approximate_gnss_lr1110_localization = (
+                self.approximate_gnss_server_localization
+            )
         self.request_reverse_geo_coding = args.reverse_geo_coding
         if args.fake_date:
             try:
-                self.fake_date = datetime.strptime(args.fake_date, DemoAppConfiguration.PARSE_DATE_FORMAT)
+                self.fake_date = datetime.strptime(
+                    args.fake_date, DemoAppConfiguration.PARSE_DATE_FORMAT
+                )
             except ValueError:
-                raise WrongDateFormat(args.fake_date, DemoAppConfiguration.PARSE_DATE_FORMAT)
+                raise WrongDateFormat(
+                    args.fake_date, DemoAppConfiguration.PARSE_DATE_FORMAT
+                )
         else:
             self.fake_date = None
 

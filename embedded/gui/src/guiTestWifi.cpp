@@ -34,13 +34,8 @@
 #define TMP_BUFFERS_REFRESH_LENGTH ( 30 )
 #define TMP_BUFFER_REVERSE_GEO_LOC_REFRESH_LENGTH ( 80 )
 
-GuiTestWifi::GuiTestWifi( const GuiWifiResult_t* results ) : GuiCommon( ), _results( results )
+GuiTestWifi::GuiTestWifi( const GuiWifiResult_t* results ) : GuiCommon( GUI_PAGE_WIFI_TEST ), _results( results )
 {
-    _pageType = GUI_PAGE_WIFI_TEST;
-
-    this->screen = lv_obj_create( NULL, NULL );
-    lv_obj_set_style( this->screen, &( GuiCommon::screen_style ) );
-
     this->createHeader( "Wi-Fi SCANNING" );
 
     this->createActionButton( &( this->btn_start_stop ), "START", GuiTestWifi::callback, GUI_BUTTON_POS_CENTER, -60,
@@ -59,7 +54,7 @@ GuiTestWifi::GuiTestWifi( const GuiWifiResult_t* results ) : GuiCommon( ), _resu
                            &( this->lbl_info_frame_2 ), "", &( this->lbl_info_frame_3 ), "" );
 }
 
-GuiTestWifi::~GuiTestWifi( ) { lv_obj_del( this->screen ); }
+GuiTestWifi::~GuiTestWifi( ) {}
 
 void GuiTestWifi::init( )
 {

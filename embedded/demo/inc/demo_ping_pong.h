@@ -32,10 +32,11 @@
 #ifndef __DEMO_PING_PONG_H__
 #define __DEMO_PING_PONG_H__
 
-#include "demo_base.h"
+#include "demo_radio_interface.h"
+#include "demo_configuration.h"
 #include "configuration.h"
 #include "environment_interface.h"
-#include "log.h"
+#include "lr1110_radio_types.h"
 
 #define DEMO_PING_PONG_MAX_PAYLOAD_SIZE ( 255 )
 
@@ -91,13 +92,13 @@ typedef struct
     int8_t                    last_rssi;
 } demo_ping_pong_results_t;
 
-class DemoPingPong : public DemoBase
+class DemoPingPong : public DemoRadioInterface
 {
    public:
-    DemoPingPong( radio_t* radio, SignalingInterface* signaling, EnvironmentInterface* environment );
+    DemoPingPong( DeviceTransceiver* device, SignalingInterface* signaling, EnvironmentInterface* environment,
+                  CommunicationInterface* communication_interface );
     virtual ~DemoPingPong( );
 
-    void                            Configure( demo_ping_pong_settings_t& settings );
     const demo_ping_pong_results_t* GetResult( ) const;
 
    protected:
@@ -133,12 +134,10 @@ class DemoPingPong : public DemoBase
     uint32_t                         last_tx_done_instant_ms;
     uint32_t                         last_rx_done_instant_ms;
     demo_ping_pong_results_t         results;
-    demo_ping_pong_settings_t        settings;
-    demo_ping_pong_rf_payload_t      payload_ping;
-    demo_ping_pong_rf_payload_t      payload_pong;
+    uint8_t                          payload_ping[DEMO_PING_PONG_MAX_PAYLOAD_SIZE];
+    uint8_t                          payload_pong[DEMO_PING_PONG_MAX_PAYLOAD_SIZE];
     demo_ping_pong_fetched_payload_t received_payload;
     uint32_t                         radio_interrupt_mask;
-    Logging                          log;
     bool                             has_intermediate_results;
 };
 

@@ -33,13 +33,8 @@
 
 GuiConfigGnss::GuiConfigGnss( guiPageType_t pageType, GuiGnssDemoSetting_t* settings_current,
                               const GuiGnssDemoSetting_t* settings_default )
-    : GuiCommon( ), settings_current( settings_current ), settings_default( settings_default )
+    : GuiCommon( pageType ), settings_current( settings_current ), settings_default( settings_default )
 {
-    _pageType = pageType;
-
-    this->screen = lv_obj_create( NULL, NULL );
-    lv_obj_set_style( this->screen, &( GuiCommon::screen_style ) );
-
     this->createHeader( "GNSS - CONFIGURATION" );
 
     this->createSection( "CONSTELLATIONS", -100 );
@@ -69,7 +64,7 @@ GuiConfigGnss::GuiConfigGnss( guiPageType_t pageType, GuiGnssDemoSetting_t* sett
     this->createActionButton( &( this->btn_save ), "SAVE", GuiConfigGnss::callback, GUI_BUTTON_POS_RIGHT, -5, false );
 }
 
-GuiConfigGnss::~GuiConfigGnss( ) { lv_obj_del( this->screen ); }
+GuiConfigGnss::~GuiConfigGnss( ) {}
 
 void GuiConfigGnss::init( ) {}
 

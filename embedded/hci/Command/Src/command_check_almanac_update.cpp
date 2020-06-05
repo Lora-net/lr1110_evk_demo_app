@@ -30,13 +30,12 @@
  */
 
 #include "command_check_almanac_update.h"
-#include "gnss_helper.h"
 #include "com_code.h"
 
 #define COMMAND_CHECK_ALMANAC_UPDATE_BUFFER_SIZE ( 4 )
 
-CommandCheckAlmanacUpdate::CommandCheckAlmanacUpdate( radio_t* radio, Hci& hci )
-    : CommandBase( radio, hci ), expected_crc( 0 )
+CommandCheckAlmanacUpdate::CommandCheckAlmanacUpdate( DeviceBase* device, Hci& hci )
+    : CommandBase( device, hci ), expected_crc( 0 )
 {
 }
 
@@ -62,6 +61,6 @@ bool CommandCheckAlmanacUpdate::ConfigureFromPayload( const uint8_t* buffer, con
 bool CommandCheckAlmanacUpdate::Job( )
 {
     bool job_success = false;
-    job_success      = GnssHelper::checkAlmanacUpdate( this->radio, this->expected_crc );
+    job_success      = this->device->checkAlmanacUpdate( this->expected_crc );
     return job_success;
 }

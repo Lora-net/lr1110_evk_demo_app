@@ -37,8 +37,9 @@
 class DemoGnssAutonomous : public DemoGnssBase
 {
    public:
-    explicit DemoGnssAutonomous( radio_t* radio, SignalingInterface* signaling, EnvironmentInterface* environment,
-                                 AntennaSelectorInterface* antenna_selector, TimerInterface* timer );
+    explicit DemoGnssAutonomous( DeviceTransceiver* device, SignalingInterface* signaling,
+                                 EnvironmentInterface* environment, AntennaSelectorInterface* antenna_selector,
+                                 TimerInterface* timer, CommunicationInterface* communication_interface );
     virtual ~DemoGnssAutonomous( );
 
    protected:

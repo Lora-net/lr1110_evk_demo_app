@@ -32,10 +32,10 @@
 #ifndef __DEMO_RADIO_PER_H__
 #define __DEMO_RADIO_PER_H__
 
-#include "demo_base.h"
+#include "demo_configuration.h"
+#include "demo_radio_interface.h"
 #include "configuration.h"
 #include "environment_interface.h"
-#include "log.h"
 
 typedef enum
 {
@@ -62,13 +62,13 @@ typedef struct
     int8_t   last_rssi;
 } demo_radio_per_results_t;
 
-class DemoRadioPer : public DemoBase
+class DemoRadioPer : public DemoRadioInterface
 {
    public:
-    DemoRadioPer( radio_t* radio, SignalingInterface* signaling, EnvironmentInterface* environment );
+    DemoRadioPer( DeviceTransceiver* device, SignalingInterface* signaling, EnvironmentInterface* environment,
+                  CommunicationInterface* communication_interface, demo_radio_per_mode_t mode );
     virtual ~DemoRadioPer( );
 
-    void                            Configure( demo_radio_per_settings_t& settings );
     bool                            HasIntermediateResults( ) const;
     const demo_radio_per_results_t* GetResult( ) const;
 
@@ -80,14 +80,14 @@ class DemoRadioPer : public DemoBase
     void         ClearRegisteredIrqs( ) const;
 
    private:
-    EnvironmentInterface*     environment;
-    demo_radio_per_state_t    state;
-    demo_radio_per_settings_t settings;
-    demo_radio_per_results_t  results;
-    uint8_t                   buffer[255];
-    uint32_t                  nb_of_packets_remaining;
-    uint32_t                  last_event;
-    bool                      has_intermediate_results;
+    EnvironmentInterface*    environment;
+    demo_radio_per_state_t   state;
+    demo_radio_per_results_t results;
+    uint8_t                  buffer[255];
+    uint32_t                 nb_of_packets_remaining;
+    uint32_t                 last_event;
+    bool                     has_intermediate_results;
+    demo_radio_per_mode_t    mode;
 };
 
 #endif  // __DEMO_RADIO_PER_H__

@@ -31,57 +31,42 @@
 
 #include "demo.h"
 
-Demo::Demo( radio_t* radio, EnvironmentInterface* environment, AntennaSelectorInterface* antenna_selector,
-            SignalingInterface* signaling, TimerInterface* timer )
-    : radio( radio ),
+Demo::Demo( DeviceTransceiver* device, EnvironmentInterface* environment, AntennaSelectorInterface* antenna_selector,
+            SignalingInterface* signaling, TimerInterface* timer, CommunicationInterface* communication_interface )
+    : device( device ),
       environment( environment ),
       antenna_selector( antenna_selector ),
       signaling( signaling ),
       timer( timer ),
       running_demo( NULL ),
-      demo_type_current( DEMO_TYPE_NONE )
+      demo_type_current( DEMO_TYPE_NONE ),
+      communication_interface( communication_interface )
 {
-    this->demo_wifi_settings_default.is_enabled   = false;
     this->demo_wifi_settings_default.channels     = DEMO_WIFI_CHANNELS_DEFAULT >> 1;
     this->demo_wifi_settings_default.types        = DEMO_WIFI_TYPE_SCAN_DEFAULT;
     this->demo_wifi_settings_default.scan_mode    = DEMO_WIFI_MODE_DEFAULT;
     this->demo_wifi_settings_default.nbr_retrials = DEMO_WIFI_NBR_RETRIALS_DEFAULT;
     this->demo_wifi_settings_default.max_results  = DEMO_WIFI_MAX_RESULTS_DEFAULT;
     this->demo_wifi_settings_default.timeout      = DEMO_WIFI_TIMEOUT_IN_MS_DEFAULT;
+    this->demo_wifi_settings_default.result_type  = DEMO_WIFI_RESULT_TYPE_DEFAULT;
 
-    this->demo_wifi_country_code_settings_default.is_enabled            = false;
     this->demo_wifi_country_code_settings_default.channels              = DEMO_WIFI_CHANNELS_DEFAULT >> 1;
     this->demo_wifi_country_code_settings_default.nbr_retrials          = DEMO_WIFI_NBR_RETRIALS_DEFAULT;
     this->demo_wifi_country_code_settings_default.max_results           = DEMO_WIFI_MAX_RESULTS_DEFAULT;
     this->demo_wifi_country_code_settings_default.timeout               = DEMO_WIFI_TIMEOUT_IN_MS_DEFAULT;
     this->demo_wifi_country_code_settings_default.does_abort_on_timeout = DEMO_WIFI_DOES_ABORT_ON_TIMEOUT_DEFAULT;
 
-    this->demo_gnss_autonomous_settings_default.is_enabled         = false;
     this->demo_gnss_autonomous_settings_default.option             = DEMO_GNSS_AUTONOMOUS_OPTION_DEFAULT;
     this->demo_gnss_autonomous_settings_default.capture_mode       = DEMO_GNSS_AUTONOMOUS_CAPTURE_MODE_DEFAULT;
     this->demo_gnss_autonomous_settings_default.nb_satellites      = DEMO_GNSS_AUTONOMOUS_N_SATELLLITE_DEFAULT;
     this->demo_gnss_autonomous_settings_default.antenna_selection  = DEMO_GNSS_AUTONOMOUS_ANTENNA_SELECTION_DEFAULT;
     this->demo_gnss_autonomous_settings_default.constellation_mask = DEMO_GNSS_AUTONOMOUS_CONSTELLATION_MASK_DEFAULT;
 
-    this->demo_gnss_assisted_settings_default.is_enabled         = false;
     this->demo_gnss_assisted_settings_default.option             = DEMO_GNSS_ASSISTED_OPTION_DEFAULT;
     this->demo_gnss_assisted_settings_default.capture_mode       = DEMO_GNSS_ASSISTED_CAPTURE_MODE_DEFAULT;
     this->demo_gnss_assisted_settings_default.nb_satellites      = DEMO_GNSS_ASSISTED_N_SATELLLITE_DEFAULT;
     this->demo_gnss_assisted_settings_default.antenna_selection  = DEMO_GNSS_ASSISTED_ANTENNA_SELECTION_DEFAULT;
     this->demo_gnss_assisted_settings_default.constellation_mask = DEMO_GNSS_ASSISTED_CONSTELLATION_MASK_DEFAULT;
-
-    this->demo_ping_pong_settings_default.radio_settings = &this->demo_radio_settings_default;
-
-    this->demo_ping_pong_settings.radio_settings = &this->demo_radio_settings;
-
-    this->demo_radio_per_settings_default.radio_settings = &this->demo_radio_settings_default;
-
-    this->demo_radio_per_settings.radio_settings = &this->demo_radio_settings;
-
-    this->demo_ping_pong_settings_default.rx_timeout = DEMO_PING_PONG_RX_TIMEOUT_DEFAULT;
-    this->demo_ping_pong_settings_default.tx_timeout = DEMO_PING_PONG_TX_TIMEOUT_DEFAULT;
-
-    this->demo_radio_per_settings_default.is_tx = false;
 
     this->demo_radio_settings_default.rf_frequency                      = DEMO_RADIO_RF_FREQUENCY_DEFAULT;
     this->demo_radio_settings_default.tx_power                          = DEMO_RADIO_TX_POWER_DEFAULT;
@@ -144,7 +129,6 @@ void Demo::SetConfigToDefault( demo_type_t demo_type )
     }
     case DEMO_TYPE_WIFI_COUNTRY_CODE:
     {
-        this->demo_wifi_country_code_settings.is_enabled            = false;
         this->demo_wifi_country_code_settings.channels              = DEMO_WIFI_CHANNELS_DEFAULT >> 1;
         this->demo_wifi_country_code_settings.nbr_retrials          = DEMO_WIFI_NBR_RETRIALS_DEFAULT;
         this->demo_wifi_country_code_settings.max_results           = DEMO_WIFI_MAX_RESULTS_DEFAULT;
@@ -158,25 +142,12 @@ void Demo::SetConfigToDefault( demo_type_t demo_type )
         break;
     }
     case DEMO_TYPE_RADIO_PING_PONG:
-    {
-        this->demo_ping_pong_settings.rx_timeout = this->demo_ping_pong_settings_default.rx_timeout;
-        this->demo_ping_pong_settings.tx_timeout = this->demo_ping_pong_settings_default.tx_timeout;
-        // The demo_radio_settings is set to default here also because of the
-        // field this->demo_ping_pong_settings.radio_settings that references
-        // this ->demo_radio_settings.
-        this->demo_radio_settings = this->demo_radio_settings_default;
-        break;
-    }
     case DEMO_TYPE_RADIO_PER_TX:
     case DEMO_TYPE_RADIO_PER_RX:
-    {
-        this->demo_radio_per_settings.is_tx = this->demo_radio_per_settings_default.is_tx;
-        this->demo_radio_settings           = this->demo_radio_settings_default;
-        break;
-    }
     case DEMO_TYPE_TX_CW:
     {
         this->demo_radio_settings = this->demo_radio_settings_default;
+        break;
     }
     default:
         break;
@@ -189,8 +160,6 @@ void Demo::GetConfigDefault( demo_all_settings_t* settings )
     settings->wifi_country_code_settings = this->demo_wifi_country_code_settings_default;
     settings->gnss_autonomous_settings   = this->demo_gnss_autonomous_settings_default;
     settings->gnss_assisted_settings     = this->demo_gnss_assisted_settings_default;
-    settings->ping_pong_settings         = this->demo_ping_pong_settings_default;
-    settings->radio_per_settings         = this->demo_radio_per_settings_default;
     settings->radio_settings             = this->demo_radio_settings_default;
 }
 
@@ -200,8 +169,6 @@ void Demo::GetConfig( demo_all_settings_t* settings )
     settings->wifi_country_code_settings = this->demo_wifi_country_code_settings;
     settings->gnss_autonomous_settings   = this->demo_gnss_autonomous_settings;
     settings->gnss_assisted_settings     = this->demo_gnss_assisted_settings;
-    settings->ping_pong_settings         = this->demo_ping_pong_settings;
-    settings->radio_per_settings         = this->demo_radio_per_settings;
     settings->radio_settings             = this->demo_radio_settings;
 }
 
@@ -215,8 +182,6 @@ void Demo::GetConfigAutonomousGnss( demo_gnss_settings_t* settings )
 }
 
 void Demo::GetConfigAssistedGnss( demo_gnss_settings_t* settings ) { *settings = this->demo_gnss_assisted_settings; }
-
-void Demo::GetConfigRadioPingPong( demo_ping_pong_settings_t* settings ) { *settings = this->demo_ping_pong_settings; }
 
 void Demo::UpdateConfigRadio( demo_radio_settings_t* radio_config ) { this->demo_radio_settings = *radio_config; }
 
@@ -237,41 +202,6 @@ void Demo::UpdateConfigAssistedGnss( const demo_gnss_settings_t* gnss_assisted_c
     this->demo_gnss_assisted_settings = *gnss_assisted_config;
 }
 
-void Demo::UpdateConfigRadioPingPong( const demo_ping_pong_settings_t* demo_ping_pong_config )
-{
-    this->demo_ping_pong_settings.rx_timeout      = demo_ping_pong_config->rx_timeout;
-    this->demo_ping_pong_settings.tx_timeout      = demo_ping_pong_config->tx_timeout;
-    *this->demo_ping_pong_settings.radio_settings = *demo_ping_pong_config->radio_settings;
-}
-
-void Demo::StartNextEnabled( )
-{
-    if( this->demo_wifi_settings.is_enabled )
-    {
-        this->Start( DEMO_TYPE_WIFI );
-    }
-    else if( this->demo_wifi_country_code_settings.is_enabled )
-    {
-        this->Start( DEMO_TYPE_WIFI_COUNTRY_CODE );
-    }
-    else if( this->demo_gnss_autonomous_settings.is_enabled )
-    {
-        this->Start( DEMO_TYPE_GNSS_AUTONOMOUS );
-    }
-    else if( this->demo_gnss_assisted_settings.is_enabled )
-    {
-        this->Start( DEMO_TYPE_GNSS_ASSISTED );
-    }
-    else if( this->demo_ping_pong_settings.is_enabled )
-    {
-        this->Start( DEMO_TYPE_RADIO_PING_PONG );
-    }
-    else if( this->demo_radio_settings.is_enabled )
-    {
-        this->Start( DEMO_TYPE_TX_CW );
-    }
-}
-
 void Demo::Start( demo_type_t demo_type )
 {
     if( demo_type != this->demo_type_current )
@@ -282,26 +212,32 @@ void Demo::Start( demo_type_t demo_type )
         switch( demo_type )
         {
         case DEMO_TYPE_WIFI:
-            this->running_demo = new DemoWifiScan( radio, signaling );
+            this->running_demo = new DemoWifiScan( device, signaling, this->communication_interface );
             break;
         case DEMO_TYPE_WIFI_COUNTRY_CODE:
-            this->running_demo = new DemoWifiCountryCode( radio, signaling );
+            this->running_demo = new DemoWifiCountryCode( device, signaling, this->communication_interface );
             break;
         case DEMO_TYPE_GNSS_AUTONOMOUS:
-            this->running_demo = new DemoGnssAutonomous( radio, signaling, environment, antenna_selector, timer );
+            this->running_demo = new DemoGnssAutonomous( device, signaling, environment, antenna_selector, timer,
+                                                         this->communication_interface );
             break;
         case DEMO_TYPE_GNSS_ASSISTED:
-            this->running_demo = new DemoGnssAssisted( radio, signaling, environment, antenna_selector, timer );
+            this->running_demo = new DemoGnssAssisted( device, signaling, environment, antenna_selector, timer,
+                                                       this->communication_interface );
             break;
         case DEMO_TYPE_RADIO_PING_PONG:
-            this->running_demo = new DemoPingPong( radio, signaling, environment );
+            this->running_demo = new DemoPingPong( device, signaling, environment, this->communication_interface );
             break;
         case DEMO_TYPE_TX_CW:
-            this->running_demo = new DemoTxCw( radio, signaling );
+            this->running_demo = new DemoTxCw( device, signaling, this->communication_interface );
             break;
         case DEMO_TYPE_RADIO_PER_TX:
+            this->running_demo = new DemoRadioPer( device, signaling, environment, this->communication_interface,
+                                                   DEMO_RADIO_PER_MODE_TX );
+            break;
         case DEMO_TYPE_RADIO_PER_RX:
-            this->running_demo = new DemoRadioPer( radio, signaling, environment );
+            this->running_demo = new DemoRadioPer( device, signaling, environment, this->communication_interface,
+                                                   DEMO_RADIO_PER_MODE_RX );
             break;
         default:
             break;
@@ -328,24 +264,15 @@ void Demo::Start( demo_type_t demo_type )
         ( ( DemoGnssAssisted* ) this->running_demo )->Configure( this->demo_gnss_assisted_settings );
         break;
     case DEMO_TYPE_RADIO_PING_PONG:
-        ( ( DemoPingPong* ) this->running_demo )->Configure( this->demo_ping_pong_settings );
-        break;
     case DEMO_TYPE_RADIO_PER_TX:
-        this->demo_radio_per_settings.is_tx = true;
-        ( ( DemoRadioPer* ) this->running_demo )->Configure( this->demo_radio_per_settings );
-        break;
     case DEMO_TYPE_RADIO_PER_RX:
-        this->demo_radio_per_settings.is_tx = false;
-        ( ( DemoRadioPer* ) this->running_demo )->Configure( this->demo_radio_per_settings );
-        break;
     case DEMO_TYPE_TX_CW:
-        ( ( DemoTxCw* ) this->running_demo )->Configure( this->demo_radio_settings );
+        ( ( DemoRadioInterface* ) this->running_demo )->Configure( this->demo_radio_settings );
         break;
     default:
         break;
     }
 
-    this->running_demo->Enable( );
     this->running_demo->Start( );
 }
 

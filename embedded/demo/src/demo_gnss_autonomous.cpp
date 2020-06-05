@@ -32,10 +32,10 @@
 #include "demo_gnss_autonomous.h"
 #include "lr1110_gnss.h"
 
-DemoGnssAutonomous::DemoGnssAutonomous( radio_t* radio, SignalingInterface* signaling,
+DemoGnssAutonomous::DemoGnssAutonomous( DeviceTransceiver* device, SignalingInterface* signaling,
                                         EnvironmentInterface* environment, AntennaSelectorInterface* antenna_selector,
-                                        TimerInterface* timer )
-    : DemoGnssBase( radio, signaling, environment, antenna_selector, timer )
+                                        TimerInterface* timer, CommunicationInterface* communication_interface )
+    : DemoGnssBase( device, signaling, environment, antenna_selector, timer, communication_interface )
 {
 }
 
@@ -52,7 +52,7 @@ void DemoGnssAutonomous::CallScan( )
     }
 
     lr1110_gnss_scan_autonomous(
-        this->radio, gnss_time,
+        this->device->GetRadio( ), gnss_time,
         LR1110_GNSS_BIT_CHANGE_MASK | LR1110_GNSS_DOPPLER_MASK | LR1110_GNSS_IRQ_PSEUDO_RANGE_MASK,
         this->GetSettings( ).nb_satellites );
 }

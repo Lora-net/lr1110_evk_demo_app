@@ -37,7 +37,7 @@
 class CommandCheckAlmanacUpdate : public CommandBase
 {
    public:
-    CommandCheckAlmanacUpdate( radio_t* radio, Hci& hci );
+    CommandCheckAlmanacUpdate( DeviceBase* device, Hci& hci );
     virtual ~CommandCheckAlmanacUpdate( );
 
     virtual uint16_t GetComCode( );

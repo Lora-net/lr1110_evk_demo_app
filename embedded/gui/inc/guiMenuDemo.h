@@ -32,9 +32,9 @@
 #ifndef __GUI_MENU_DEMO_H__
 #define __GUI_MENU_DEMO_H__
 
-#include "guiCommon.h"
+#include "guiMenuCommon.h"
 
-class GuiMenuDemo : public GuiCommon
+class GuiMenuDemo : public GuiMenuCommon
 {
    public:
     GuiMenuDemo( );
@@ -42,8 +42,7 @@ class GuiMenuDemo : public GuiCommon
 
     virtual void draw( );
     virtual void updateHostConnectivityState( );
-    void createTestEntry( int16_t y_pos, lv_obj_t** lbl, lv_obj_t** btn, lv_obj_t** lbl_btn, const char* lbl_name,
-                          bool is_clickable );
+
     static void callback( lv_obj_t* obj, lv_event_t event );
 
    private:

@@ -30,14 +30,16 @@
  */
 
 #include "demo_wifi_interface.h"
+#include "lr1110_wifi.h"
 
 #define WIFI_DEMO_CONSUMPTION_DCDC_CORRELATION_MA ( 12 )
 #define WIFI_DEMO_CONSUMPTION_DCDC_DEMODULATION_MA ( 4 )
 #define WIFI_DEMO_CONSUMPTION_LDO_CORRELATION_MA ( 24 )
 #define WIFI_DEMO_CONSUMPTION_LDO_DEMODULATION_MA ( 8 )
 
-DemoWifiInterface::DemoWifiInterface( radio_t* radio, SignalingInterface* signaling )
-    : DemoBase( radio, signaling ), state( DEMO_WIFI_INIT )
+DemoWifiInterface::DemoWifiInterface( DeviceTransceiver* device, SignalingInterface* signaling,
+                                      CommunicationInterface* communication_interface )
+    : DemoTransceiverBase( device, signaling, communication_interface ), state( DEMO_WIFI_INIT )
 {
     wifi_irq = LR1110_SYSTEM_IRQ_WIFI_SCAN_DONE;
 }
@@ -53,7 +55,7 @@ void DemoWifiInterface::Reset( )
 
     uint32_t irq_to_en_dio1 = LR1110_SYSTEM_IRQ_WIFI_SCAN_DONE;
     uint32_t irq_to_en_dio2 = 0x00;
-    lr1110_system_set_dio_irq_params( this->radio, irq_to_en_dio1, irq_to_en_dio2 );
+    lr1110_system_set_dio_irq_params( this->device->GetRadio( ), irq_to_en_dio1, irq_to_en_dio2 );
 }
 
 void DemoWifiInterface::SpecificRuntime( )
@@ -63,7 +65,7 @@ void DemoWifiInterface::SpecificRuntime( )
     case DEMO_WIFI_INIT:
     {
         this->state = DEMO_WIFI_SCAN;
-        lr1110_wifi_reset_cumulative_timing( this->radio );
+        lr1110_wifi_reset_cumulative_timing( this->device->GetRadio( ) );
         break;
     }
 
@@ -71,8 +73,8 @@ void DemoWifiInterface::SpecificRuntime( )
     {
         this->SetWaitingForInterrupt( );
 
-        lr1110_wifi_cfg_hardware_debarker( this->radio, true );
-        this->ExecuteScan( this->radio );
+        lr1110_wifi_cfg_hardware_debarker( this->device->GetRadio( ), true );
+        this->ExecuteScan( this->device->GetRadio( ) );
 
         this->state = DEMO_WIFI_WAIT_FOR_SCAN;
         signaling->StartCapture( );
@@ -88,7 +90,7 @@ void DemoWifiInterface::SpecificRuntime( )
             lr1110_system_stat2_t stat2;
             uint32_t              irq_status;
 
-            lr1110_system_get_status( this->radio, &stat1, &stat2, &irq_status );
+            lr1110_system_get_status( this->device->GetRadio( ), &stat1, &stat2, &irq_status );
 
             if( ( irq_status & LR1110_SYSTEM_IRQ_WIFI_SCAN_DONE ) != 0 )
             {
@@ -98,7 +100,7 @@ void DemoWifiInterface::SpecificRuntime( )
                 {
                     this->results.error      = true;
                     this->results.nbrResults = 0;
-                    this->results.timings    = { 0 };
+                    this->results.timings    = {};
                     this->state              = DEMO_WIFI_TERMINATED;
                 }
                 else
@@ -122,10 +124,10 @@ void DemoWifiInterface::SpecificRuntime( )
 
     case DEMO_WIFI_GET_RESULTS:
     {
-        this->FetchAndSaveResults( this->radio );
+        this->FetchAndSaveResults( this->device->GetRadio( ) );
         lr1110_wifi_cumulative_timings_t wifi_results_timings = { 0 };
 
-        lr1110_wifi_read_cumulative_timing( this->radio, &wifi_results_timings );
+        lr1110_wifi_read_cumulative_timing( this->device->GetRadio( ), &wifi_results_timings );
 
         uint32_t consumption_uas =
             DemoWifiInterface::ComputeConsumption( LR1110_SYSTEM_REG_MODE_DCDC, wifi_results_timings );
@@ -193,4 +195,7 @@ uint32_t DemoWifiInterface::ComputeConsumption( const lr1110_system_reg_mode_t  
     return consumption_uas;
 }
 
-void DemoWifiInterface::ClearRegisteredIrqs( ) const { lr1110_system_clear_irq_status( this->radio, this->wifi_irq ); }
+void DemoWifiInterface::ClearRegisteredIrqs( ) const
+{
+    lr1110_system_clear_irq_status( this->device->GetRadio( ), this->wifi_irq );
+}

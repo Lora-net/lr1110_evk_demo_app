@@ -61,8 +61,8 @@ typedef enum
 class Demo
 {
    public:
-    Demo( radio_t* radio, EnvironmentInterface* environment, AntennaSelectorInterface* antenna_selector,
-          SignalingInterface* signaling, TimerInterface* timer );
+    Demo( DeviceTransceiver* device, EnvironmentInterface* environment, AntennaSelectorInterface* antenna_selector,
+          SignalingInterface* signaling, TimerInterface* timer, CommunicationInterface* communication_interface );
     virtual ~Demo( );
 
     void Init( );
@@ -74,16 +74,13 @@ class Demo
     void GetConfigWifi( demo_wifi_settings_t* settings );
     void GetConfigAutonomousGnss( demo_gnss_settings_t* settings );
     void GetConfigAssistedGnss( demo_gnss_settings_t* settings );
-    void GetConfigRadioPingPong( demo_ping_pong_settings_t* settings );
     void UpdateConfigRadio( demo_radio_settings_t* radio_config );
     void UpdateConfigWifiScan( const demo_wifi_settings_t* wifi_config );
     void UpdateConfigWifiCountryCode( const demo_wifi_country_code_settings_t* wifi_config );
     void UpdateConfigAutonomousGnss( const demo_gnss_settings_t* gnss_autonomous_config );
     void UpdateConfigAssistedGnss( const demo_gnss_settings_t* gnss_assisted_config );
-    void UpdateConfigRadioPingPong( const demo_ping_pong_settings_t* demo_ping_pong_config );
 
     void Start( demo_type_t demo_type );
-    void StartNextEnabled( );
     void Stop( );
     void Reset( );
     bool HasIntermediateResults( ) const;
@@ -94,7 +91,7 @@ class Demo
     void*       GetResults( );
 
    private:
-    radio_t*                          radio;
+    DeviceTransceiver*                device;
     EnvironmentInterface*             environment;
     AntennaSelectorInterface*         antenna_selector;
     SignalingInterface*               signaling;
@@ -109,12 +106,9 @@ class Demo
     demo_gnss_settings_t              demo_gnss_autonomous_settings_default;
     demo_gnss_settings_t              demo_gnss_assisted_settings;
     demo_gnss_settings_t              demo_gnss_assisted_settings_default;
-    demo_ping_pong_settings_t         demo_ping_pong_settings;
-    demo_ping_pong_settings_t         demo_ping_pong_settings_default;
-    demo_radio_per_settings_t         demo_radio_per_settings;
-    demo_radio_per_settings_t         demo_radio_per_settings_default;
     demo_radio_settings_t             demo_radio_settings;
     demo_radio_settings_t             demo_radio_settings_default;
+    CommunicationInterface*           communication_interface;
 };
 
 #endif

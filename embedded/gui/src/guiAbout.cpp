@@ -35,16 +35,10 @@
 
 #define GUI_ABOUT_BUFFER_LENGTH ( 30 )
 
-GuiAbout::GuiAbout( version_handler_t* version_handler ) : GuiCommon( )
+GuiAbout::GuiAbout( version_handler_t* version_handler )
+    : GuiCommon( GUI_PAGE_ABOUT ), version_handler( version_handler )
 {
     char buffer[GUI_ABOUT_BUFFER_LENGTH];
-
-    this->_pageType = GUI_PAGE_ABOUT;
-
-    this->version_handler = version_handler;
-
-    this->screen = lv_obj_create( NULL, NULL );
-    lv_obj_set_style( this->screen, &( GuiCommon::screen_style ) );
 
     this->createHeader( "ABOUT" );
 
@@ -103,7 +97,7 @@ GuiAbout::GuiAbout( version_handler_t* version_handler ) : GuiCommon( )
     this->createActionButton( &( this->btn_back ), "BACK", GuiAbout::callback, GUI_BUTTON_POS_CENTER, -5, true );
 }
 
-GuiAbout::~GuiAbout( ) { lv_obj_del( this->screen ); }
+GuiAbout::~GuiAbout( ) {}
 
 void GuiAbout::draw( ) { lv_scr_load( this->screen ); }
 

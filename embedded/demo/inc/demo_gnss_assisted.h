@@ -34,13 +34,13 @@
 
 #include "demo_gnss_base.h"
 #include "demo_configuration.h"
-#include "log.h"
 
 class DemoGnssAssisted : public DemoGnssBase
 {
    public:
-    DemoGnssAssisted( radio_t* radio, SignalingInterface* signaling, EnvironmentInterface* environment,
-                      AntennaSelectorInterface* antenna_selector, TimerInterface* timer );
+    DemoGnssAssisted( DeviceTransceiver* device, SignalingInterface* signaling, EnvironmentInterface* environment,
+                      AntennaSelectorInterface* antenna_selector, TimerInterface* timer,
+                      CommunicationInterface* communication_interface );
     virtual ~DemoGnssAssisted( );
 
    protected:

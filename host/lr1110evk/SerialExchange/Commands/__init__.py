@@ -1,5 +1,11 @@
-from .CommandConfigure import (
-    CommandConfigure,
+from .CommandFetchResults import CommandFetchResults
+from .CommandReset import CommandReset
+from .CommandSetDateLoc import CommandSetDateLoc
+from .CommandStart import (
+    CommandStartWifiScan,
+    CommandStartWifiCountryCode,
+    CommandStartGnssAutonomous,
+    CommandStartGnssAssisted,
     GnssOption,
     GnssCaptureMode,
     GnssConstellation,
@@ -7,10 +13,6 @@ from .CommandConfigure import (
     WifiEnableMode,
     GnssAntennaSelection,
 )
-from .CommandFetchResults import CommandFetchResults
-from .CommandReset import CommandReset
-from .CommandSetDateLoc import CommandSetDateLoc
-from .CommandStart import CommandStart
 from .CommandStatus import CommandStatus
 from .CommandGetVersion import CommandGetVersion
 from .CommandGetAlmanacDates import CommandGetAlmanacDates

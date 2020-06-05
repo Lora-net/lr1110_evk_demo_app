@@ -68,7 +68,9 @@ class GnssRequestUplink:
 
     def to_json_dict(self):
         json_dict = {
-            "payload": self.payload[2:], # The very first byte is removed here. "Why?"" I heard you asked. "Because" is my answer.
+            "payload": self.payload[
+                2:
+            ],  # The very first byte is removed here. "Why?"" I heard you asked. "Because" is my answer.
             "timestamp": self.timestamp,
             "msgtype": self.message_type,
             "gnss_capture_time": self.timestamp + 18 - 315964800,
@@ -76,21 +78,22 @@ class GnssRequestUplink:
         }
         if self.aiding_coordinate:
             json_dict["gnss_assist_position"] = [
-                        self.aiding_coordinate.latitude,
-                        self.aiding_coordinate.longitude
-                    ]
+                self.aiding_coordinate.latitude,
+                self.aiding_coordinate.longitude,
+            ]
 
         return json_dict
 
 
 class GnssRequestFakeUplink(GnssRequestUplink):
     FAKE_MESSAGE_TYPE = "gnss"
+
     def __init__(self, payload, timestamp, aiding_coordinate):
         super().__init__(
             payload=payload,
             timestamp=timestamp.replace(tzinfo=timezone.utc).timestamp(),
             message_type=GnssRequestFakeUplink.FAKE_MESSAGE_TYPE,
-            aiding_coordinate=aiding_coordinate
+            aiding_coordinate=aiding_coordinate,
         )
 
 
@@ -103,30 +106,34 @@ class RequestGnssPerDevice(RequestBase):
 
     def _to_json_dict(self):
         json_dict = {
-            dev_eui: request_uplink.to_json_dict() for dev_eui, request_uplink in self.__request_mapping.items()
+            dev_eui: request_uplink.to_json_dict()
+            for dev_eui, request_uplink in self.__request_mapping.items()
         }
         return json_dict
 
 
-
 import random
+
+
 class RequestGnssPerDeviceFake(RequestGnssPerDevice):
     @staticmethod
     def generate_random_device_eui():
         def get_random_hex():
             return random.randint(0, 255)
-        return "AA-AA-AA-00-00-{:02X}-{:02X}-{:02X}".format(get_random_hex(), get_random_hex(), get_random_hex())
+
+        return "AA-AA-AA-00-00-{:02X}-{:02X}-{:02X}".format(
+            get_random_hex(), get_random_hex(), get_random_hex()
+        )
 
     def append_device(self, nav_message, capture_instant, aiding_coordinate):
         fake_uplink_request = GnssRequestFakeUplink(
             payload=nav_message,
             timestamp=capture_instant,
-            aiding_coordinate=aiding_coordinate
+            aiding_coordinate=aiding_coordinate,
         )
         fake_deveui = RequestGnssPerDeviceFake.generate_random_device_eui()
         super().append_device_request(
-            dev_eui=fake_deveui,
-            uplink_request=fake_uplink_request
+            dev_eui=fake_deveui, uplink_request=fake_uplink_request
         )
 
 
@@ -136,18 +143,14 @@ class RequestWifiGls(RequestBase):
 
     def _to_json_dict(self):
         return {
-            "lorawan":[
+            "lorawan": [
                 {
                     "gatewayId": "00",
                     "rssi": 0,
                     "snr": 0,
                     "toa": 0,
                     "antennaId": 0,
-                    "antennaLocation": {
-                        "latitude": 0,
-                        "longitude": 0,
-                        "altitude": 0,
-                    },
+                    "antennaLocation": {"latitude": 0, "longitude": 0, "altitude": 0,},
                 },
             ],
             "wifiAccessPoints": [
@@ -156,7 +159,7 @@ class RequestWifiGls(RequestBase):
         }
 
     @staticmethod
-    def mac_to_json_dict(mac:ScannedMacAddress):
+    def mac_to_json_dict(mac: ScannedMacAddress):
         return {
             "macAddress": mac.mac_address,
             "signalStrength": mac.rssi,

@@ -35,37 +35,27 @@
 #include "environment_interface.h"
 #include "version.h"
 #include "gui.h"
-#include "log.h"
+#include "communication_manager.h"
 #include "configuration.h"
 #include "demo.h"
-#include "hci.h"
-#include "command_factory.h"
-#include "command_get_version.h"
-#include "command_get_almanac_dates.h"
-#include "command_configure.h"
-#include "command_start_demo.h"
-#include "command_fetch_result.h"
-#include "command_set_date_loc.h"
-#include "command_reset.h"
-#include "command_update_almanac.h"
-#include "command_check_almanac_update.h"
 
 class Supervisor
 {
    public:
-    Supervisor( Gui* gui, radio_t* radio, Demo* demo, EnvironmentInterface* environment );
+    Supervisor( Gui* gui, DeviceBase* device, Demo* demo, EnvironmentInterface* environment,
+                CommunicationManager* communication_manager );
     virtual ~Supervisor( );
 
     void Init( );
     void Runtime( );
-    void RuntimeAuto( );
-    void SwitchInFieldTestMode( );
     bool CanEnterLowPower( ) const;
 
     static void InterruptHandlerGui( bool is_down );
     static void InterruptHandlerDemo( );
 
     bool HasPendingInterrupt( ) const;
+
+    const version_handler_t* GetVersionHandler( ) const;
 
    protected:
     void TransfertDemoResultsToGui( );
@@ -84,10 +74,8 @@ class Supervisor
     void ConvertSettingsFromGuiToDemo( const GuiGnssDemoSetting_t* gui_settings, demo_gnss_settings_t* demo_settings );
 
     void GuiRuntimeAndProcess( );
-    void GuiRuntimeAndProcessAuto( );
     void DemoRuntimeAndProcess( );
-    void HciRuntimeAndProces( );
-    void TestHostRuntime( );
+    void CommunicationManagerRuntime( );
 
     void GetAndPropagateVersion( );
 
@@ -101,24 +89,11 @@ class Supervisor
     bool                  run_demo;
     Demo*                 demo;
     Gui*                  gui;
-    Logging               log;
     EnvironmentInterface* environment;
-    radio_t*              radio;
-    CommandFactory        command_factory;
-    Hci                   hci;
-    LoggingHostType_t     host_type;
+    DeviceBase*           device;
     version_handler_t     version_handler;
 
-    // Commands for HCI
-    CommandGetVersion         com_get_version;
-    CommandGetAlmanacDates    com_get_almanac_dates;
-    CommandConfigure          com_configure;
-    CommandStartDemo          com_start;
-    CommandFetchResult        com_fetch_result;
-    CommandSetDateLoc         com_set_date_loc;
-    CommandReset              com_reset;
-    CommandUpdateAlmanac      com_update_almanac;
-    CommandCheckAlmanacUpdate com_check_almanac_update;
+    CommunicationManager* communication_manager;
 };
 
 #endif  // __SUPERVISOR_H__

@@ -32,17 +32,16 @@
 #ifndef __GUI_MENU_RADIO_TEST_MODES_H__
 #define __GUI_MENU_RADIO_TEST_MODES_H__
 
-#include "guiCommon.h"
+#include "guiMenuCommon.h"
 
-class GuiMenuRadioTestModes : public GuiCommon
+class GuiMenuRadioTestModes : public GuiMenuCommon
 {
    public:
     GuiMenuRadioTestModes( );
     virtual ~GuiMenuRadioTestModes( );
 
     virtual void draw( );
-    void createTestEntry( int16_t y_pos, lv_obj_t** lbl, lv_obj_t** btn, lv_obj_t** lbl_btn, const char* lbl_name,
-                          bool is_clickable );
+
     static void callback( lv_obj_t* obj, lv_event_t event );
 
    private:

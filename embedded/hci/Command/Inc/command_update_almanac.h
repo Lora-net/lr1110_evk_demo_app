@@ -34,14 +34,13 @@
 
 #include "command_base.h"
 #include "hci.h"
-#include "configuration.h"
 
 #define COMMAND_UPDATE_ALMANAC_BUFFER_SIZE ( 20 )
 
 class CommandUpdateAlmanac : public CommandBase
 {
    public:
-    CommandUpdateAlmanac( radio_t* radio, Hci& hci );
+    CommandUpdateAlmanac( DeviceBase* device, Hci& hci );
     virtual ~CommandUpdateAlmanac( );
 
     virtual uint16_t GetComCode( );

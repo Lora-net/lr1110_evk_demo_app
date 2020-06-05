@@ -34,13 +34,8 @@
 #define TMP_BUFFER_REFRESH_LENGTH ( 30 )
 
 GuiRadioPer::GuiRadioPer( const GuiRadioSetting_t* settings, const GuiRadioPerResult_t* results )
-    : GuiCommon( ), settings( settings ), results( results )
+    : GuiCommon( GUI_PAGE_RADIO_PER ), settings( settings ), results( results )
 {
-    _pageType = GUI_PAGE_RADIO_PER;
-
-    this->screen = lv_obj_create( NULL, NULL );
-    lv_obj_set_style( this->screen, &( GuiCommon::screen_style ) );
-
     this->createHeader( "PACKET ERROR RATE" );
 
     this->createInfoFrame( &( this->info_frame ), &( this->lbl_info_frame_1 ), "", &( this->lbl_info_frame_2 ), "",
@@ -59,7 +54,7 @@ GuiRadioPer::GuiRadioPer( const GuiRadioSetting_t* settings, const GuiRadioPerRe
     lv_obj_set_hidden( this->btn_stop, true );
 }
 
-GuiRadioPer::~GuiRadioPer( ) { lv_obj_del( this->screen ); }
+GuiRadioPer::~GuiRadioPer( ) {}
 
 void GuiRadioPer::init( )
 {

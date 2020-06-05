@@ -32,6 +32,7 @@
 #ifndef __LOG_H__
 #define __LOG_H__
 
+#include <stdarg.h>
 #include "hci.h"
 
 class FieldTestLog
@@ -40,6 +41,7 @@ class FieldTestLog
     static FieldTestLog* GetOrCreateInstance( Hci& hci );
     virtual ~FieldTestLog( );
     static void TrySendLog( const char* fmt, ... );
+    static void vTrySendLog( const char* fmt, va_list args );
 
    protected:
     explicit FieldTestLog( Hci& hci );

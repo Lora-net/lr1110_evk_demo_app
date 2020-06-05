@@ -46,11 +46,8 @@ class GuiSplashScreen : public GuiCommon
     static void callback( lv_obj_t* obj, lv_event_t event );
 
    private:
-    lv_obj_t* icon;
     lv_obj_t* btn_continue;
     lv_obj_t* btn_about;
-    lv_obj_t* lbl_version;
-    lv_obj_t* lbl_copyrights;
 };
 
 #endif

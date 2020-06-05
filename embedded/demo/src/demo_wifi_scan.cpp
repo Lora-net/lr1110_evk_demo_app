@@ -36,7 +36,11 @@
 #define WIFI_SCAN_ABORT_ON_TIMEOUT ( false )
 #define DEMO_WIFI_MAX_RESULTS_PER_SCAN ( 20 )
 
-DemoWifiScan::DemoWifiScan( radio_t* radio, SignalingInterface* signaling ) : DemoWifiInterface( radio, signaling ) {}
+DemoWifiScan::DemoWifiScan( DeviceTransceiver* device, SignalingInterface* signaling,
+                            CommunicationInterface* communication_interface )
+    : DemoWifiInterface( device, signaling, communication_interface )
+{
+}
 
 DemoWifiScan::~DemoWifiScan( ) {}
 
@@ -49,6 +53,23 @@ void DemoWifiScan::ExecuteScan( radio_t* radio )
 
 void DemoWifiScan::FetchAndSaveResults( radio_t* radio )
 {
+    switch( this->settings.result_type )
+    {
+    case DEMO_WIFI_RESULT_TYPE_BASIC_COMPLETE:
+    {
+        this->FetchAndSaveBasicCompleteResults( radio );
+        break;
+    }
+    case DEMO_WIFI_RESULT_TYPE_BASIC_MAC_TYPE_CHANNEL:
+    {
+        this->FetchAndSaveBasicMacChannelTypeResults( radio );
+        break;
+    }
+    }
+}
+
+void DemoWifiScan::FetchAndSaveBasicCompleteResults( radio_t* radio )
+{
     lr1110_wifi_basic_complete_result_t wifi_results_mac_addr[DEMO_WIFI_MAX_RESULTS_PER_SCAN] = { 0 };
     uint8_t                             nbr_results                                           = 0;
 
@@ -56,7 +77,23 @@ void DemoWifiScan::FetchAndSaveResults( radio_t* radio )
     const uint8_t max_results_to_fetch =
         ( nbr_results > DEMO_WIFI_MAX_RESULTS_PER_SCAN ) ? DEMO_WIFI_MAX_RESULTS_PER_SCAN : nbr_results;
 
-    lr1110_wifi_read_basic_complete_results( this->radio, 0, max_results_to_fetch, wifi_results_mac_addr );
+    lr1110_wifi_read_basic_complete_results( this->device->GetRadio( ), 0, max_results_to_fetch,
+                                             wifi_results_mac_addr );
+
+    AddScanToResults( LR1110_SYSTEM_REG_MODE_DCDC, this->results, wifi_results_mac_addr, max_results_to_fetch );
+}
+
+void DemoWifiScan::FetchAndSaveBasicMacChannelTypeResults( radio_t* radio )
+{
+    lr1110_wifi_basic_mac_type_channel_result_t wifi_results_mac_addr[DEMO_WIFI_MAX_RESULTS_PER_SCAN] = { 0 };
+    uint8_t                                     nbr_results                                           = 0;
+
+    lr1110_wifi_get_nb_results( radio, &nbr_results );
+    const uint8_t max_results_to_fetch =
+        ( nbr_results > DEMO_WIFI_MAX_RESULTS_PER_SCAN ) ? DEMO_WIFI_MAX_RESULTS_PER_SCAN : nbr_results;
+
+    lr1110_wifi_read_basic_mac_type_channel_results( this->device->GetRadio( ), 0, max_results_to_fetch,
+                                                     wifi_results_mac_addr );
 
     AddScanToResults( LR1110_SYSTEM_REG_MODE_DCDC, this->results, wifi_results_mac_addr, max_results_to_fetch );
 }
@@ -72,8 +109,31 @@ void DemoWifiScan::AddScanToResults( const lr1110_system_reg_mode_t regMode, dem
         results.results[results.nbrResults].channel =
             lr1110_extract_channel_from_info_byte( local_basic_result->channel_info_byte );
 
-        results.results[results.nbrResults].type =
-            lr1110_extract_signal_type_from_data_rate_info( local_basic_result->data_rate_info_byte );
+        results.results[results.nbrResults].type = demo_wifi_types_from_transceiver(
+            lr1110_extract_signal_type_from_data_rate_info( local_basic_result->data_rate_info_byte ) );
+
+        memcpy( results.results[results.nbrResults].mac_address, local_basic_result->mac_address,
+                LR1110_WIFI_MAC_ADDRESS_LENGTH );
+
+        results.results[results.nbrResults].rssi            = local_basic_result->rssi;
+        results.results[results.nbrResults].country_code[0] = '?';
+        results.results[results.nbrResults].country_code[1] = '?';
+        results.nbrResults++;
+    }
+}
+
+void DemoWifiScan::AddScanToResults( const lr1110_system_reg_mode_t regMode, demo_wifi_scan_all_results_t& results,
+                                     const lr1110_wifi_basic_mac_type_channel_result_t* scan_result,
+                                     const uint8_t                                      nbr_results )
+{
+    for( uint8_t index = 0; ( index < nbr_results ) && ( results.nbrResults < DEMO_WIFI_MAX_RESULT_TOTAL ); index++ )
+    {
+        const lr1110_wifi_basic_mac_type_channel_result_t* local_basic_result = &scan_result[index];
+        results.results[results.nbrResults].channel =
+            lr1110_extract_channel_from_info_byte( local_basic_result->channel_info_byte );
+
+        results.results[results.nbrResults].type = demo_wifi_types_from_transceiver(
+            lr1110_extract_signal_type_from_data_rate_info( local_basic_result->data_rate_info_byte ) );
 
         memcpy( results.results[results.nbrResults].mac_address, local_basic_result->mac_address,
                 LR1110_WIFI_MAC_ADDRESS_LENGTH );

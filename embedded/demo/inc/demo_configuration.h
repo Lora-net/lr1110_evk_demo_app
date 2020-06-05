@@ -51,6 +51,7 @@
 #define DEMO_WIFI_NBR_RETRIALS_DEFAULT 5
 #define DEMO_WIFI_MAX_RESULTS_DEFAULT 15
 #define DEMO_WIFI_TIMEOUT_IN_MS_DEFAULT 110
+#define DEMO_WIFI_RESULT_TYPE_DEFAULT ( DEMO_WIFI_RESULT_TYPE_BASIC_COMPLETE )
 #define DEMO_WIFI_DOES_ABORT_ON_TIMEOUT_DEFAULT ( false )
 
 #define DEMO_GNSS_AUTONOMOUS_OPTION_DEFAULT ( LR1110_GNSS_OPTION_DEFAULT )
@@ -98,7 +99,6 @@
 
 typedef struct
 {
-    bool                           is_enabled;
     uint32_t                       rf_frequency;
     lr1110_radio_pa_cfg_t          pa_configuration;
     int8_t                         tx_power;
@@ -112,35 +112,25 @@ typedef struct
     lr1110_radio_pkt_params_lora_t packet_lora;
 } demo_radio_settings_t;
 
-typedef struct
+typedef enum
 {
-    bool                   is_enabled;
-    bool                   is_tx;
-    demo_radio_settings_t* radio_settings;
-} demo_radio_per_settings_t;
+    DEMO_WIFI_RESULT_TYPE_BASIC_COMPLETE,
+    DEMO_WIFI_RESULT_TYPE_BASIC_MAC_TYPE_CHANNEL,
+} demo_wifi_result_type_t;
 
 typedef struct
 {
-    bool                   is_enabled;
-    uint32_t               tx_timeout;
-    uint32_t               rx_timeout;
-    demo_radio_settings_t* radio_settings;
-} demo_ping_pong_settings_t;
-
-typedef struct
-{
-    bool                           is_enabled;
     lr1110_wifi_channel_mask_t     channels;
     lr1110_wifi_signal_type_scan_t types;
     lr1110_wifi_mode_t             scan_mode;
     uint8_t                        nbr_retrials;
     uint8_t                        max_results;
     uint16_t                       timeout;
+    demo_wifi_result_type_t        result_type;
 } demo_wifi_settings_t;
 
 typedef struct
 {
-    bool                       is_enabled;
     lr1110_wifi_channel_mask_t channels;
     uint8_t                    nbr_retrials;
     uint8_t                    max_results;
@@ -157,7 +147,6 @@ typedef enum
 
 typedef struct
 {
-    bool                          is_enabled;
     lr1110_gnss_search_mode_t     option;
     lr1110_gnss_scan_mode_t       capture_mode;
     uint8_t                       nb_satellites;
@@ -172,7 +161,5 @@ typedef struct
     demo_gnss_settings_t              gnss_autonomous_settings;
     demo_gnss_settings_t              gnss_assisted_settings;
     demo_radio_settings_t             radio_settings;
-    demo_ping_pong_settings_t         ping_pong_settings;
-    demo_radio_per_settings_t         radio_per_settings;
 } demo_all_settings_t;
 #endif

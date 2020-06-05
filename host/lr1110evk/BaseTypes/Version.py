@@ -55,7 +55,7 @@ class Version:
         lr1110_version,
         almanac_crc,
         almanac_ages,
-        chip_uid
+        chip_uid,
     ):
         self.host_version = host_version
         self.demo_version = demo_version
@@ -125,7 +125,7 @@ class Version:
             lr1110_version=lr1110_version,
             almanac_crc=almanac_crc,
             almanac_ages=almanac_ages,
-            chip_uid=chip_uid.strip()
+            chip_uid=chip_uid.strip(),
         )
 
     @staticmethod
@@ -149,5 +149,5 @@ class Version:
             lr1110_version,
             almanac_crc,
             dict(),
-            chip_uid
+            chip_uid,
         )

@@ -34,8 +34,9 @@
 
 #define DEMO_WIFI_MAX_RESULTS_PER_SCAN ( 20 )
 
-DemoWifiCountryCode::DemoWifiCountryCode( radio_t* radio, SignalingInterface* signaling )
-    : DemoWifiInterface( radio, signaling )
+DemoWifiCountryCode::DemoWifiCountryCode( DeviceTransceiver* device, SignalingInterface* signaling,
+                                          CommunicationInterface* communication_interface )
+    : DemoWifiInterface( device, signaling, communication_interface )
 {
 }
 
@@ -74,7 +75,7 @@ void DemoWifiCountryCode::AddScanToResults( const lr1110_system_reg_mode_t    re
         results.results[results.nbrResults].channel =
             lr1110_extract_channel_from_info_byte( scan_result[index].channel_info_byte );
 
-        results.results[results.nbrResults].type = LR1110_WIFI_TYPE_RESULT_B;
+        results.results[results.nbrResults].type = DEMO_WIFI_TYPE_B;
 
         memcpy( results.results[results.nbrResults].mac_address, scan_result[index].mac_address,
                 LR1110_WIFI_MAC_ADDRESS_LENGTH );

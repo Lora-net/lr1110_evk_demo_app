@@ -84,6 +84,6 @@ class ResponseVersion(ResponseBase):
             lr1110_type=lr1110_type_raw.decode(),
             lr1110_firmware_version=lr1110_firmware_version_raw.decode(),
             almanac_crc=almanac_crc_raw.decode(),
-            chip_uid=chip_uid.decode()
+            chip_uid=chip_uid.decode(),
         )
         return response

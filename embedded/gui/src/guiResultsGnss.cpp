@@ -34,14 +34,8 @@
 #define TMP_BUFFER_SET_RESULTS_LENGTH ( 25 )
 
 GuiResultsGnss::GuiResultsGnss( const GuiGnssResult_t* results, guiPageType_t pageType )
-    : GuiCommon( ), _results( results )
+    : GuiCommon( pageType ), _results( results )
 {
-    /* Initialize variables */
-    _pageType = pageType;
-
-    this->screen = lv_obj_create( NULL, NULL );
-    lv_obj_set_style( this->screen, &( GuiCommon::screen_style ) );
-
     switch( pageType )
     {
     case GUI_PAGE_GNSS_AUTONOMOUS_RESULTS:
@@ -78,7 +72,7 @@ GuiResultsGnss::GuiResultsGnss( const GuiGnssResult_t* results, guiPageType_t pa
     lv_obj_align( this->table, NULL, LV_ALIGN_IN_TOP_MID, 0, 80 );
 }
 
-GuiResultsGnss::~GuiResultsGnss( ) { lv_obj_del( this->screen ); }
+GuiResultsGnss::~GuiResultsGnss( ) {}
 
 void GuiResultsGnss::draw( )
 {

@@ -33,13 +33,9 @@
 
 #define TMP_BUFFER_SET_CHANNEL_RESULTS_LENGTH ( 25 )
 
-GuiResultsWifi::GuiResultsWifi( const GuiWifiResult_t* results ) : GuiCommon( ), _results( results )
+GuiResultsWifi::GuiResultsWifi( const GuiWifiResult_t* results )
+    : GuiCommon( GUI_PAGE_WIFI_RESULTS ), _results( results )
 {
-    _pageType = GUI_PAGE_WIFI_RESULTS;
-
-    this->screen = lv_obj_create( NULL, NULL );
-    lv_obj_set_style( this->screen, &( GuiCommon::screen_style ) );
-
     this->createHeader( "Wi-Fi SCANNING - RESULTS" );
 
     this->createActionButton( &( this->btn_back ), "BACK", GuiResultsWifi::callback, GUI_BUTTON_POS_CENTER, -5, true );
@@ -66,7 +62,7 @@ GuiResultsWifi::GuiResultsWifi( const GuiWifiResult_t* results ) : GuiCommon( ),
     lv_obj_align( this->table, NULL, LV_ALIGN_IN_TOP_MID, 0, 80 );
 }
 
-GuiResultsWifi::~GuiResultsWifi( ) { lv_obj_del( this->screen ); }
+GuiResultsWifi::~GuiResultsWifi( ) {}
 
 void GuiResultsWifi::draw( )
 {

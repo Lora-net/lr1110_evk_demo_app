@@ -32,14 +32,12 @@
 #ifndef __DEMO_BASE_H__
 #define __DEMO_BASE_H__
 
-#include "configuration.h"
-#include "demo_configuration.h"
-#include "lr1110_system.h"
+#include "device_base.h"
 #include "signaling_interface.h"
+#include "communication_interface.h"
 
 typedef enum
 {
-    DEMO_STATUS_PENDING,
     DEMO_STATUS_RUNNING,
     DEMO_STATUS_TERMINATED,
     DEMO_STATUS_STOPPED,
@@ -49,7 +47,7 @@ typedef enum
 class DemoBase
 {
    public:
-    DemoBase( radio_t* radio, SignalingInterface* signaling );
+    DemoBase( DeviceBase* device, SignalingInterface* signaling, CommunicationInterface* communication_interface );
     virtual ~DemoBase( );
 
     void Initialize( );
@@ -57,37 +55,34 @@ class DemoBase
     demo_status_t Runtime( );
     static void   InterruptHandler( );
 
-    void         Enable( );
-    void         Disable( );
     void         Start( );
     void         Stop( );
     virtual void Reset( );
 
-    static void  ResetAndInitLr1110( const radio_t* radio );
+    void         ResetAndInitLr1110( );
     virtual bool HasIntermediateResults( ) const;
 
     bool          IsStarted( ) const;
-    virtual bool  IsPending( ) const;
     demo_status_t GetStatus( ) const;
     bool          IsWaitingForInterrupt( ) const;
 
    protected:
-    virtual void        SpecificRuntime( )           = 0;
-    virtual void        SpecificStop( )              = 0;
-    virtual void        SpecificInterruptHandler( )  = 0;
-    virtual void        ClearRegisteredIrqs( ) const = 0;
-    void                SetWaitingForInterrupt( );
-    bool                InterruptHasRaised( );
-    void                Terminate( );
-    radio_t*            radio;
-    SignalingInterface* signaling;
+    virtual void            SpecificRuntime( )           = 0;
+    virtual void            SpecificStop( )              = 0;
+    virtual void            SpecificInterruptHandler( )  = 0;
+    virtual void            ClearRegisteredIrqs( ) const = 0;
+    void                    SetWaitingForInterrupt( );
+    bool                    InterruptHasRaised( );
+    void                    Terminate( );
+    DeviceBase*             device;
+    SignalingInterface*     signaling;
+    CommunicationInterface* communication_interface;
 
    private:
     static bool          is_initialized;
     bool                 is_waiting_for_interrupt;
     volatile static bool has_received_interrupt;
     static DemoBase*     running_demo;
-    bool                 started;
     demo_status_t        status;
 };
 

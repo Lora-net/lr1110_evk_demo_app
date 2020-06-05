@@ -32,7 +32,8 @@
 #ifndef __DEMO_TX_CW_H__
 #define __DEMO_TX_CW_H__
 
-#include "demo_base.h"
+#include "demo_configuration.h"
+#include "demo_radio_interface.h"
 
 typedef enum
 {
@@ -40,13 +41,12 @@ typedef enum
     DEMO_TX_CW_STATE_RUNNING,
 } demo_tx_cw_state_t;
 
-class DemoTxCw : public DemoBase
+class DemoTxCw : public DemoRadioInterface
 {
    public:
-    DemoTxCw( radio_t* radio, SignalingInterface* signaling );
+    DemoTxCw( DeviceTransceiver* device, SignalingInterface* signaling,
+              CommunicationInterface* communication_interface );
     virtual ~DemoTxCw( );
-
-    void Configure( demo_radio_settings_t& settings );
 
    protected:
     virtual void SpecificRuntime( );
@@ -59,8 +59,7 @@ class DemoTxCw : public DemoBase
     void StartReceptionMessage( ) const;
 
    private:
-    demo_radio_settings_t settings;
-    demo_tx_cw_state_t    state;
+    demo_tx_cw_state_t state;
 };
 
 #endif  // __DEMO_TX_CW_H__

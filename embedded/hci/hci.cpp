@@ -95,6 +95,7 @@ void Hci::RestartBufferReception( )
 {
     this->buffer_length = 0;
     system_uart_start_buffer_reception( COMCODE_SIZE + LENGTH_SIZE, this->buffer );
+    system_uart_start_receiving( );
 }
 
 void Hci::Runtime( )
@@ -250,6 +251,7 @@ void Hci::CallbackRx( )
 
     case HCI_STATE_WAIT_OPERAND:
     {
+        system_uart_stop_receiving( );
         this->state = HCI_STATE_BUILD_COMMAND;
         break;
     }

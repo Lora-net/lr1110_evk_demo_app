@@ -30,7 +30,6 @@
  */
 
 #include "supervisor.h"
-#include "gnss_helper.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,36 +45,15 @@ extern void SupervisorInterruptHandlerDemo( void ) { Supervisor::InterruptHandle
 
 bool Supervisor::is_interrupt_raised = false;
 
-Supervisor::Supervisor( Gui* gui, radio_t* radio, Demo* demo, EnvironmentInterface* environment )
+Supervisor::Supervisor( Gui* gui, DeviceBase* device, Demo* demo, EnvironmentInterface* environment,
+                        CommunicationManager* communication_manager )
     : run_demo( false ),
       demo( demo ),
       gui( gui ),
-      log( "SUPERVISOR" ),
       environment( environment ),
-      radio( radio ),
-      command_factory( ),
-      hci( command_factory, *environment ),
-      host_type( LOGGING_NO_HOST ),
-      com_get_version( radio, hci ),
-      com_get_almanac_dates( radio, hci ),
-      com_configure( radio, hci, *demo ),
-      com_start( radio, hci ),
-      com_fetch_result( this->hci, *this->environment, *this->demo ),
-      com_set_date_loc( radio, this->hci, *this->environment ),
-      com_reset( radio, this->hci ),
-      com_update_almanac( radio, this->hci ),
-      com_check_almanac_update( radio, this->hci )
+      device( device ),
+      communication_manager( communication_manager )
 {
-    command_factory.AddCommandToPool( this->com_get_version );
-    command_factory.AddCommandToPool( this->com_get_almanac_dates );
-    command_factory.AddCommandToPool( this->com_configure );
-    command_factory.AddCommandToPool( this->com_start );
-    command_factory.AddCommandToPool( this->com_fetch_result );
-    command_factory.AddCommandToPool( this->com_set_date_loc );
-    command_factory.AddCommandToPool( this->com_reset );
-    command_factory.AddCommandToPool( this->com_update_almanac );
-    command_factory.AddCommandToPool( this->com_check_almanac_update );
-
     version_handler.almanac_crc       = 0;
     version_handler.almanac_date      = 0;
     version_handler.version_chip_fw   = 0;
@@ -83,10 +61,6 @@ Supervisor::Supervisor( Gui* gui, radio_t* radio, Demo* demo, EnvironmentInterfa
     version_handler.version_chip_type = 0;
     strcpy( version_handler.version_driver, "TBD" );
     strcpy( version_handler.version_sw, "TBD" );
-
-    // By default, logging is enabled
-    Logging::EnableLogging( );
-    this->hci.Stop( );
 }
 
 Supervisor::~Supervisor( ) {}
@@ -110,9 +84,7 @@ void Supervisor::Init( )
 
     this->gui->Init( &gui_demo_settings, &gui_demo_settings_default, &version_handler );
 
-    lr1110_system_read_uid( this->radio, version_handler.chip_uid );
-    com_get_version.SetVersion( &version_handler );
-    Logging::SetVersion( &version_handler );
+    lr1110_system_read_uid( this->device->GetRadio( ), version_handler.chip_uid );
 }
 
 void Supervisor::ConvertSettingsFromDemoToGui( const demo_all_settings_t* demo_settings,
@@ -379,35 +351,15 @@ void Supervisor::ConvertSettingsFromGuiToDemo( const GuiRadioSetting_t* gui_sett
         break;
     }
 
-    switch( gui_settings->lora.is_iq_inverted )
-    {
-    case false:
-        demo_settings->packet_lora.iq = LR1110_RADIO_LORA_IQ_STANDARD;
-        break;
-    case true:
-        demo_settings->packet_lora.iq = LR1110_RADIO_LORA_IQ_INVERTED;
-        break;
-    }
+    demo_settings->packet_lora.iq =
+        ( gui_settings->lora.is_iq_inverted == false ) ? LR1110_RADIO_LORA_IQ_STANDARD : LR1110_RADIO_LORA_IQ_INVERTED;
 
-    switch( gui_settings->lora.is_crc_activated )
-    {
-    case false:
-        demo_settings->packet_lora.crc = LR1110_RADIO_LORA_CRC_OFF;
-        break;
-    case true:
-        demo_settings->packet_lora.crc = LR1110_RADIO_LORA_CRC_ON;
-        break;
-    }
+    demo_settings->packet_lora.crc =
+        ( gui_settings->lora.is_crc_activated == false ) ? LR1110_RADIO_LORA_CRC_OFF : LR1110_RADIO_LORA_CRC_ON;
 
-    switch( gui_settings->lora.is_crc_activated )
-    {
-    case false:
-        demo_settings->packet_lora.header_type = LR1110_RADIO_LORA_PKT_EXPLICIT;
-        break;
-    case true:
-        demo_settings->packet_lora.header_type = LR1110_RADIO_LORA_PKT_IMPLICIT;
-        break;
-    }
+    demo_settings->packet_lora.header_type = ( gui_settings->lora.is_hdr_implicit == false )
+                                                 ? LR1110_RADIO_LORA_PKT_EXPLICIT
+                                                 : LR1110_RADIO_LORA_PKT_IMPLICIT;
 
     demo_settings->modulation_gfsk.br_in_bps = gui_settings->gfsk.br_in_bps;
 
@@ -432,25 +384,12 @@ void Supervisor::ConvertSettingsFromGuiToDemo( const GuiRadioSetting_t* gui_sett
         break;
     }
 
-    switch( gui_settings->gfsk.is_dcfree_enabled )
-    {
-    case false:
-        demo_settings->packet_gfsk.dc_free = LR1110_RADIO_GFSK_DC_FREE_OFF;
-        break;
-    case true:
-        demo_settings->packet_gfsk.dc_free = LR1110_RADIO_GFSK_DC_FREE_WHITENING;
-        break;
-    }
+    demo_settings->packet_gfsk.dc_free = ( gui_settings->gfsk.is_dcfree_enabled == false )
+                                             ? LR1110_RADIO_GFSK_DC_FREE_OFF
+                                             : LR1110_RADIO_GFSK_DC_FREE_WHITENING;
 
-    switch( gui_settings->gfsk.is_hdr_implicit )
-    {
-    case true:
-        demo_settings->packet_gfsk.header_type = LR1110_RADIO_GFSK_PKT_FIX_LEN;
-        break;
-    case false:
-        demo_settings->packet_gfsk.header_type = LR1110_RADIO_GFSK_PKT_VAR_LEN;
-        break;
-    }
+    demo_settings->packet_gfsk.header_type =
+        ( gui_settings->gfsk.is_hdr_implicit == false ) ? LR1110_RADIO_GFSK_PKT_VAR_LEN : LR1110_RADIO_GFSK_PKT_FIX_LEN;
 }
 
 void Supervisor::ConvertSettingsFromGuiToDemo( const GuiWifiDemoSetting_t* gui_settings,
@@ -474,6 +413,7 @@ void Supervisor::ConvertSettingsFromGuiToDemo( const GuiWifiDemoSetting_t* gui_s
     {
         demo_settings->types = LR1110_WIFI_TYPE_SCAN_B_G_N;
     }
+    demo_settings->result_type = DEMO_WIFI_RESULT_TYPE_BASIC_COMPLETE;
 }
 
 void Supervisor::ConvertSettingsFromGuiToDemo( const GuiGnssDemoSetting_t* gui_settings,
@@ -510,53 +450,12 @@ void Supervisor::ConvertSettingsFromGuiToDemo( const GuiGnssDemoSetting_t* gui_s
     }
 }
 
-void Supervisor::GetAndPropagateVersion( )
-{
-    lr1110_system_version_t lr1110_version = { 0 };
-
-    lr1110_system_get_version( radio, &lr1110_version );
-
-    version_handler.version_chip_fw   = lr1110_version.fw;
-    version_handler.version_chip_hw   = lr1110_version.hw;
-    version_handler.version_chip_type = lr1110_version.type;
-
-    strcpy( version_handler.version_sw, DEMO_VERSION );
-    strcpy( version_handler.version_driver, "TBD" );
-
-    GnssHelperAlmanacDetails_t almanac_ages_crc = { 0 };
-    GnssHelper::GetAlmanacAgesAndCrcOfAllSatellites( this->radio, &almanac_ages_crc );
-    version_handler.almanac_date = almanac_ages_crc.ages_per_almanacs[0].almanac_age;
-    version_handler.almanac_crc  = almanac_ages_crc.crc_almanac;
-}
-
-void Supervisor::SwitchInFieldTestMode( )
-{
-    Logging::DisableLogging( );
-    this->hci.Start( );
-}
+void Supervisor::GetAndPropagateVersion( ) { this->device->FetchVersion( this->version_handler ); }
 
 void Supervisor::Runtime( )
 {
-    this->TestHostRuntime( );
     this->GuiRuntimeAndProcess( );
-    this->HciRuntimeAndProces( );
-
-    if( this->run_demo )
-    {
-        this->DemoRuntimeAndProcess( );
-    }
-}
-
-void Supervisor::RuntimeAuto( )
-{
-    this->TestHostRuntime( );
-
-    if( this->host_type == LOGGING_DEMO_HOST )
-    {
-        this->GuiRuntimeAndProcessAuto( );
-    }
-
-    this->HciRuntimeAndProces( );
+    this->CommunicationManagerRuntime( );
 
     if( this->run_demo )
     {
@@ -632,8 +531,8 @@ void Supervisor::GuiRuntimeAndProcess( )
     }
     case GUI_LAST_EVENT_SEND:
     {
-        Logging::EraseDataStored( );
-        Logging::SendVersionInformation( );
+        this->communication_manager->EraseDataStored( );
+        this->communication_manager->Store( this->version_handler );
 
         demo_type_t demo_type = demo->GetType( );
 
@@ -652,24 +551,20 @@ void Supervisor::GuiRuntimeAndProcess( )
             break;
         }
 
-        Logging::SendDataStoredToServer( );
+        this->communication_manager->SendDataStoredToServer( );
 
-        float           latitude              = 0;
-        float           longitude             = 0;
-        float           altitude              = 0;
-        float           accuracy              = 0;
-        char            geo_coding[64]        = { 0 };
-        const uint8_t   geo_coding_max_length = 64;
-        uint8_t         count_attempt         = 0;
-        const uint8_t   max_count_attempt     = 1;
-        LoggingStatus_t status                = LOGGING_STATUS_TIMEOUT;
-        do
-        {
-            count_attempt++;
-            status = Logging::GetResults( latitude, longitude, altitude, accuracy, geo_coding, geo_coding_max_length );
-            this->log.Log( "GetResult status: 0x%x\n", status );
-        } while( ( status != LOGGING_STATUS_OK ) && ( count_attempt < max_count_attempt ) );
-        if( status == LOGGING_STATUS_OK )
+        float         latitude              = 0;
+        float         longitude             = 0;
+        float         altitude              = 0;
+        float         accuracy              = 0;
+        char          geo_coding[64]        = { 0 };
+        const uint8_t geo_coding_max_length = 64;
+        uint8_t       count_attempt         = 0;
+        const uint8_t max_count_attempt     = 1;
+
+        const bool success = this->communication_manager->GetResults( latitude, longitude, altitude, accuracy,
+                                                                      geo_coding, geo_coding_max_length );
+        if( success == true )
         {
             GuiResultGeoLoc_t new_reverse_geo_loc;
             sscanf( geo_coding, "%[^,],%[^,],%s", new_reverse_geo_loc.street, new_reverse_geo_loc.city,
@@ -680,6 +575,11 @@ void Supervisor::GuiRuntimeAndProcess( )
         }
         else
         {
+            GuiResultGeoLoc_t new_reverse_geo_loc;
+            sscanf( geo_coding, "Failure" );
+            snprintf( new_reverse_geo_loc.latitude, GUI_RESULT_GEO_LOC_LATITUDE_LENGTH, "XXX" );
+            snprintf( new_reverse_geo_loc.longitude, GUI_RESULT_GEO_LOC_LATITUDE_LENGTH, "XXX" );
+            this->gui->UpdateReverseGeoCoding( new_reverse_geo_loc );
         }
         break;
     }
@@ -728,112 +628,6 @@ void Supervisor::GuiRuntimeAndProcess( )
     }
 }
 
-void Supervisor::GuiRuntimeAndProcessAuto( )
-{
-    static uint8_t demo_index    = 1;
-    static time_t  last_fetch_s  = 0;
-    static bool    has_been_sent = false;
-
-    const time_t   actual_time    = this->environment->GetLocalTimeSeconds( );
-    GuiLastEvent_t last_gui_event = GUI_LAST_EVENT_NONE;
-
-    if( this->demo->GetType( ) == DEMO_TYPE_NONE )
-    {
-        last_gui_event = GUI_LAST_EVENT_START_DEMO_WIFI;
-        has_been_sent  = false;
-    }
-    else
-    {
-        if( this->run_demo == false )
-        {
-            if( has_been_sent == false )
-            {
-                last_fetch_s   = actual_time;
-                last_gui_event = GUI_LAST_EVENT_SEND;
-                has_been_sent  = true;
-            }
-            else
-            {
-                if( ( actual_time - last_fetch_s ) > 5 )
-                {
-                    switch( demo_index )
-                    {
-                    case 0:
-                        last_gui_event = GUI_LAST_EVENT_START_DEMO_WIFI;
-                        has_been_sent  = false;
-                        break;
-
-                    case 1:
-                        last_gui_event = GUI_LAST_EVENT_START_DEMO_GNSS_ASSISTED;
-                        has_been_sent  = false;
-                        break;
-                    }
-
-                    demo_index = ( demo_index + 1 ) % 2;
-                }
-            }
-        }
-    }
-
-    switch( last_gui_event )
-    {
-    case GUI_LAST_EVENT_NONE:
-    {
-        break;
-    }
-    case GUI_LAST_EVENT_START_DEMO_WIFI:
-    {
-        demo->Start( DEMO_TYPE_WIFI );
-        this->run_demo = true;
-        break;
-    }
-    case GUI_LAST_EVENT_START_DEMO_GNSS_AUTONOMOUS:
-    {
-        demo->Start( DEMO_TYPE_GNSS_AUTONOMOUS );
-        this->run_demo = true;
-        break;
-    }
-    case GUI_LAST_EVENT_START_DEMO_GNSS_ASSISTED:
-    {
-        demo->Start( DEMO_TYPE_GNSS_ASSISTED );
-        this->run_demo = true;
-        break;
-    }
-    case GUI_LAST_EVENT_STOP_DEMO:
-    {
-        demo->Stop( );
-        this->run_demo = false;
-        break;
-    }
-    case GUI_LAST_EVENT_SEND:
-    {
-        Logging::EraseDataStored( );
-        Logging::SendVersionInformation( );
-
-        demo_type_t demo_type = demo->GetType( );
-
-        switch( demo_type )
-        {
-        case DEMO_TYPE_WIFI:
-        case DEMO_TYPE_WIFI_COUNTRY_CODE:
-            TransferResultToSerial( ( ( demo_wifi_scan_all_results_t* ) demo->GetResults( ) ) );
-            break;
-
-        case DEMO_TYPE_GNSS_AUTONOMOUS:
-        case DEMO_TYPE_GNSS_ASSISTED:
-            TransferResultToSerial( ( ( demo_gnss_all_results_t* ) demo->GetResults( ) ) );
-            break;
-        default:
-            break;
-        }
-
-        Logging::SendDataStoredToServer( );
-    }
-    default:
-        break;
-    }
-}
-
 void Supervisor::DemoRuntimeAndProcess( )
 {
     switch( demo->Runtime( ) )
@@ -851,7 +645,7 @@ void Supervisor::DemoRuntimeAndProcess( )
         demo->Stop( );
         this->run_demo = false;
         this->TransfertDemoResultsToGui( );
-        this->hci.EventNotify( );
+        this->communication_manager->EventNotify( );
         break;
     }
     default:
@@ -859,21 +653,66 @@ void Supervisor::DemoRuntimeAndProcess( )
     }
 }
 
-void Supervisor::HciRuntimeAndProces( )
+void Supervisor::CommunicationManagerRuntime( )
 {
-    this->hci.Runtime( );
-    if( this->hci.HasNewCommand( ) )
+    this->communication_manager->Runtime( );
+    CommunicationManagerHostType_t new_host_type = COMMUNICATION_MANAGER_NO_HOST;
+    if( this->communication_manager->HasHostJustChanged( &new_host_type ) )
     {
-        CommandEvent_t hci_event = hci.FetchCommand( )->Execute( );
+        switch( new_host_type )
+        {
+        case COMMUNICATION_MANAGER_FIELD_TEST_HOST:
+        {
+            this->gui->HostConnectivityChange( true );
+            break;
+        }
+        case COMMUNICATION_MANAGER_DEMO_HOST:
+        {
+            this->gui->HostConnectivityChange( true );
+            break;
+        }
+        case COMMUNICATION_MANAGER_NO_HOST:
+        case COMMUNICATION_MANAGER_UNKNOWN_HOST:
+        {
+            this->gui->HostConnectivityChange( false );
+            break;
+        }
+        default:
+        {
+            break;
+        }
+        }
+    }
+    if( this->communication_manager->HasNewCommand( ) )
+    {
+        CommandEvent_t hci_event = this->communication_manager->FetchCommand( )->Execute( );
         switch( hci_event )
         {
         case COMMAND_NO_EVENT:
         {
             break;
         }
-        case COMMAND_START_DEMO_EVENT:
+        case COMMAND_START_WIFI_SCAN_DEMO_EVENT:
         {
-            this->demo->StartNextEnabled( );
+            demo->Start( DEMO_TYPE_WIFI );
+            this->run_demo = true;
+            break;
+        }
+        case COMMAND_START_WIFI_COUNTRY_CODE_DEMO_EVENT:
+        {
+            demo->Start( DEMO_TYPE_WIFI_COUNTRY_CODE );
+            this->run_demo = true;
+            break;
+        }
+        case COMMAND_START_GNSS_AUTONOMOUS_DEMO_EVENT:
+        {
+            demo->Start( DEMO_TYPE_GNSS_AUTONOMOUS );
+            this->run_demo = true;
+            break;
+        }
+        case COMMAND_START_GNSS_ASSISTED_DEMO_EVENT:
+        {
+            demo->Start( DEMO_TYPE_GNSS_ASSISTED );
             this->run_demo = true;
             break;
         }
@@ -887,61 +726,8 @@ void Supervisor::HciRuntimeAndProces( )
         {
             this->demo->Stop( );
             this->run_demo = false;
-            DemoBase::ResetAndInitLr1110( this->radio );
+            this->device->ResetAndInit( );
             this->demo->Reset( );
-            break;
-        }
-        }
-    }
-}
-
-void Supervisor::TestHostRuntime( )
-{
-    static time_t           last_fetch_s                   = 0;
-    const uint16_t          host_fetch_if_unknown_period_s = 1;
-    const time_t            actual_time                    = this->environment->GetLocalTimeSeconds( );
-    const LoggingHostType_t last_type                      = this->host_type;
-    switch( this->host_type )
-    {
-    case LOGGING_NO_HOST:
-    case LOGGING_UNKNOWN_HOST:
-    case LOGGING_CONNECTION_TEST_HOST:
-    {
-        if( ( actual_time - last_fetch_s ) > host_fetch_if_unknown_period_s )
-        {
-            last_fetch_s = actual_time;
-            Logging::TestHostConnected( &this->host_type );
-            if( this->host_type == LOGGING_CONNECTION_TEST_HOST )
-            {
-                Logging::SendConnectionTestResponse( );
-            }
-        }
-        break;
-    }
-    default:
-    {
-        break;
-    }
-    }
-
-    if( this->host_type != last_type )
-    {
-        switch( this->host_type )
-        {
-        case LOGGING_FIELD_TEST_HOST:
-        {
-            this->SwitchInFieldTestMode( );
-            this->gui->HostConnectivityChange( true );
-            break;
-        }
-        case LOGGING_DEMO_HOST:
-        {
-            this->gui->HostConnectivityChange( true );
-            break;
-        }
-        default:
-        {
-            break;
         }
         }
     }
@@ -1016,7 +802,7 @@ void Supervisor::TransfertDemoResultsToGui( )
         break;
 
     default:
-        this->log.Log( "Error: unknown demo type in result handling: 0x%x\n", demo_type );
+        this->communication_manager->Log( "Error: unknown demo type in result handling: 0x%x\n", demo_type );
     }
 }
 
@@ -1044,8 +830,8 @@ void Supervisor::TransferResultToGui( const demo_wifi_scan_all_results_t* result
         GuiWifiMacAddress_t              strMac;
         GuiWifiResultChannel_t*          chan;
 
-        const lr1110_wifi_channel_t            wifi_chan = result->results[index].channel;
-        const lr1110_wifi_signal_type_result_t wifi_type = result->results[index].type;
+        const demo_wifi_channel_t     wifi_chan = result->results[index].channel;
+        const demo_wifi_signal_type_t wifi_type = result->results[index].type;
 
         snprintf( strMac, GUI_WIFI_STRING_LENGTH, "%02x:%02x:%02x:%02x:%02x:%02x", ( *mac )[0], ( *mac )[1],
                   ( *mac )[2], ( *mac )[3], ( *mac )[4], ( *mac )[5] );
@@ -1170,29 +956,19 @@ GuiDemoStatus_t Supervisor::DemoGnssErrorCodeToGuiStatus( const demo_gnss_error_
 
 void Supervisor::TransferResultToSerial( const demo_wifi_scan_all_results_t* result )
 {
-    for( uint8_t result_index = 0; result_index < result->nbrResults; result_index++ )
-    {
-        demo_wifi_scan_single_result_t local_result = result->results[result_index];
-
-        this->log.Store(
-            "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x, CHANNEL_%i, %s, %i, %i, %i, "
-            "%i, "
-            "%i\n",
-            local_result.mac_address[0], local_result.mac_address[1], local_result.mac_address[2],
-            local_result.mac_address[3], local_result.mac_address[4], local_result.mac_address[5], local_result.channel,
-            Supervisor::WifiTypeToStr( local_result.type ), local_result.rssi, result->timings.demodulation_us,
-            result->timings.rx_capture_us, result->timings.rx_correlation_us, result->timings.rx_detection_us );
-    }
+    this->communication_manager->Store( *( demo_wifi_scan_all_results_t* ) demo->GetResults( ) );
 }
 
 void Supervisor::TransferResultToSerial( const demo_gnss_all_results_t* result )
 {
     const uint32_t delay_capture_s = this->environment->GetLocalTimeSeconds( ) - result->local_instant_measurement;
-    this->log.Store( result->nav_message.message, result->nav_message.size, delay_capture_s, result->timings.radio_ms,
-                     result->timings.computation_ms );
+
+    this->communication_manager->Store( *( demo_gnss_all_results_t* ) demo->GetResults( ), delay_capture_s );
 }
 
 bool Supervisor::HasPendingInterrupt( ) const { return Supervisor::is_interrupt_raised; }
+
+const version_handler_t* Supervisor::GetVersionHandler( ) const { return &this->version_handler; }
 
 const char* Supervisor::WifiTypeToStr( const lr1110_wifi_signal_type_result_t type )
 {

@@ -32,7 +32,7 @@
 #include "command_reset.h"
 #include "com_code.h"
 
-CommandReset::CommandReset( radio_t* radio, Hci& hci ) : CommandBase( radio, hci ) {}
+CommandReset::CommandReset( DeviceBase* device, Hci& hci ) : CommandBase( device, hci ) {}
 
 CommandReset::~CommandReset( ) {}
 

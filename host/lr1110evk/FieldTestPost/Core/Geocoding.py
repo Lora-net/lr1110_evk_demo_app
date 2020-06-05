@@ -29,7 +29,7 @@ Define Geocoding builder class
 
 from yaml import load_all
 from pkg_resources import resource_string
-from unidecode import unidecode
+from unicodedata import normalize
 
 
 class GeocodingBuilder:
@@ -73,8 +73,23 @@ class GeocodingBuilder:
         house = GeocodingBuilder.extract_from_name_or_none(
             self.name_aliases, GeocodingBuilder.HOUSE_KEY_NAME, osm_json
         )
-        data = GeoCodingData(road, city, country, country_code, state, postcode, house)
+        data = GeoCodingData(
+            GeocodingBuilder.remove_accents(road),
+            GeocodingBuilder.remove_accents(city),
+            GeocodingBuilder.remove_accents(country),
+            GeocodingBuilder.remove_accents(country_code),
+            GeocodingBuilder.remove_accents(state),
+            GeocodingBuilder.remove_accents(postcode),
+            GeocodingBuilder.remove_accents(house),
+        )
         return data
+
+    @staticmethod
+    def remove_accents(message: str):
+        if message:
+            return normalize("NFD", message).encode("ASCII", "ignore").decode("utf-8")
+        else:
+            return message
 
     @staticmethod
     def extract_from_name_or_none(name_aliases, name, osm_dict):
@@ -88,12 +103,11 @@ class GeocodingBuilder:
             keys = [name] + aliases
         else:
             keys = [name]
-        val = "dnf"
         for key in keys:
             try:
                 val = osm_dict[key]
             except KeyError:
-                pass
+                val = None
             else:
                 break
         return val
@@ -116,8 +130,8 @@ class GeocodingBuilder:
 class GeoCodingData:
     def __init__(self, street, town, country, country_code, state, postcode, house):
         self._street = street
-        self._town = unidecode(town)
-        self._country = unidecode(country)
+        self._town = town
+        self._country = country
         self._country_code = country_code.upper()
         self._state = state
         self._postcode = postcode

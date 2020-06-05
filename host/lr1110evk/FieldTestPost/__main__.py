@@ -112,15 +112,19 @@ def post_analyzis_fetch_results():
         help="approximate coordinate sent to the server as initial localization for GNSS localization solver. Format is <latitude>,<longitude>,<altitude>",
     )
     parser.add_argument(
-        "glsAuthenticationToken", help="HTTP header token to authenticate the Wi-Fi requests on LoRa Cloud Geolocation (GLS) server"
+        "glsAuthenticationToken",
+        help="HTTP header token to authenticate the Wi-Fi requests on LoRa Cloud Geolocation (GLS) server",
     )
     parser.add_argument(
-        "dasAuthenticationToken", help="HTTP header token to authenticate the GNSS requests on LoRa Cloud Device and Application Services (DAS) server"
+        "dasAuthenticationToken",
+        help="HTTP header token to authenticate the GNSS requests on LoRa Cloud Device and Application Services (DAS) server",
     )
     parser.add_argument(
         "-s",
         "--wifi-server-base-url",
-        help="Wifi server base address to use (default={}".format(default_wifi_server_base),
+        help="Wifi server base address to use (default={}".format(
+            default_wifi_server_base
+        ),
         default=default_wifi_server_base,
     )
     parser.add_argument(
@@ -135,7 +139,9 @@ def post_analyzis_fetch_results():
     parser.add_argument(
         "-t",
         "--gnss-server-base-url",
-        help="GNSS server base address to use (default={}".format(default_gnss_server_base),
+        help="GNSS server base address to use (default={}".format(
+            default_gnss_server_base
+        ),
         default=default_gnss_server_base,
     )
     parser.add_argument(
@@ -218,9 +224,7 @@ def post_analyzis_fetch_results():
                         request_sender.get_geo_loc_service_for_request(
                             request
                         ).server_address,
-                        request_sender.get_geo_loc_service_for_request(
-                            request
-                        ).header,
+                        request_sender.get_geo_loc_service_for_request(request).header,
                         request,
                     )
                 )
@@ -264,7 +268,8 @@ def post_analyzis_fetch_results():
                     exception=excp_timeout,
                 )
             except SolverContactException as excp_solver_contact:
-                print("Exception: Solver contact failed: '{}'\n  -> Request: {}\n".format(
+                print(
+                    "Exception: Solver contact failed: '{}'\n  -> Request: {}\n".format(
                         excp_solver_contact, request
                     )
                 )
@@ -272,7 +277,7 @@ def post_analyzis_fetch_results():
                     date=init_date,
                     job_counter=job_counter,
                     job_id=job_id,
-                    exception=excp_solver_contact
+                    exception=excp_solver_contact,
                 )
             else:
                 result = SolverResultCoordinate(

@@ -33,25 +33,34 @@
 #define __COMMAND_BASE_H__
 
 #include "command_interface.h"
-#include "configuration.h"
+#include "device_base.h"
 #include "hci.h"
+
+typedef enum
+{
+    COMMAND_BASE_NO_DEMO                = 0,
+    COMMAND_BASE_DEMO_WIFI_SCAN         = 1,
+    COMMAND_BASE_DEMO_WIFI_COUNTRY_CODE = 2,
+    COMMAND_BASE_DEMO_GNSS_AUTONOMOUS   = 3,
+    COMMAND_BASE_DEMO_GNSS_ASSISTED     = 4,
+} CommandBaseDemoId_t;
 
 class CommandBase : public CommandInterface
 {
    public:
-    CommandBase( radio_t* radio, Hci& hci );
+    CommandBase( DeviceBase* device, Hci& hci );
     virtual ~CommandBase( );
 
     virtual CommandEvent_t Execute( );
 
    protected:
     virtual bool Job( ) { return false; }
-    void         SetEventStartDemo( );
+    void         SetEventStartDemo( CommandBaseDemoId_t demo_to_start );
     void         SetEventStopDemo( );
     void         SetEventResetDemo( void );
     void         SetNoEvent( );
     void         SendResponseBuffer( const uint8_t* buffer, const uint16_t buffer_length );
-    radio_t*     radio;
+    DeviceBase*  device;
 
    private:
     Hci*           hci;

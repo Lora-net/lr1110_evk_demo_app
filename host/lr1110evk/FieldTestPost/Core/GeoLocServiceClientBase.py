@@ -27,7 +27,11 @@ Define GeoLoc service client base class
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-from .ResponseBase import ResponseFailureBase, ResponseSuccessBase, ResponseSuccessReverseGeoLoc
+from .ResponseBase import (
+    ResponseFailureBase,
+    ResponseSuccessBase,
+    ResponseSuccessReverseGeoLoc,
+)
 from .Geocoding import GeocodingBuilder
 from lr1110evk.BaseTypes import Coordinate
 import requests
@@ -104,7 +108,9 @@ class GeoLocServiceClientBase:
         return {}
 
     @classmethod
-    def from_token_and_url_info(cls, authentication_token, baseUrl, port, version, path):
+    def from_token_and_url_info(
+        cls, authentication_token, baseUrl, port, version, path
+    ):
         raise NotImplementedError
 
     @classmethod
@@ -114,14 +120,14 @@ class GeoLocServiceClientBase:
             baseUrl=cls.get_default_base_url(),
             port=cls.get_default_port_number(),
             version=cls.get_default_url_version(),
-            path=cls.get_default_url_path()
+            path=cls.get_default_url_path(),
         )
 
     def build_error_response(self, http_error_code, response_text):
         erroneous_response = ResponseFailureBase(
             http_code=http_error_code,
             raw_response=response_text,
-            failure_reason_from_server=response_text
+            failure_reason_from_server=response_text,
         )
         return erroneous_response
 
@@ -131,7 +137,9 @@ class GeoLocServiceClientBase:
     def produce_response_from_request(self, request_data):
         response = requests.post(
             self.server_address,
-            headers=self.build_header_from_authentication_token(self.authentication_token),
+            headers=self.build_header_from_authentication_token(
+                self.authentication_token
+            ),
             data=request_data,
             timeout=self.RESPONSE_TIMEOUT_S,
         )
@@ -154,7 +162,6 @@ class GeoLocServiceClientBase:
         return self.build_response(response.status_code, response.text)
 
 
-
 class GeoLocServiceClientGnss(GeoLocServiceClientBase):
     DEFAULT_BASE_URL = "https://das.loracloud.com"
     DEFAULT_PATH_URL = "uplink/send"
@@ -163,7 +170,10 @@ class GeoLocServiceClientGnss(GeoLocServiceClientBase):
 
     @staticmethod
     def build_header_from_authentication_token(authentication_token):
-        return {"Authorization": authentication_token, "Content-Type": "application/json"}
+        return {
+            "Authorization": authentication_token,
+            "Content-Type": "application/json",
+        }
 
     def get_first_result(self, response_dict):
         RESULT_KEY = "result"
@@ -199,17 +209,14 @@ class GeoLocServiceClientGnss(GeoLocServiceClientBase):
         longitude = float(result_device[POSITION_SOLUTION_KEY][REFERENTIAL_KEY][1])
         altitude = float(result_device[POSITION_SOLUTION_KEY][REFERENTIAL_KEY][2])
         coordinate = Coordinate(
-            latitude=latitude,
-            longitude=longitude,
-            altitude=altitude
+            latitude=latitude, longitude=longitude, altitude=altitude
         )
         accuracy = float(result_device[POSITION_SOLUTION_KEY][ACCURACY_KEY])
         return coordinate, accuracy
 
     def build_response(self, http_code, response_text):
         response_dict = loads(response_text)
-        from pprint import pprint
-        pprint(response_dict)
+
         try:
             result_first_device = self.get_first_result(response_dict)
         except TypeError as err:
@@ -219,7 +226,7 @@ class GeoLocServiceClientGnss(GeoLocServiceClientBase):
                 response = ResponseFailureBase(
                     http_code=http_code,
                     raw_response=response_text,
-                    failure_reason_from_server=failure_text
+                    failure_reason_from_server=failure_text,
                 )
                 return response
             raise err
@@ -229,18 +236,20 @@ class GeoLocServiceClientGnss(GeoLocServiceClientBase):
             response = ResponseFailureBase(
                 http_code=http_code,
                 raw_response=response_text,
-                failure_reason_from_server=failure_text
+                failure_reason_from_server=failure_text,
             )
             return response
         try:
-            coordinates, loc_accuracy = self.get_coordinate_accuracy_from_result(result_first_device)
+            coordinates, loc_accuracy = self.get_coordinate_accuracy_from_result(
+                result_first_device
+            )
         except TypeError as err:
             if "NoneType" in str(err):
                 failure_text = self.get_log_message_from_result(result_first_device)
                 response = ResponseFailureBase(
                     http_code=http_code,
                     raw_response=response_text,
-                    failure_reason_from_server=failure_text
+                    failure_reason_from_server=failure_text,
                 )
                 return response
             raise err
@@ -253,7 +262,9 @@ class GeoLocServiceClientGnss(GeoLocServiceClientBase):
         return response
 
     @classmethod
-    def from_token_and_url_info(cls, authentication_token, baseUrl, port, version, path):
+    def from_token_and_url_info(
+        cls, authentication_token, baseUrl, port, version, path
+    ):
         url = "{base}:{port}/api/{version}/{path}".format(
             base=baseUrl, port=port, path=path, version=version
         )
@@ -268,10 +279,15 @@ class GeoLocServiceClientWifi(GeoLocServiceClientBase):
 
     @staticmethod
     def build_header_from_authentication_token(authentication_token):
-        return {"Ocp-Apim-Subscription-Key": authentication_token, "Content-Type": "application/json"}
+        return {
+            "Ocp-Apim-Subscription-Key": authentication_token,
+            "Content-Type": "application/json",
+        }
 
     @classmethod
-    def from_token_and_url_info(cls, authentication_token, baseUrl, port, version, path):
+    def from_token_and_url_info(
+        cls, authentication_token, baseUrl, port, version, path
+    ):
         url = "{base}:{port}/{version}/{path}".format(
             base=baseUrl, port=port, path=path, version=version
         )
@@ -279,8 +295,6 @@ class GeoLocServiceClientWifi(GeoLocServiceClientBase):
 
     def build_response(self, http_code, response_text):
         response_dict = loads(response_text)
-        from pprint import pprint
-        pprint(response_dict)
 
         RESULT_KEY = "result"
         LATITUDE_KEY = "latitude"
@@ -289,18 +303,17 @@ class GeoLocServiceClientWifi(GeoLocServiceClientBase):
         ACCURACY_KEY = "accuracy"
 
         coordinates = Coordinate(
-            latitude=float(
-                response_dict[RESULT_KEY][LATITUDE_KEY]
-            ),
-            longitude=float(
-                response_dict[RESULT_KEY][LONGITUDE_KEY]
-            ),
-            altitude=float(
-                response_dict[RESULT_KEY][ALTITUDE_KEY]
-            ),
+            latitude=float(response_dict[RESULT_KEY][LATITUDE_KEY]),
+            longitude=float(response_dict[RESULT_KEY][LONGITUDE_KEY]),
+            altitude=float(response_dict[RESULT_KEY][ALTITUDE_KEY]),
         )
         loc_accuracy = int(response_dict[RESULT_KEY][ACCURACY_KEY])
-        response = ResponseSuccessBase(http_code=http_code, raw_response=response_text, estimated_coordinate=coordinates, accuracy=loc_accuracy)
+        response = ResponseSuccessBase(
+            http_code=http_code,
+            raw_response=response_text,
+            estimated_coordinate=coordinates,
+            accuracy=loc_accuracy,
+        )
         return response
 
 
@@ -310,10 +323,7 @@ class GeoLocServiceClientReverseGeoCoding(GeoLocServiceClientBase):
     DEFAULT_PORT = 443
 
     def __init__(self, url):
-        super().__init__(
-            server_address=url,
-            authentication_token=None
-        )
+        super().__init__(server_address=url, authentication_token=None)
 
     @staticmethod
     def build_header_from_authentication_token(authentication_token):
@@ -321,9 +331,7 @@ class GeoLocServiceClientReverseGeoCoding(GeoLocServiceClientBase):
 
     @classmethod
     def from_url_info(cls, baseUrl, port, path):
-        url = "{base}:{port}/{path}".format(
-            base=baseUrl, port=port, path=path
-        )
+        url = "{base}:{port}/{path}".format(base=baseUrl, port=port, path=path)
         return GeoLocServiceClientReverseGeoCoding(url)
 
     @classmethod
@@ -336,20 +344,20 @@ class GeoLocServiceClientReverseGeoCoding(GeoLocServiceClientBase):
 
     def produce_response_from_request(self, request_data: Coordinate):
         url_request = f"{self.server_address}?latitude={request_data.latitude}&longitude={request_data.longitude}"
-        response = requests.get(
-            url=url_request,
-        )
+        response = requests.get(url=url_request,)
         return response
 
     def build_response(self, http_code, response_text):
         ADDRESS_KEY = "address"
 
         response_dict = loads(response_text)
-        from pprint import pprint
-        pprint(response_dict)
 
         geo_conding_builder = GeocodingBuilder()
         geo_conding_builder.load_names_aliases()
         reverse_geocoding = geo_conding_builder.build_data(response_dict[ADDRESS_KEY])
-        response = ResponseSuccessReverseGeoLoc(http_code=http_code, raw_response=response_text, reverse_geo_loc=reverse_geocoding)
+        response = ResponseSuccessReverseGeoLoc(
+            http_code=http_code,
+            raw_response=response_text,
+            reverse_geo_loc=reverse_geocoding,
+        )
         return response

@@ -30,13 +30,13 @@
  */
 
 #include "configuration.h"
+#include "device_transceiver.h"
 #include "lr1110_system.h"
 #include "lr1110_wifi.h"
 #include "system.h"
 
 #include "supervisor.h"
 #include "environment_interface.h"
-#include "log.h"
 #include "antenna_selector_interface.h"
 #include "signaling_interface.h"
 #include "timer_interface_implementation.h"
@@ -45,6 +45,17 @@
 #include "stdio.h"
 #include "string.h"
 #include "demo.h"
+
+#include "hci.h"
+#include "command_factory.h"
+#include "command_get_version.h"
+#include "command_get_almanac_dates.h"
+#include "command_start_demo.h"
+#include "command_fetch_result.h"
+#include "command_set_date_loc.h"
+#include "command_reset.h"
+#include "command_update_almanac.h"
+#include "command_check_almanac_update.h"
 
 #include "stm32_assert_template.h"
 
@@ -208,35 +219,47 @@ int main( void )
     lv_port_disp_init( );
     lv_port_indev_init( );
 
-    Logging::EnableLogging( );
+    Environment       environment;
+    AntennaSelector   antenna_selector;
+    Signaling         signaling( &environment );
+    Gui               gui;
+    Timer             timer;
+    DeviceTransceiver device_transceiver( &radio );
 
-    Environment     environment;
-    AntennaSelector antenna_selector;
-    Signaling       signaling( &environment );
-    Gui             gui;
-    Timer           timer;
-    Demo            demo( &radio, &environment, &antenna_selector, &signaling, &timer );
+    CommandFactory command_factory;
+    Hci            hci( command_factory, environment );
 
-    Supervisor supervisor( &gui, &radio, &demo, &environment );
+    CommunicationManager communication_manager( &environment, &hci );
+
+    Demo demo( &device_transceiver, &environment, &antenna_selector, &signaling, &timer, &communication_manager );
+
+    CommandGetVersion         com_get_version( hci );
+    CommandGetAlmanacDates    com_get_almanac_dates( &device_transceiver, hci );
+    CommandStartDemo          com_start( &device_transceiver, hci, demo );
+    CommandFetchResult        com_fetch_result( hci, environment, demo );
+    CommandSetDateLoc         com_set_date_loc( &device_transceiver, hci, environment );
+    CommandReset              com_reset( &device_transceiver, hci );
+    CommandUpdateAlmanac      com_update_almanac( &device_transceiver, hci );
+    CommandCheckAlmanacUpdate com_check_almanac_update( &device_transceiver, hci );
+
+    command_factory.AddCommandToPool( com_get_version );
+    command_factory.AddCommandToPool( com_get_almanac_dates );
+    command_factory.AddCommandToPool( com_start );
+    command_factory.AddCommandToPool( com_fetch_result );
+    command_factory.AddCommandToPool( com_set_date_loc );
+    command_factory.AddCommandToPool( com_reset );
+    command_factory.AddCommandToPool( com_update_almanac );
+    command_factory.AddCommandToPool( com_check_almanac_update );
+
+    Supervisor supervisor( &gui, &device_transceiver, &demo, &environment, &communication_manager );
     supervisor.Init( );
+    com_get_version.SetVersion( supervisor.GetVersionHandler( ) );
 
     system_uart_flush( );
-
-    if( system_gpio_get_pin_state( { BUTTON_BLUE_PORT, BUTTON_BLUE_PIN } ) == SYSTEM_GPIO_PIN_STATE_LOW )
-    {
-        automatic_mode = true;
-    }
 
     while( 1 )
     {
         signaling.Runtime( );
-        if( automatic_mode == true )
-        {
-            supervisor.RuntimeAuto( );
-        }
-        else
-        {
-            supervisor.Runtime( );
-        }
+        supervisor.Runtime( );
     };
 }

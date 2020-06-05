@@ -43,42 +43,16 @@ volatile bool DemoBase::has_received_interrupt = false;
 bool          DemoBase::is_initialized         = false;
 DemoBase*     DemoBase::running_demo           = nullptr;
 
-DemoBase::DemoBase( radio_t* radio, SignalingInterface* signaling )
-    : radio( radio ),
+DemoBase::DemoBase( DeviceBase* device, SignalingInterface* signaling, CommunicationInterface* communication_interface )
+    : device( device ),
       signaling( signaling ),
       is_waiting_for_interrupt( false ),
-      started( false ),
-      status( DEMO_STATUS_SKIPPED )
+      status( DEMO_STATUS_SKIPPED ),
+      communication_interface( communication_interface )
 {
 }
 
-void DemoBase::ResetAndInitLr1110( const radio_t* radio )
-{
-    lr1110_system_reset( radio );
-
-    lr1110_system_set_reg_mode( radio, LR1110_SYSTEM_REG_MODE_DCDC );
-
-    lr1110_system_rfswitch_cfg_t rf_switch_setup = { 0 };
-    rf_switch_setup.enable                       = DEMO_COMMON_RF_SWITCH_ENABLE;
-    rf_switch_setup.standby                      = DEMO_COMMON_RF_SWITCH_STANDBY;
-    rf_switch_setup.tx                           = DEMO_COMMON_RF_SWITCH_TX;
-    rf_switch_setup.rx                           = DEMO_COMMON_RF_SWITCH_RX;
-    rf_switch_setup.wifi                         = DEMO_COMMON_RF_SWITCH_WIFI;
-    rf_switch_setup.gnss                         = DEMO_COMMON_RF_SWITCH_GNSS;
-    lr1110_system_set_dio_as_rf_switch( radio, &rf_switch_setup );
-
-    lr1110_system_set_tcxo_mode( radio, LR1110_SYSTEM_TCXO_CTRL_3_0V, 500 );
-
-    lr1110_system_cfg_lfclk( radio, LR1110_SYSTEM_LFCLK_XTAL, true );
-
-    lr1110_system_clear_errors( radio );
-    lr1110_system_calibrate( radio, 0x3F );
-
-    uint16_t errors;
-    lr1110_system_get_errors( radio, &errors );
-    lr1110_system_clear_errors( radio );
-    lr1110_system_clear_irq_status( radio, LR1110_SYSTEM_IRQ_ALL_MASK );
-}
+void DemoBase::ResetAndInitLr1110( ) { this->device->ResetAndInit( ); }
 
 bool DemoBase::HasIntermediateResults( ) const { return false; }
 
@@ -88,44 +62,33 @@ void DemoBase::Initialize( )
 {
     if( is_initialized == false )
     {
-        DemoBase::ResetAndInitLr1110( this->radio );
+        DemoBase::ResetAndInitLr1110( );
         is_initialized = true;
     }
 }
 
 demo_status_t DemoBase::GetStatus( ) const { return this->status; }
 
-void DemoBase::Enable( ) { this->status = DEMO_STATUS_PENDING; }
-
-void DemoBase::Disable( ) { this->status = DEMO_STATUS_SKIPPED; }
-
 void DemoBase::Start( )
 {
-    if( this->IsPending( ) )
-    {
-        this->Reset( );
-        this->status           = DEMO_STATUS_RUNNING;
-        this->started          = true;
-        DemoBase::running_demo = this;
-    }
+    this->Reset( );
+    this->status           = DEMO_STATUS_RUNNING;
+    DemoBase::running_demo = this;
 }
 
 void DemoBase::Stop( )
 {
-    this->started = false;
-    this->status  = DEMO_STATUS_STOPPED;
+    this->status = DEMO_STATUS_STOPPED;
     this->SpecificStop( );
     DemoBase::running_demo = nullptr;
 }
 
-bool DemoBase::IsStarted( ) const { return this->started; }
-
-bool DemoBase::IsPending( ) const { return this->status == DEMO_STATUS_PENDING; }
+bool DemoBase::IsStarted( ) const { return this->status == DEMO_STATUS_RUNNING; }
 
 demo_status_t DemoBase::Runtime( )
 {
     this->is_waiting_for_interrupt = false;
-    if( this->started )
+    if( this->IsStarted( ) )
     {
         this->SpecificRuntime( );
     }
@@ -162,8 +125,7 @@ void DemoBase::Reset( )
         this->has_received_interrupt = false;
         this->ClearRegisteredIrqs( );
     }
-    this->started = false;
-    this->status  = DEMO_STATUS_SKIPPED;
+    this->status = DEMO_STATUS_SKIPPED;
 }
 
 void DemoBase::Terminate( ) { this->status = DEMO_STATUS_TERMINATED; }

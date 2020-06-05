@@ -130,27 +130,31 @@ class VcpReader:
         request = self.request_sender.build_gnss_request_per_device(self.storage)
         if self.embedded_version:
             request.embedded_versions = self.embedded_version
-        print(
+        self.print_if_verbose(
             "Request to send to server '{}': {}".format(
                 self.geo_loc_service_gnss.server_address, request.to_json()
             )
         )
         if self.__configuration.dry_run:
-            print("Dry run: not contacting server")
+            self.print_if_verbose("Dry run: not contacting server")
             return None
         try:
             response = self.request_sender.send_request_get_response(request)
         except SolverContactException as solver_exception:
-            print("Exception when trying to contact solver: '{}'".format(solver_exception))
+            print(
+                "Exception when trying to contact solver: '{}'".format(solver_exception)
+            )
             return None
-        print("Response from server: '{}'".format(response.raw_response))
+        self.print_if_verbose(
+            "Response from server: '{}'".format(response.raw_response)
+        )
         return response
 
     def SendWiFiDataToServer(self):
         request = self.request_sender.build_wifi_requests(self.storage)
         if self.embedded_version:
             request.embedded_versions = self.embedded_version
-        print(
+        self.print_if_verbose(
             "Request to send to server '{}': {}".format(
                 self.geo_loc_service_wifi.server_address, request.to_json()
             )
@@ -159,7 +163,9 @@ class VcpReader:
             print("Dry run: not contacting server")
             return None
         response = self.request_sender.send_request_get_response(request)
-        print("Response from server: '{}'".format(response.raw_response))
+        self.print_if_verbose(
+            "Response from server: '{}'".format(response.raw_response)
+        )
         return response
 
     def ProduceResultWithReverseGeoLoc(self, geo_loc_response):
@@ -167,8 +173,10 @@ class VcpReader:
         reverse_geo_loc_response = reverse_geo_coding_client.call_service_and_get_response(
             geo_loc_response.estimated_coordinates
         ).reverse_geo_loc
-        print(f"{reverse_geo_loc_response}")
-        result = LocalizationResult.from_response_and_geocoding(geo_loc_response, reverse_geo_loc_response)
+        self.print_if_verbose(f"{reverse_geo_loc_response}")
+        result = LocalizationResult.from_response_and_geocoding(
+            geo_loc_response, reverse_geo_loc_response
+        )
         return result
 
     def ProduceResultWithoutReverseGeoLoc(self, geo_loc_response):
@@ -183,7 +191,7 @@ class VcpReader:
         return result
 
     def GetResultCommandHandler(self):
-        print("Get result...")
+        self.print_if_verbose("Get result...")
         if self.result:
             geo_coding_ascii = "".join(
                 [
@@ -200,11 +208,11 @@ class VcpReader:
             )
         else:
             message = "0;0;0;0;Error"
-        print("Message: '{}'".format(message))
+        self.print_if_verbose("Message: '{}'".format(message))
         self.serial.write(message.encode("ascii") + b"\x00")
 
     def SendDataCommandHandler(self):
-        print("Send data to server...")
+        self.print_if_verbose("Send data to server...")
         # Erase self.result if it exists
         self.result = None
         try:
@@ -219,10 +227,10 @@ class VcpReader:
             kml_scan_type = kmlOutput.SCAN_TYPE_GNSS
             data = [data for data in self.storage if isinstance(data, ScannedGnss)]
             if not data:
-                print("No GNSS data")
+                self.print_if_verbose("No GNSS data")
                 return
             if len(data) > 1:
-                print("Too many GNSS data")
+                self.print_if_verbose("Too many GNSS data")
                 return
             data = data[0]
 
@@ -245,7 +253,7 @@ class VcpReader:
             kml.save()
 
     def DateCommandHandler(self):
-        print("Date handler")
+        self.print_if_verbose("Date handler")
         latitude = self.approximated_coordinate_gnss_lr1110.latitude
         longitude = self.approximated_coordinate_gnss_lr1110.longitude
         altitude = self.approximated_coordinate_gnss_lr1110.altitude
@@ -256,7 +264,7 @@ class VcpReader:
         else:
             gps_second = self.gnss_data_builder.get_now_gps()
 
-        print(
+        self.print_if_verbose(
             "Date : {} s, Loc. tokens: {}, {}, {}".format(
                 gps_second, latitude, longitude, altitude
             )
@@ -275,11 +283,11 @@ class VcpReader:
         self.serial.write(data_to_send)
 
     def TestHostCommandHandler(self):
-        print("Test Host handler")
+        self.print_if_verbose("Test Host handler")
         self.serial.write(b"demooglog\x00")
 
     def handle_command(self, command):
-        print("Handle command '{}'...".format(command))
+        self.print_if_verbose("Handle command '{}'...".format(command))
         try:
             command_handler = self.COMMAND_HANDLER[command]
         except KeyError:
@@ -295,19 +303,21 @@ class VcpReader:
             print(f"Error contacting solver: {bad_response_service}")
             self.result = None
         except SolverContactException as solver_exception:
-            print("Exception when trying to contact solver: '{}'".format(solver_exception))
+            print(
+                "Exception when trying to contact solver: '{}'".format(solver_exception)
+            )
             self.result = None
 
-
     def handle_comment(self, comment):
-        # print("Handle comment '{}'".format(comment))
-        pass
+        print("Embedded: {}".format(comment))
 
     def handle_storing(self, blob):
         if blob.startswith(Version.VERSION_TOKEN):
             try:
                 self.embedded_version = Version.from_string(blob)
-                print("Embedded version: {}".format(self.embedded_version))
+                self.print_if_verbose(
+                    "Embedded version: {}".format(self.embedded_version)
+                )
                 self.request_sender.device_eui = self.embedded_version.chip_uid
             except VersionException as version_exception:
                 print("Failed to interpret version: '{}'".format(version_exception))
@@ -329,10 +339,10 @@ class VcpReader:
                 )
             else:
                 self.storage.append(element_to_store)
-                print("Stored GNSS '{}'".format(element_to_store))
+                self.print_if_verbose("Stored GNSS '{}'".format(element_to_store))
         else:
             self.storage.append(element_to_store)
-            print("Stored MAC '{}'".format(element_to_store))
+            self.print_if_verbose("Stored MAC '{}'".format(element_to_store))
 
     def handle_read_data(self, data):
         """ Main handler for data comming from VCP
@@ -345,7 +355,7 @@ class VcpReader:
             data (string): The line received from VCP
 
         """
-        print("Received '{}'".format(data))
+        self.print_if_verbose("Received '{}'".format(data))
         if data.startswith("!"):
             command = data[1:].strip().upper()
             self.handle_command(command)
@@ -424,3 +434,7 @@ class VcpReader:
     @property
     def line_read_counter(self):
         return self.__line_read_counter
+
+    def print_if_verbose(self, message):
+        if self.__configuration.verbosity:
+            print(message)

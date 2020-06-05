@@ -33,16 +33,11 @@
 #include "version.h"
 #include "semtech_logo.h"
 
-GuiSplashScreen::GuiSplashScreen( ) : GuiCommon( )
+GuiSplashScreen::GuiSplashScreen( ) : GuiCommon( GUI_PAGE_SPLASHSCREEN )
 {
-    this->_pageType = GUI_PAGE_SPLASHSCREEN;
-
-    this->screen = lv_obj_create( NULL, NULL );
-    lv_obj_set_style( this->screen, &( GuiCommon::screen_style ) );
-
-    this->icon = lv_img_create( this->screen, NULL );
-    lv_obj_align( this->icon, NULL, LV_ALIGN_IN_TOP_LEFT, 17, 0 );
-    lv_img_set_src( this->icon, &semtech_logo );
+    lv_obj_t* icon = lv_img_create( this->screen, NULL );
+    lv_obj_align( icon, NULL, LV_ALIGN_IN_TOP_LEFT, 17, 0 );
+    lv_img_set_src( icon, &semtech_logo );
 
     lv_obj_t* lbl_title = lv_label_create( this->screen, NULL );
     lv_obj_set_style( lbl_title, &( GuiCommon::title_style ) );
@@ -52,13 +47,13 @@ GuiSplashScreen::GuiSplashScreen( ) : GuiCommon( )
     lv_obj_set_width( lbl_title, 240 );
     lv_obj_align( lbl_title, NULL, LV_ALIGN_CENTER, 0, 0 );
 
-    this->lbl_version = lv_label_create( screen, NULL );
-    lv_obj_set_style( this->lbl_version, &( GuiCommon::screen_style ) );
-    lv_label_set_long_mode( this->lbl_version, LV_LABEL_LONG_BREAK );
-    lv_label_set_align( this->lbl_version, LV_LABEL_ALIGN_CENTER );
-    lv_label_set_text( this->lbl_version, DEMO_VERSION );
-    lv_obj_set_width( this->lbl_version, 240 );
-    lv_obj_align( this->lbl_version, NULL, LV_ALIGN_CENTER, 0, 40 );
+    lv_obj_t* lbl_version = lv_label_create( screen, NULL );
+    lv_obj_set_style( lbl_version, &( GuiCommon::screen_style ) );
+    lv_label_set_long_mode( lbl_version, LV_LABEL_LONG_BREAK );
+    lv_label_set_align( lbl_version, LV_LABEL_ALIGN_CENTER );
+    lv_label_set_text( lbl_version, DEMO_VERSION );
+    lv_obj_set_width( lbl_version, 240 );
+    lv_obj_align( lbl_version, NULL, LV_ALIGN_CENTER, 0, 40 );
 
     this->createActionButton( &( this->btn_continue ), "START", GuiSplashScreen::callback, GUI_BUTTON_POS_RIGHT, -5,
                               true );
@@ -66,7 +61,7 @@ GuiSplashScreen::GuiSplashScreen( ) : GuiCommon( )
     this->createActionButton( &( this->btn_about ), "ABOUT", GuiSplashScreen::callback, GUI_BUTTON_POS_LEFT, -5, true );
 }
 
-GuiSplashScreen::~GuiSplashScreen( ) { lv_obj_del( this->screen ); }
+GuiSplashScreen::~GuiSplashScreen( ) {}
 
 void GuiSplashScreen::draw( ) { lv_scr_load( this->screen ); }
 

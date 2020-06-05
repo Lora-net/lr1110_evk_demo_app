@@ -31,7 +31,7 @@
 
 #include "command_base.h"
 
-CommandBase::CommandBase( radio_t* radio, Hci& hci ) : radio( radio ), hci( &hci ), event( COMMAND_NO_EVENT ) {}
+CommandBase::CommandBase( DeviceBase* device, Hci& hci ) : device( device ), hci( &hci ), event( COMMAND_NO_EVENT ) {}
 
 CommandBase::~CommandBase( ) {}
 
@@ -48,7 +48,40 @@ void CommandBase::SendResponseBuffer( const uint8_t* buffer, const uint16_t buff
     this->hci->SendResponse( response_code, buffer, buffer_length );
 }
 
-void CommandBase::SetEventStartDemo( ) { this->event = COMMAND_START_DEMO_EVENT; }
+void CommandBase::SetEventStartDemo( CommandBaseDemoId_t demo_to_start )
+{
+    switch( demo_to_start )
+    {
+    case COMMAND_BASE_DEMO_WIFI_SCAN:
+    {
+        this->event = COMMAND_START_WIFI_SCAN_DEMO_EVENT;
+        break;
+    }
+
+    case COMMAND_BASE_DEMO_WIFI_COUNTRY_CODE:
+    {
+        this->event = COMMAND_START_WIFI_COUNTRY_CODE_DEMO_EVENT;
+        break;
+    }
+
+    case COMMAND_BASE_DEMO_GNSS_AUTONOMOUS:
+    {
+        this->event = COMMAND_START_GNSS_AUTONOMOUS_DEMO_EVENT;
+        break;
+    }
+
+    case COMMAND_BASE_DEMO_GNSS_ASSISTED:
+    {
+        this->event = COMMAND_START_GNSS_ASSISTED_DEMO_EVENT;
+        break;
+    }
+
+    default:
+    {
+        this->event = COMMAND_NO_EVENT;
+    }
+    }
+}
 
 void CommandBase::SetEventStopDemo( ) { this->event = COMMAND_STOP_DEMO_EVENT; }
 

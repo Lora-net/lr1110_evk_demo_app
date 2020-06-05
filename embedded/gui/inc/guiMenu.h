@@ -32,17 +32,16 @@
 #ifndef __GUI_MENU_H__
 #define __GUI_MENU_H__
 
-#include "guiCommon.h"
+#include "guiMenuCommon.h"
 
-class GuiMenu : public GuiCommon
+class GuiMenu : public GuiMenuCommon
 {
    public:
     GuiMenu( );
     virtual ~GuiMenu( );
 
     virtual void draw( );
-    void createTestEntry( int16_t y_pos, lv_obj_t** lbl, lv_obj_t** btn, lv_obj_t** lbl_btn, const char* lbl_name,
-                          bool is_clickable );
+
     static void callback( lv_obj_t* obj, lv_event_t event );
 
    private:

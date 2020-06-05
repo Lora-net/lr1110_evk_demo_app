@@ -30,10 +30,9 @@
  */
 
 #include "command_update_almanac.h"
-#include "gnss_helper.h"
 #include "com_code.h"
 
-CommandUpdateAlmanac::CommandUpdateAlmanac( radio_t* radio, Hci& hci ) : CommandBase( radio, hci )
+CommandUpdateAlmanac::CommandUpdateAlmanac( DeviceBase* device, Hci& hci ) : CommandBase( device, hci )
 {
     for( uint16_t index_buffer = 0; index_buffer < COMMAND_UPDATE_ALMANAC_BUFFER_SIZE; index_buffer++ )
     {
@@ -66,7 +65,7 @@ bool CommandUpdateAlmanac::ConfigureFromPayload( const uint8_t* buffer, const ui
 bool CommandUpdateAlmanac::Job( )
 {
     bool job_success = false;
-    GnssHelper::UpdateAlmanac( this->radio, this->almanac_buffer, COMMAND_UPDATE_ALMANAC_BUFFER_SIZE );
+    this->device->UpdateAlmanac( this->almanac_buffer, COMMAND_UPDATE_ALMANAC_BUFFER_SIZE );
     job_success = true;
     return job_success;
 }

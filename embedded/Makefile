@@ -75,6 +75,7 @@ system/src/system_uart.c \
 system/src/system_time.c \
 system/src/system_lptim.c \
 system/src/system.c \
+lr1110_driver/src/lr1110_driver_version.c \
 lr1110_driver/src/lr1110_bootloader.c \
 lr1110_driver/src/lr1110_gnss.c \
 lr1110_driver/src/lr1110_radio.c \
@@ -93,22 +94,33 @@ C_SOURCES += ${CSRCS}
 # CPP sources
 CPP_SOURCES = \
 application/src/main.cpp \
-application/src/gnss_helper.cpp \
 application/src/timer_interface_implementation.cpp \
+communication/src/communication_manager.cpp \
+communication/src/communication_utils.cpp \
+communication/src/communication_interface.cpp \
+communication/src/communication_print_only.cpp \
+communication/src/communication_demo.cpp \
+communication/src/communication_field_test.cpp \
 demo/src/environment_interface.cpp \
 demo/src/demo_base.cpp \
+demo/src/demo_transceiver_base.cpp \
 demo/src/demo_wifi_interface.cpp \
 demo/src/demo_wifi_scan.cpp \
 demo/src/demo_wifi_country_code.cpp \
+demo/src/demo_wifi_types.cpp \
 demo/src/demo_gnss_autonomous.cpp \
 demo/src/demo_gnss_base.cpp \
-demo/src/demo_gnss_assisted.cpp\
-demo/src/demo_ping_pong.cpp\
+demo/src/demo_gnss_assisted.cpp \
+demo/src/demo_radio_interface.cpp \
+demo/src/demo_ping_pong.cpp \
 demo/src/demo_tx_cw.cpp \
 demo/src/demo_radio_per.cpp \
 demo/src/demo.cpp\
+demo/src/device_base.cpp \
+demo/src/device_transceiver.cpp \
 gui/src/gui.cpp \
 gui/src/guiCommon.cpp \
+gui/src/guiMenuCommon.cpp \
 gui/src/guiMenu.cpp \
 gui/src/guiMenuRadioTestModes.cpp \
 gui/src/guiConfigRadioTestModes.cpp \
@@ -124,11 +136,9 @@ gui/src/guiTestGnss.cpp \
 gui/src/guiTestWifi.cpp \
 gui/src/guiConfigWifi.cpp \
 gui/src/guiConfigGnss.cpp \
-log/src/log.cpp \
 supervisor/src/supervisor.cpp \
 hci/hci.cpp \
 hci/Command/Src/command_base.cpp \
-hci/Command/Src/command_configure.cpp \
 hci/Command/Src/command_factory.cpp \
 hci/Command/Src/command_fetch_result.cpp \
 hci/Command/Src/command_get_version.cpp \
@@ -204,6 +214,7 @@ AS_INCLUDES =
 # C includes
 C_INCLUDES =  \
 -Iapplication/inc \
+-Icommunication/inc \
 -ICMSIS/Device/ST/STM32L4xx/Include \
 -ICMSIS/Core/Include \
 -Idemo/inc \
@@ -218,7 +229,6 @@ C_INCLUDES =  \
 -Ilvgl/src/lv_objx \
 -Ilvgl/src/lv_themes \
 -Ilvgl/src \
--Ilog/inc \
 -ISTM32L4xx_HAL_Driver/Inc \
 -Isupervisor/inc \
 -Isystem/inc \

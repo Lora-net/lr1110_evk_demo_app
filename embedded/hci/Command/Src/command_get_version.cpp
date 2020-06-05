@@ -37,7 +37,7 @@
 
 #define VERSION_STRING_MAX_LEN 272
 
-CommandGetVersion::CommandGetVersion( radio_t* radio, Hci& hci ) : hci( &hci ), radio( radio ) {}
+CommandGetVersion::CommandGetVersion( Hci& hci ) : hci( &hci ) {}
 
 CommandGetVersion::~CommandGetVersion( ) {}
 
@@ -59,16 +59,14 @@ CommandEvent_t CommandGetVersion::Execute( )
 {
     char buffer_response[VERSION_STRING_MAX_LEN] = { 0 };
 
-    const uint8_t buffer_len = snprintf(
-        buffer_response, VERSION_STRING_MAX_LEN,
-        "%s;%s;0x%02x;0x%02x;0x%04x;0x%04x;%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x",
-        version_handler->version_sw, version_handler->version_driver,
-        version_handler->version_chip_hw, version_handler->version_chip_type,
-        version_handler->version_chip_fw, version_handler->almanac_crc,
-        version_handler->chip_uid[0], version_handler->chip_uid[1],
-        version_handler->chip_uid[2], version_handler->chip_uid[3],
-        version_handler->chip_uid[4], version_handler->chip_uid[5],
-        version_handler->chip_uid[6], version_handler->chip_uid[7] );
+    const uint8_t buffer_len =
+        snprintf( buffer_response, VERSION_STRING_MAX_LEN,
+                  "%s;%s;0x%02x;0x%02x;0x%04x;0x%04x;%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x",
+                  version_handler->version_sw, version_handler->version_driver, version_handler->version_chip_hw,
+                  version_handler->version_chip_type, version_handler->version_chip_fw, version_handler->almanac_crc,
+                  version_handler->chip_uid[0], version_handler->chip_uid[1], version_handler->chip_uid[2],
+                  version_handler->chip_uid[3], version_handler->chip_uid[4], version_handler->chip_uid[5],
+                  version_handler->chip_uid[6], version_handler->chip_uid[7] );
 
     this->hci->SendResponse( this->GetComCode( ), ( uint8_t* ) buffer_response, buffer_len );
 
@@ -77,4 +75,4 @@ CommandEvent_t CommandGetVersion::Execute( )
 
 uint16_t CommandGetVersion::GetComCode( ) { return COM_CODE_GET_VERSION; }
 
-void CommandGetVersion::SetVersion( version_handler_t* version ) { this->version_handler = version; }
+void CommandGetVersion::SetVersion( const version_handler_t* version ) { this->version_handler = version; }

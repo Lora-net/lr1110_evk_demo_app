@@ -32,15 +32,14 @@
 #include "demo_tx_cw.h"
 #include "lr1110_radio.h"
 
-DemoTxCw::DemoTxCw( radio_t* radio, SignalingInterface* signaling )
-    : DemoBase( radio, signaling ), state( DEMO_TX_CW_STATE_INIT )
+DemoTxCw::DemoTxCw( DeviceTransceiver* device, SignalingInterface* signaling,
+                    CommunicationInterface* communication_interface )
+    : DemoRadioInterface( device, signaling, communication_interface ), state( DEMO_TX_CW_STATE_INIT )
 {
     this->settings = {};
 }
 
 DemoTxCw::~DemoTxCw( ) {}
-
-void DemoTxCw::Configure( demo_radio_settings_t& settings ) { this->settings = settings; }
 
 void DemoTxCw::SpecificRuntime( )
 {
@@ -49,7 +48,7 @@ void DemoTxCw::SpecificRuntime( )
     case DEMO_TX_CW_STATE_INIT:
     {
         this->ConfigureRadio( );
-        lr1110_radio_set_tx_cw( this->radio );
+        lr1110_radio_set_tx_cw( this->device->GetRadio( ) );
         this->signaling->StartContinuousTx( );
         this->state = DEMO_TX_CW_STATE_RUNNING;
         break;
@@ -63,25 +62,25 @@ void DemoTxCw::SpecificRuntime( )
 
 void DemoTxCw::SpecificStop( )
 {
-    lr1110_system_set_standby( this->radio, LR1110_SYSTEM_STANDBY_CFG_RC );
+    lr1110_system_set_standby( this->device->GetRadio( ), LR1110_SYSTEM_STANDBY_CFG_RC );
     this->signaling->StopContinuousTx( );
     this->state = DEMO_TX_CW_STATE_INIT;
 }
 
 void DemoTxCw::ConfigureRadio( ) const
 {
-    // 0. Reset the radio
-    DemoBase::ResetAndInitLr1110( this->radio );
-    lr1110_radio_set_pkt_type( this->radio, LR1110_RADIO_PKT_TYPE_LORA );
+    // 0. Reset the device
+    this->device->ResetAndInit( );
+    lr1110_radio_set_pkt_type( this->device->GetRadio( ), LR1110_RADIO_PKT_TYPE_LORA );
 
     // 1. Set RF frequency
-    lr1110_radio_set_rf_freq( this->radio, this->settings.rf_frequency );
+    lr1110_radio_set_rf_freq( this->device->GetRadio( ), this->settings.rf_frequency );
 
     // 2. Set PA configuration
-    lr1110_radio_set_pa_cfg( this->radio, &this->settings.pa_configuration );
+    lr1110_radio_set_pa_cfg( this->device->GetRadio( ), &this->settings.pa_configuration );
 
     // 3. Set tx output power
-    lr1110_radio_set_tx_params( this->radio, this->settings.tx_power, this->settings.pa_ramp_time );
+    lr1110_radio_set_tx_params( this->device->GetRadio( ), this->settings.tx_power, this->settings.pa_ramp_time );
 }
 void DemoTxCw::SpecificInterruptHandler( ) {}
 

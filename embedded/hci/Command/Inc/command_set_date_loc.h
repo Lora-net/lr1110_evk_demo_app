@@ -38,7 +38,7 @@
 class CommandSetDateLoc : public CommandBase
 {
    public:
-    CommandSetDateLoc( radio_t* radio, Hci& hci, EnvironmentInterface& environment );
+    CommandSetDateLoc( DeviceBase* device, Hci& hci, EnvironmentInterface& environment );
     virtual ~CommandSetDateLoc( );
 
     virtual uint16_t GetComCode( );

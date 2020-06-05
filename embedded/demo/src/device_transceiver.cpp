@@ -1,7 +1,7 @@
 /**
- * @file      gnss_helper.cpp
+ * @file      device_transceiver.cpp
  *
- * \brief
+ * @brief     Implementation of transceiver device class.
  *
  * Revised BSD License
  * Copyright Semtech Corporation 2020. All rights reserved.
@@ -29,13 +29,45 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "gnss_helper.h"
+#include "device_transceiver.h"
+#include "lr1110_system.h"
+#include "lr1110_driver_version.h"
 #include "lr1110_gnss.h"
+#include "demo_configuration.h"
+#include <string.h>
 
-void GnssHelper::GetAlmanacAgesAndCrcOfAllSatellites( radio_t* radio, GnssHelperAlmanacDetails_t* almanac_details )
+DeviceTransceiver::DeviceTransceiver( radio_t* radio ) : DeviceBase( radio ) {}
+
+void DeviceTransceiver::ResetAndInit( )
+{
+    lr1110_system_reset( this->radio );
+
+    lr1110_system_set_reg_mode( this->radio, LR1110_SYSTEM_REG_MODE_DCDC );
+
+    lr1110_system_rfswitch_cfg_t rf_switch_setup = { 0 };
+    rf_switch_setup.enable                       = DEMO_COMMON_RF_SWITCH_ENABLE;
+    rf_switch_setup.standby                      = DEMO_COMMON_RF_SWITCH_STANDBY;
+    rf_switch_setup.tx                           = DEMO_COMMON_RF_SWITCH_TX;
+    rf_switch_setup.rx                           = DEMO_COMMON_RF_SWITCH_RX;
+    rf_switch_setup.wifi                         = DEMO_COMMON_RF_SWITCH_WIFI;
+    rf_switch_setup.gnss                         = DEMO_COMMON_RF_SWITCH_GNSS;
+    lr1110_system_set_dio_as_rf_switch( this->radio, &rf_switch_setup );
+
+    lr1110_system_set_tcxo_mode( this->radio, LR1110_SYSTEM_TCXO_CTRL_3_0V, 500 );
+    lr1110_system_cfg_lfclk( this->radio, LR1110_SYSTEM_LFCLK_XTAL, true );
+    lr1110_system_clear_errors( this->radio );
+    lr1110_system_calibrate( this->radio, 0x3F );
+
+    uint16_t errors;
+    lr1110_system_get_errors( this->radio, &errors );
+    lr1110_system_clear_errors( this->radio );
+    lr1110_system_clear_irq_status( this->radio, LR1110_SYSTEM_IRQ_ALL_MASK );
+}
+
+void DeviceTransceiver::GetAlmanacAgesAndCrcOfAllSatellites( GnssHelperAlmanacDetails_t* almanac_details )
 {
     lr1110_gnss_almanac_full_read_bytestream_t almanac_bytestream = { 0 };
-    lr1110_gnss_read_almanac( radio, almanac_bytestream );
+    lr1110_gnss_read_almanac( this->radio, almanac_bytestream );
     uint16_t index_bytestream = 0;
     for( uint8_t index_satellite = 0; ( index_bytestream < ( LR1110_GNSS_FULL_ALMANAC_READ_BUFFER_SIZE - 4 ) ) &&
                                       ( index_satellite < GNSS_HELPER_NUMBER_SATELLITES_ALMANAC_READ );
@@ -51,28 +83,28 @@ void GnssHelper::GetAlmanacAgesAndCrcOfAllSatellites( radio_t* radio, GnssHelper
                                    ( almanac_bytestream[GNSS_HELPER_NUMBER_SATELLITES_ALMANAC_READ - 4] << 24 );
 }
 
-void GnssHelper::UpdateAlmanac( radio_t* radio, const uint8_t* almanac_buffer, const uint8_t buffer_size )
+void DeviceTransceiver::UpdateAlmanac( const uint8_t* almanac_buffer, const uint8_t buffer_size )
 {
     if( buffer_size == LR1110_GNSS_SINGLE_ALMANAC_WRITE_SIZE )
     {
-        lr1110_gnss_one_satellite_almanac_update( radio, almanac_buffer );
+        lr1110_gnss_one_satellite_almanac_update( this->radio, almanac_buffer );
     }
 }
 
-bool GnssHelper::checkAlmanacUpdate( radio_t* radio, uint32_t expected_crc )
+bool DeviceTransceiver::checkAlmanacUpdate( uint32_t expected_crc )
 {
     bool     update_success = false;
     uint16_t result_size    = 0;
-    lr1110_gnss_get_result_size( radio, &result_size );
+    lr1110_gnss_get_result_size( this->radio, &result_size );
 
     if( result_size == 2 )
     {
         uint8_t result_buffer[2] = { 0 };
-        lr1110_gnss_read_results( radio, result_buffer, result_size );
+        lr1110_gnss_read_results( this->radio, result_buffer, result_size );
         if( ( result_buffer[0] == 0 ) && ( result_buffer[1] == 0 ) )
         {
             uint32_t actual_crc = 0;
-            lr1110_gnss_get_almanac_crc( radio, &actual_crc );
+            lr1110_gnss_get_almanac_crc( this->radio, &actual_crc );
             update_success = ( expected_crc == actual_crc );
         }
         else
@@ -85,4 +117,24 @@ bool GnssHelper::checkAlmanacUpdate( radio_t* radio, uint32_t expected_crc )
         update_success = false;
     }
     return update_success;
+}
+
+void DeviceTransceiver::FetchVersion( version_handler_t& version_handler )
+{
+    lr1110_system_version_t lr1110_version = { 0 };
+
+    lr1110_system_get_version( this->radio, &lr1110_version );
+    version_handler.version_chip_fw   = lr1110_version.fw;
+    version_handler.version_chip_hw   = lr1110_version.hw;
+    version_handler.version_chip_type = lr1110_version.type;
+
+    lr1110_system_read_uid( this->radio, version_handler.chip_uid );
+
+    strcpy( version_handler.version_sw, DEMO_VERSION );
+    strcpy( version_handler.version_driver, lr1110_driver_version_get_version_string( ) );
+
+    GnssHelperAlmanacDetails_t almanac_ages_crc = { 0 };
+    this->GetAlmanacAgesAndCrcOfAllSatellites( &almanac_ages_crc );
+    version_handler.almanac_date = almanac_ages_crc.ages_per_almanacs[0].almanac_age;
+    version_handler.almanac_crc  = almanac_ages_crc.crc_almanac;
 }

@@ -38,7 +38,7 @@
 class CommandReset : public CommandBase
 {
    public:
-    explicit CommandReset( radio_t* radio, Hci& hci );
+    explicit CommandReset( DeviceBase* device, Hci& hci );
     virtual ~CommandReset( );
 
     virtual uint16_t GetComCode( );

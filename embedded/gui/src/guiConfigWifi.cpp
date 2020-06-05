@@ -32,13 +32,8 @@
 #include "guiConfigWifi.h"
 
 GuiConfigWifi::GuiConfigWifi( GuiWifiDemoSetting_t* settings_current, const GuiWifiDemoSetting_t* settings_default )
-    : GuiCommon( ), settings_current( settings_current ), settings_default( settings_default )
+    : GuiCommon( GUI_PAGE_WIFI_CONFIG ), settings_current( settings_current ), settings_default( settings_default )
 {
-    _pageType = GUI_PAGE_WIFI_CONFIG;
-
-    this->screen = lv_obj_create( NULL, NULL );
-    lv_obj_set_style( this->screen, &( GuiCommon::screen_style ) );
-
     this->createHeader( "Wi-Fi - CONFIGURATION" );
 
     this->createSection( "TYPES", -100 );
@@ -69,7 +64,7 @@ GuiConfigWifi::GuiConfigWifi( GuiWifiDemoSetting_t* settings_current, const GuiW
     this->createActionButton( &( this->btn_save ), "SAVE", GuiConfigWifi::callback, GUI_BUTTON_POS_RIGHT, -5, false );
 }
 
-GuiConfigWifi::~GuiConfigWifi( ) { lv_obj_del( this->screen ); }
+GuiConfigWifi::~GuiConfigWifi( ) {}
 
 void GuiConfigWifi::init( ) {}
 

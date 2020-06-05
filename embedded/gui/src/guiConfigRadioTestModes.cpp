@@ -39,13 +39,10 @@
 
 GuiConfigRadioTestModes::GuiConfigRadioTestModes( GuiRadioSetting_t*       settings_current,
                                                   const GuiRadioSetting_t* settings_default )
-    : GuiCommon( ), settings_current( settings_current ), settings_default( settings_default )
+    : GuiCommon( GUI_PAGE_RADIO_TEST_MODES_CONFIG ),
+      settings_current( settings_current ),
+      settings_default( settings_default )
 {
-    _pageType = GUI_PAGE_RADIO_TEST_MODES_CONFIG;
-
-    this->screen = lv_obj_create( NULL, NULL );
-    lv_obj_set_style( this->screen, &( GuiCommon::screen_style ) );
-
     this->createHeader( "RADIO - CONFIGURATION" );
 
     /* Create a Tab view object and configure it */
@@ -160,7 +157,7 @@ GuiConfigRadioTestModes::GuiConfigRadioTestModes( GuiRadioSetting_t*       setti
     lv_obj_set_hidden( this->kb_num, true );
 }
 
-GuiConfigRadioTestModes::~GuiConfigRadioTestModes( ) { lv_obj_del( this->screen ); }
+GuiConfigRadioTestModes::~GuiConfigRadioTestModes( ) {}
 
 void GuiConfigRadioTestModes::init( ) {}
 

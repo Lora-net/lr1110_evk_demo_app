@@ -28,13 +28,16 @@ Define single Field test job executor class
 """
 
 from ..SerialExchange.Commands import (
-    CommandConfigure,
-    CommandStart,
+    CommandStartWifiScan,
+    CommandStartWifiCountryCode,
+    CommandStartGnssAutonomous,
+    CommandStartGnssAssisted,
     CommandFetchResults,
     CommandSetDateLoc,
     CommandReset,
     CommandGetVersion,
     CommandGetAlmanacDates,
+    WifiEnableMode,
 )
 from ..SerialExchange.CommunicationHandler import (
     CommunicationHandlerException,
@@ -122,15 +125,8 @@ class JobExecutor:
             timeout_s += JobExecutor.EVENT_WAIT_TIMEOUT_GNSS_AUTONOMOUS_S
         return timeout_s
 
-    def configure_job(self, job):
+    def configure_and_start_job(self, job):
         self.log("Configuring...")
-        conf_command = JobExecutor.build_conf_command_from_job(job)
-        conf_command_sent, conf_response = self.handle_and_log_command(conf_command)
-        if not JobExecutor.is_exchange_valid(conf_command_sent, conf_response):
-            raise JobExecutorMismatchComResp(job, conf_command_sent, conf_response)
-        if not conf_response.ack_status:
-            raise JobConfigurationFailed(job)
-
         # If there is a gnss assisted or autonomous, the date and assisted location must be updated
         if job.has_gnss_assisted or job.has_gnss_autonomous:
             self.log("Updating date and loc...")
@@ -145,15 +141,13 @@ class JobExecutor:
                 raise JobExecutorMismatchComResp(
                     job, set_date_loc_command_sent, set_date_loc_response
                 )
-
-    def star_job(self, job):
         self.log("Starting...")
-        start_command = CommandStart()
+        start_command = JobExecutor.build_start_command_from_job(job)
         start_command_sent, start_response = self.handle_and_log_command(start_command)
         if not JobExecutor.is_exchange_valid(start_command_sent, start_response):
             raise JobExecutorMismatchComResp(job, start_command_sent, start_response)
         if not start_response.ack_status:
-            raise JobStartFailed(job)
+            raise JobConfigurationFailed(job)
 
     def wait_event_job(self, job):
         timeout_s = JobExecutor.compute_timeout(job)
@@ -188,16 +182,13 @@ class JobExecutor:
         #         "Job is configured to run nothing: will not send commands and return no results")
         #     return list()
 
-        # 1. Configure
-        self.configure_job(job)
+        # 1. Configure and start
+        self.configure_and_start_job(job)
 
-        # 2. Start
-        self.star_job(job)
-
-        # 3. Wait for event
+        # 2. Wait for event
         self.wait_event_job(job)
 
-        # 4. Fetch results
+        # 3. Fetch results
         results = self.store_result_job(job)
         return results
 
@@ -291,40 +282,43 @@ class JobExecutor:
         return command.get_com_code() == response.get_response_code()
 
     @staticmethod
-    def build_conf_command_from_job(job):
-        command_configure = CommandConfigure()
-        command_configure.wifi_channels = job.wifi_channels
-        command_configure.wifi_types = job.wifi_types
-        command_configure.wifi_enable_mode = job.wifi_enable_mode
-        command_configure.wifi_nbr_retrials = job.wifi_nbr_retrials
-        command_configure.wifi_max_results_per_scan = job.wifi_max_results
-        command_configure.wifi_timeout = job.wifi_timeout
-        command_configure.wifi_mode = job.wifi_mode
-        command_configure.gnss_autonomous_enable = job.gnss_autonomous_enable
-        command_configure.gnss_autonomous_option = job.gnss_autonomous_option
-        command_configure.gnss_autonomous_capture_mode = (
-            job.gnss_autonomous_capture_mode
-        )
-        command_configure.gnss_autonomous_nb_satellite = (
-            job.gnss_autonomous_nb_satellite
-        )
-        command_configure.gnss_autonomous_antenna_selection = (
-            job.gnss_autonomous_antenna_selection
-        )
-        command_configure.gnss_autonomous_constellation_mask = (
-            job.gnss_autonomous_constellation_mask
-        )
-        command_configure.gnss_assisted_enable = job.gnss_assisted_enable
-        command_configure.gnss_assisted_option = job.gnss_assisted_option
-        command_configure.gnss_assisted_capture_mode = job.gnss_assisted_capture_mode
-        command_configure.gnss_assisted_nb_satellite = job.gnss_assisted_nb_satellite
-        command_configure.gnss_assisted_antenna_selection = (
-            job.gnss_assisted_antenna_selection
-        )
-        command_configure.gnss_assisted_constellation_mask = (
-            job.gnss_assisted_constellation_mask
-        )
-        return command_configure
+    def build_start_command_from_job(job):
+        if job.has_wifi:
+            if job.wifi_enable_mode == WifiEnableMode.wifi_scan:
+                start_command = CommandStartWifiScan()
+                start_command.wifi_channels = job.wifi_channels
+                start_command.wifi_types = job.wifi_types
+                start_command.wifi_nbr_retrials = job.wifi_nbr_retrials
+                start_command.wifi_max_results_per_scan = job.wifi_max_results
+                start_command.wifi_timeout = job.wifi_timeout
+                start_command.wifi_mode = job.wifi_mode
+                return start_command
+            elif job.wifi_enable_mode == WifiEnableMode.country_code:
+                start_command = CommandStartWifiCountryCode()
+                start_command.wifi_channels = job.wifi_channels
+                start_command.wifi_nbr_retrials = job.wifi_nbr_retrials
+                start_command.wifi_max_results_per_scan = job.wifi_max_results
+                start_command.wifi_timeout = job.wifi_timeout
+            else:
+                raise JobConfigurationFailed(job)
+        elif job.has_gnss_autonomous:
+            start_command = CommandStartGnssAutonomous()
+            start_command.gnss_option = job.gnss_autonomous_option
+            start_command.gnss_capture_mode = job.gnss_autonomous_capture_mode
+            start_command.gnss_nb_satellite = job.gnss_autonomous_nb_satellite
+            start_command.gnss_antenna_selection = job.gnss_autonomous_antenna_selection
+            start_command.gnss_constellation_mask = (
+                job.gnss_autonomous_constellation_mask
+            )
+            return start_command
+        elif job.has_gnss_assisted:
+            start_command = CommandStartGnssAssisted()
+            start_command.gnss_option = job.gnss_assisted_option
+            start_command.gnss_capture_mode = job.gnss_assisted_capture_mode
+            start_command.gnss_nb_satellite = job.gnss_assisted_nb_satellite
+            start_command.gnss_antenna_selection = job.gnss_assisted_antenna_selection
+            start_command.gnss_constellation_mask = job.gnss_assisted_constellation_mask
+            return start_command
 
     @staticmethod
     def build_set_date_loc_command_from_job(job):

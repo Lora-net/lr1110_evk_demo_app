@@ -126,7 +126,9 @@ class ResponseBase:
 
 class ResponseSuccessBase(ResponseBase):
     def __init__(self, http_code, raw_response, estimated_coordinate, accuracy):
-        super().__init__(status=ResponseStatusOk(http_code=http_code), raw_response=raw_response)
+        super().__init__(
+            status=ResponseStatusOk(http_code=http_code), raw_response=raw_response
+        )
         self.__estimated_coordinate = estimated_coordinate
         self.__accuracy = accuracy
 
@@ -141,7 +143,12 @@ class ResponseSuccessBase(ResponseBase):
 
 class ResponseFailureBase(ResponseBase):
     def __init__(self, http_code, raw_response, failure_reason_from_server):
-        super().__init__(status=ResponseStatusNok(http_code=http_code, reason=failure_reason_from_server), raw_response=raw_response)
+        super().__init__(
+            status=ResponseStatusNok(
+                http_code=http_code, reason=failure_reason_from_server
+            ),
+            raw_response=raw_response,
+        )
 
     @property
     def failure_reason(self):
@@ -157,7 +164,9 @@ class ResponseFailureBase(ResponseBase):
 
 class ResponseSuccessReverseGeoLoc(ResponseBase):
     def __init__(self, http_code, raw_response, reverse_geo_loc):
-        super().__init__(status=ResponseStatusOk(http_code=http_code), raw_response=raw_response)
+        super().__init__(
+            status=ResponseStatusOk(http_code=http_code), raw_response=raw_response
+        )
         self.__reverse_geo_loc = reverse_geo_loc
 
     @property

@@ -44,8 +44,9 @@
 // Slave opens Ping Rx window 5 ms before Master actually sends the Ping
 #define DEMO_PING_PONG_SLAVE_WAIT_START_PING_RX ( DEMO_PING_PONG_WAIT_MASTER_PING_TO_PING_TIMEOUT_MS - 5 )
 
-DemoPingPong::DemoPingPong( radio_t* radio, SignalingInterface* signaling, EnvironmentInterface* environment )
-    : DemoBase( radio, signaling ),
+DemoPingPong::DemoPingPong( DeviceTransceiver* device, SignalingInterface* signaling, EnvironmentInterface* environment,
+                            CommunicationInterface* communication_interface )
+    : DemoRadioInterface( device, signaling, communication_interface ),
       environment( environment ),
       mode( DEMO_PING_PONG_MODE_MASTER ),
       state( DEMO_PING_PONG_STATE_INIT ),
@@ -53,32 +54,19 @@ DemoPingPong::DemoPingPong( radio_t* radio, SignalingInterface* signaling, Envir
       last_tx_done_instant_ms( 0 ),
       last_rx_done_instant_ms( 0 ),
       radio_interrupt_mask( LR1110_SYSTEM_IRQ_TX_DONE | LR1110_SYSTEM_IRQ_RX_DONE | LR1110_SYSTEM_IRQ_TIMEOUT ),
-      log( "PingPong" ),
       has_intermediate_results( false )
 {
-    this->results                 = {};
-    this->settings                = {};
-    this->payload_ping.size       = 1;
-    this->payload_ping.content[0] = 0;
-    this->payload_pong.size       = 1;
-    this->payload_pong.content[0] = 1;
+    this->results  = {};
+    this->settings = {};
+
+    for( uint16_t i = 0; i < DEMO_PING_PONG_MAX_PAYLOAD_SIZE; i++ )
+    {
+        this->payload_ping[i] = 0x00;
+        this->payload_pong[i] = 0x01;
+    }
 }
 
 DemoPingPong::~DemoPingPong( ) {}
-
-void DemoPingPong::Configure( demo_ping_pong_settings_t& settings )
-{
-    this->settings = settings;
-
-    // Here the packet parameters for both LoRa and GFSK are forcily modified so
-    // that the payload size fit with the PING payload size. This has two
-    // drawbacks:
-    //   1. The PONG and PING payload must be of the same length
-    //   2. If the client of this method though it was ok to set the payload
-    //   size, he will have some surprise
-    this->settings.radio_settings->packet_lora.pld_len_in_bytes = this->payload_ping.size;
-    this->settings.radio_settings->packet_gfsk.pld_len_in_bytes = this->payload_ping.size;
-}
 
 const demo_ping_pong_results_t* DemoPingPong::GetResult( ) const { return &this->results; }
 
@@ -96,13 +84,13 @@ void DemoPingPong::SpecificRuntime( )
         {
             this->last_tx_done_instant_ms = now_ms;  // Fake the instant of last received event
             this->state                   = DEMO_PING_PONG_STATE_MASTER_WAIT_SEND_PING;
-            this->log.Log( "Start as Master\n" );
+            this->communication_interface->Log( "Start as Master\n" );
         }
         else
         {
             this->state = DEMO_PING_PONG_STATE_ERROR;
         }
-        lr1110_radio_reset_stats( this->radio );
+        lr1110_radio_reset_stats( this->device->GetRadio( ) );
         break;
     }
     case DEMO_PING_PONG_STATE_MASTER_WAIT_SEND_PING:
@@ -124,7 +112,7 @@ void DemoPingPong::SpecificRuntime( )
             lr1110_system_stat2_t stat2;
             uint32_t              irq_status;
 
-            lr1110_system_get_status( this->radio, &stat1, &stat2, &irq_status );
+            lr1110_system_get_status( this->device->GetRadio( ), &stat1, &stat2, &irq_status );
             if( irq_status & LR1110_SYSTEM_IRQ_TX_DONE )
             {
                 this->results.count_tx++;
@@ -154,11 +142,11 @@ void DemoPingPong::SpecificRuntime( )
             lr1110_system_stat2_t stat2;
             uint32_t              irq_status;
 
-            lr1110_system_get_status( this->radio, &stat1, &stat2, &irq_status );
+            lr1110_system_get_status( this->device->GetRadio( ), &stat1, &stat2, &irq_status );
 
             if( irq_status & LR1110_SYSTEM_IRQ_CRC_ERROR )
             {
-                lr1110_system_clear_irq_status( this->radio, LR1110_SYSTEM_IRQ_CRC_ERROR );
+                lr1110_system_clear_irq_status( this->device->GetRadio( ), LR1110_SYSTEM_IRQ_CRC_ERROR );
                 this->results.count_rx_wrong_packet++;
             }
             else if( irq_status & LR1110_SYSTEM_IRQ_RX_DONE )
@@ -176,21 +164,21 @@ void DemoPingPong::SpecificRuntime( )
                 {
                     // That means there is another Master on the line.
                     // Switch this one to slave and keep going.
-                    this->log.Log( "Switch to Slave\n" );
+                    this->communication_interface->Log( "Switch to Slave\n" );
                     this->last_rx_done_instant_ms = this->last_tx_done_instant_ms;
                     this->mode                    = DEMO_PING_PONG_MODE_SLAVE;
                     this->state                   = DEMO_PING_PONG_STATE_SLAVE_WAIT_SEND_PONG;
                 }
                 else
                 {
-                    this->log.Log( "Wrong packet\n" );
+                    this->communication_interface->Log( "Wrong packet\n" );
                     this->state = DEMO_PING_PONG_STATE_MASTER_WAIT_SEND_PING;
                     this->results.count_rx_wrong_packet++;
                 }
             }
             if( irq_status & LR1110_SYSTEM_IRQ_TIMEOUT )
             {
-                this->log.Log( "Master Timeout\n" );
+                this->communication_interface->Log( "Master Timeout\n" );
                 this->state = DEMO_PING_PONG_STATE_MASTER_WAIT_SEND_PING;
                 this->results.count_rx_timeout++;
             }
@@ -225,10 +213,10 @@ void DemoPingPong::SpecificRuntime( )
             lr1110_system_stat2_t stat2;
             uint32_t              irq_status;
 
-            lr1110_system_get_status( this->radio, &stat1, &stat2, &irq_status );
+            lr1110_system_get_status( this->device->GetRadio( ), &stat1, &stat2, &irq_status );
             if( irq_status & LR1110_SYSTEM_IRQ_CRC_ERROR )
             {
-                lr1110_system_clear_irq_status( this->radio, LR1110_SYSTEM_IRQ_CRC_ERROR );
+                lr1110_system_clear_irq_status( this->device->GetRadio( ), LR1110_SYSTEM_IRQ_CRC_ERROR );
                 this->results.count_rx_wrong_packet++;
             }
             else if( irq_status & LR1110_SYSTEM_IRQ_RX_DONE )
@@ -247,7 +235,7 @@ void DemoPingPong::SpecificRuntime( )
                 {
                     // That means there is another Slave on the line.
                     // Switch this one to master and keep going.
-                    this->log.Log( "Wrong payload: switch to Master\n" );
+                    this->communication_interface->Log( "Wrong payload: switch to Master\n" );
                     this->last_tx_done_instant_ms = this->last_irq_received_instant_ms;
                     this->mode                    = DEMO_PING_PONG_MODE_MASTER;
                     this->state                   = DEMO_PING_PONG_STATE_MASTER_WAIT_SEND_PING;
@@ -261,7 +249,7 @@ void DemoPingPong::SpecificRuntime( )
             {
                 // In case of timeout: go back to master
                 this->last_tx_done_instant_ms = this->last_irq_received_instant_ms;
-                this->log.Log( "Timeout: switch to Master\n" );
+                this->communication_interface->Log( "Timeout: switch to Master\n" );
                 this->mode  = DEMO_PING_PONG_MODE_MASTER;
                 this->state = DEMO_PING_PONG_STATE_MASTER_WAIT_SEND_PING;
                 this->results.count_rx_timeout++;
@@ -298,7 +286,7 @@ void DemoPingPong::SpecificRuntime( )
             lr1110_system_stat2_t stat2;
             uint32_t              irq_status;
 
-            lr1110_system_get_status( this->radio, &stat1, &stat2, &irq_status );
+            lr1110_system_get_status( this->device->GetRadio( ), &stat1, &stat2, &irq_status );
             if( irq_status & LR1110_SYSTEM_IRQ_TX_DONE )
             {
                 this->ClearRegisteredIrqs( );
@@ -336,7 +324,7 @@ bool DemoPingPong::HasIntermediateResults( ) const { return has_intermediate_res
 
 void DemoPingPong::SpecificStop( )
 {
-    lr1110_system_set_standby( this->radio, LR1110_SYSTEM_STANDBY_CFG_RC );
+    lr1110_system_set_standby( this->device->GetRadio( ), LR1110_SYSTEM_STANDBY_CFG_RC );
 
     this->results.count_tx                = 0;
     this->results.count_rx_correct_packet = 0;
@@ -348,7 +336,7 @@ void DemoPingPong::SpecificStop( )
 
 void DemoPingPong::LogInfo( ) const
 {
-    this->log.Log(
+    this->communication_interface->Log(
         "Status: %s\n"
         "Counters:\n - rx ok: %u\n - tx ok: %u\n - rx timeout: %u\n"
         " - rx wrong: %u\n"
@@ -379,25 +367,25 @@ void DemoPingPong::SpecificInterruptHandler( )
 
 demo_ping_pong_status_t DemoPingPong::ConfigureRadio( ) const
 {
-    // 0. Reset the radio
-    DemoBase::ResetAndInitLr1110( this->radio );
+    // 0. Reset the device
+    this->device->ResetAndInit( );
 
     // 1. Set packet type
-    lr1110_radio_set_pkt_type( this->radio, this->settings.radio_settings->pkt_type );
+    lr1110_radio_set_pkt_type( this->device->GetRadio( ), this->settings.pkt_type );
 
     // 2. Set modulation and packet parameters
-    switch( this->settings.radio_settings->pkt_type )
+    switch( this->settings.pkt_type )
     {
     case LR1110_RADIO_PKT_TYPE_LORA:
     {
-        lr1110_radio_set_lora_mod_params( this->radio, &this->settings.radio_settings->modulation_lora );
-        lr1110_radio_set_lora_pkt_params( this->radio, &this->settings.radio_settings->packet_lora );
+        lr1110_radio_set_lora_mod_params( this->device->GetRadio( ), &this->settings.modulation_lora );
+        lr1110_radio_set_lora_pkt_params( this->device->GetRadio( ), &this->settings.packet_lora );
         break;
     }
     case LR1110_RADIO_PKT_TYPE_GFSK:
     {
-        lr1110_radio_set_gfsk_mod_params( this->radio, &this->settings.radio_settings->modulation_gfsk );
-        lr1110_radio_set_gfsk_pkt_params( this->radio, &this->settings.radio_settings->packet_gfsk );
+        lr1110_radio_set_gfsk_mod_params( this->device->GetRadio( ), &this->settings.modulation_gfsk );
+        lr1110_radio_set_gfsk_pkt_params( this->device->GetRadio( ), &this->settings.packet_gfsk );
         break;
     }
     default:
@@ -407,17 +395,16 @@ demo_ping_pong_status_t DemoPingPong::ConfigureRadio( ) const
     }
 
     // 3. Set RF frequency
-    lr1110_radio_set_rf_freq( this->radio, this->settings.radio_settings->rf_frequency );
+    lr1110_radio_set_rf_freq( this->device->GetRadio( ), this->settings.rf_frequency );
 
     // 4. Set PA configuration
-    lr1110_radio_set_pa_cfg( this->radio, &this->settings.radio_settings->pa_configuration );
+    lr1110_radio_set_pa_cfg( this->device->GetRadio( ), &this->settings.pa_configuration );
 
     // 5. Set tx output power
-    lr1110_radio_set_tx_params( this->radio, this->settings.radio_settings->tx_power,
-                                this->settings.radio_settings->pa_ramp_time );
+    lr1110_radio_set_tx_params( this->device->GetRadio( ), this->settings.tx_power, this->settings.pa_ramp_time );
 
     // 6. Enable IRQs
-    lr1110_system_set_dio_irq_params( this->radio, this->radio_interrupt_mask, 0 );
+    lr1110_system_set_dio_irq_params( this->device->GetRadio( ), this->radio_interrupt_mask, 0 );
 
     return DEMO_PING_PONG_STATUS_OK;
 }
@@ -428,24 +415,27 @@ void DemoPingPong::StartSendMessage( ) const
     {
     case DEMO_PING_PONG_MODE_MASTER:
     {
-        DemoPingPong::TransmitPayload( this->radio, this->payload_ping.content, this->payload_ping.size,
-                                       this->settings.tx_timeout );
+        DemoPingPong::TransmitPayload( this->device->GetRadio( ), this->payload_ping, this->settings.payload_length,
+                                       DEMO_PING_PONG_TX_TIMEOUT_DEFAULT );
         break;
     }
     case DEMO_PING_PONG_MODE_SLAVE:
     {
-        DemoPingPong::TransmitPayload( this->radio, this->payload_pong.content, this->payload_pong.size,
-                                       this->settings.tx_timeout );
+        DemoPingPong::TransmitPayload( this->device->GetRadio( ), this->payload_pong, this->settings.payload_length,
+                                       DEMO_PING_PONG_TX_TIMEOUT_DEFAULT );
         break;
     }
     }
 }
 
-void DemoPingPong::StartReceptionMessage( ) const { lr1110_radio_set_rx( this->radio, this->settings.rx_timeout ); }
+void DemoPingPong::StartReceptionMessage( ) const
+{
+    lr1110_radio_set_rx( this->device->GetRadio( ), DEMO_PING_PONG_RX_TIMEOUT_DEFAULT );
+}
 
 void DemoPingPong::EndReceptionMessage( ) const
 {
-    lr1110_system_set_standby( this->radio, LR1110_SYSTEM_STANDBY_CFG_RC );
+    lr1110_system_set_standby( this->device->GetRadio( ), LR1110_SYSTEM_STANDBY_CFG_RC );
 }
 
 void DemoPingPong::TransmitPayload( const void* radio, const uint8_t* payload, const uint8_t payload_size,
@@ -458,23 +448,23 @@ void DemoPingPong::TransmitPayload( const void* radio, const uint8_t* payload, c
 void DemoPingPong::FetchPayload( demo_ping_pong_fetched_payload_t* fetch_payload ) const
 {
     lr1110_radio_rx_buffer_status_t buffer_status = { 0 };
-    lr1110_radio_get_rx_buffer_status( this->radio, &buffer_status );
+    lr1110_radio_get_rx_buffer_status( this->device->GetRadio( ), &buffer_status );
     fetch_payload->received_payload.size = buffer_status.pld_len_in_bytes;
-    lr1110_regmem_read_buffer8( this->radio, fetch_payload->received_payload.content,
+    lr1110_regmem_read_buffer8( this->device->GetRadio( ), fetch_payload->received_payload.content,
                                 buffer_status.buffer_start_pointer, buffer_status.pld_len_in_bytes );
-    switch( this->settings.radio_settings->pkt_type )
+    switch( this->settings.pkt_type )
     {
     case LR1110_RADIO_PKT_TYPE_LORA:
     {
         lr1110_radio_pkt_status_lora_t packet_status = { 0 };
-        lr1110_radio_get_lora_pkt_status( this->radio, &packet_status );
+        lr1110_radio_get_lora_pkt_status( this->device->GetRadio( ), &packet_status );
         fetch_payload->rssi = packet_status.rssi_packet_in_dbm;
         break;
     }
     case LR1110_RADIO_PKT_TYPE_GFSK:
     {
         lr1110_radio_pkt_status_gfsk_t packet_status = { 0 };
-        lr1110_radio_get_gfsk_pkt_status( this->radio, &packet_status );
+        lr1110_radio_get_gfsk_pkt_status( this->device->GetRadio( ), &packet_status );
         fetch_payload->rssi = packet_status.rssi_avg_in_dbm;
         break;
     }
@@ -483,16 +473,16 @@ void DemoPingPong::FetchPayload( demo_ping_pong_fetched_payload_t* fetch_payload
 
 void DemoPingPong::FetchStatisticToResults( )
 {
-    switch( this->settings.radio_settings->pkt_type )
+    switch( this->settings.pkt_type )
     {
     case LR1110_RADIO_PKT_TYPE_LORA:
     {
-        lr1110_radio_get_lora_stats( this->radio, &this->results.statistics_lora );
+        lr1110_radio_get_lora_stats( this->device->GetRadio( ), &this->results.statistics_lora );
         break;
     }
     case LR1110_RADIO_PKT_TYPE_GFSK:
     {
-        lr1110_radio_get_gfsk_stats( this->radio, &this->results.statistics_gfsk );
+        lr1110_radio_get_gfsk_stats( this->device->GetRadio( ), &this->results.statistics_gfsk );
         break;
     }
     }
@@ -500,12 +490,16 @@ void DemoPingPong::FetchStatisticToResults( )
 
 bool DemoPingPong::IsPongPayload( const demo_ping_pong_rf_payload_t& payload ) const
 {
-    return DemoPingPong::ArePayloadEquals( this->payload_pong, payload );
+    demo_ping_pong_rf_payload_t payload_pong = { this->settings.payload_length, { 1 } };
+
+    return DemoPingPong::ArePayloadEquals( payload_pong, payload );
 }
 
 bool DemoPingPong::IsPingPayload( const demo_ping_pong_rf_payload_t& payload ) const
 {
-    return DemoPingPong::ArePayloadEquals( this->payload_ping, payload );
+    demo_ping_pong_rf_payload_t payload_ping = { this->settings.payload_length, { 0 } };
+
+    return DemoPingPong::ArePayloadEquals( payload_ping, payload );
 }
 
 bool DemoPingPong::ArePayloadEquals( const demo_ping_pong_rf_payload_t& expected,
@@ -530,5 +524,5 @@ bool DemoPingPong::ArePayloadEquals( const demo_ping_pong_rf_payload_t& expected
 
 void DemoPingPong::ClearRegisteredIrqs( ) const
 {
-    lr1110_system_clear_irq_status( this->radio, this->radio_interrupt_mask );
+    lr1110_system_clear_irq_status( this->device->GetRadio( ), this->radio_interrupt_mask );
 }

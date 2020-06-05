@@ -34,13 +34,8 @@
 #define TMP_BUFFER_REFRESH_LENGTH ( 30 )
 
 GuiRadioPingPong::GuiRadioPingPong( const GuiRadioSetting_t* settings, const GuiRadioPingPongResult_t* results )
-    : GuiCommon( ), settings( settings ), results( results )
+    : GuiCommon( GUI_PAGE_RADIO_PING_PONG ), settings( settings ), results( results )
 {
-    _pageType = GUI_PAGE_RADIO_PING_PONG;
-
-    this->screen = lv_obj_create( NULL, NULL );
-    lv_obj_set_style( this->screen, &( GuiCommon::screen_style ) );
-
     this->createHeader( "PING PONG" );
 
     this->createInfoFrame( &( this->info_frame ), &( this->lbl_info_frame_1 ), "", &( this->lbl_info_frame_2 ), "",
@@ -59,7 +54,7 @@ GuiRadioPingPong::GuiRadioPingPong( const GuiRadioSetting_t* settings, const Gui
     lv_obj_set_hidden( this->btn_stop, true );
 }
 
-GuiRadioPingPong::~GuiRadioPingPong( ) { lv_obj_del( this->screen ); }
+GuiRadioPingPong::~GuiRadioPingPong( ) {}
 
 void GuiRadioPingPong::init( )
 {

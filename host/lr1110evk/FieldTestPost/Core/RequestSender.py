@@ -34,6 +34,7 @@ from .ResponseBase import ResponseBase
 from .ExternalCoordinate import ExternalCoordinate
 from .GeoLocServiceClientBase import GeoLocServiceBadResponseStatus
 
+
 class RequestSenderException(Exception):
     pass
 
@@ -110,9 +111,9 @@ class RequestSender:
         up_link_request = GnssRequestFakeUplink(
             payload=gnss_data.nav_message,
             timestamp=utc_time,
-            aiding_coordinate=self.configuration.approximate_gnss_server_localization
+            aiding_coordinate=self.configuration.approximate_gnss_server_localization,
         )
-        request.append_device_request( self.device_eui, up_link_request)
+        request.append_device_request(self.device_eui, up_link_request)
         return request
 
     def get_geo_loc_service_for_request(self, request):
@@ -123,12 +124,20 @@ class RequestSender:
         try:
             response = geoloc_service.call_service_and_get_response(request.to_json())
         except GeoLocServiceBadResponseStatus as bad_response:
-            raise SolverContactException(reason="{}: {}".format(bad_response.bad_http_code_text, bad_response.erroneous_response))
+            raise SolverContactException(
+                reason="{}: {}".format(
+                    bad_response.bad_http_code_text, bad_response.erroneous_response
+                )
+            )
         return response
 
     def send_request(self, request):
         response = self.send_request_get_response(request)
-        self.print_if_verbose("Raw response from server:\n - HTTP: {}\n - {}\n".format(response.http_code, response.raw_response))
+        self.print_if_verbose(
+            "Raw response from server:\n - HTTP: {}\n - {}\n".format(
+                response.http_code, response.raw_response
+            )
+        )
         coordinate = response.estimated_coordinates
         accuracy = response.loc_accuracy
         self.print_if_verbose(
@@ -146,7 +155,7 @@ class RequestSender:
                 lr1110_version="unknown",
                 almanac_crc="unknown",
                 almanac_ages="unknown",
-                chip_uid="Unknown"
+                chip_uid="Unknown",
             )
         for key_scan_group in key_scan_result_groups:
             # key = key_scan_group[0]

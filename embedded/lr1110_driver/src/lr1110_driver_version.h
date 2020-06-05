@@ -32,21 +32,31 @@
 #ifndef __LR1110_DRIVER_VERSION_H__
 #define __LR1110_DRIVER_VERSION_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define LR1110_DRIVER_VERSION_MAJOR 2
 #define LR1110_DRIVER_VERSION_MINOR 0
-#define LR1110_DRIVER_VERSION_PATCH 0
+#define LR1110_DRIVER_VERSION_PATCH 1
 
 /*!
  * \brief Compare version information with current ones
  *
- * This macro expands to true boolean value if the version information provided in argument is compatible or
- * retro-compatible with the version of this code base
+ * This macro expands to true boolean value if the version information provided
+ * in argument is compatible or retro-compatible with the version of this code
+ * base
  */
-#define LR1110_DRIVER_VERSION_CHECK( x, y, z ) \
-    ( x == LR1110_DRIVER_VERSION_MAJOR &&      \
-      ( y < LR1110_DRIVER_VERSION_MINOR ||     \
-        ( y == LR1110_DRIVER_VERSION_MINOR && z <= LR1110_DRIVER_VERSION_PATCH ) ) )
+#define LR1110_DRIVER_VERSION_CHECK(x, y, z)                                   \
+  (x == LR1110_DRIVER_VERSION_MAJOR &&                                         \
+   (y < LR1110_DRIVER_VERSION_MINOR ||                                         \
+    (y == LR1110_DRIVER_VERSION_MINOR && z <= LR1110_DRIVER_VERSION_PATCH)))
 
-const char* lr1110_driver_version_get_version_string( void );
+  const char* lr1110_driver_version_get_version_string(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

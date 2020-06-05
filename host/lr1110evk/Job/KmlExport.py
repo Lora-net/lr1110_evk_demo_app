@@ -91,13 +91,15 @@ class kmlOutput:
 
         return style
 
-    def __add_kml_point(self, name, folder, coordinates, style, metadata=None, timestamp=None):
+    def __add_kml_point(
+        self, name, folder, coordinates, style, metadata=None, timestamp=None
+    ):
         placemark = ET.SubElement(folder, "Placemark", id=f"id_{name}")
 
         # Add Timestamp information if available
         if timestamp:
             kml_timestamp = ET.SubElement(placemark, "TimeStamp")
-            ET.SubElement(kml_timestamp, "when").text =timestamp.isoformat()
+            ET.SubElement(kml_timestamp, "when").text = timestamp.isoformat()
 
         placemark.append(style)
         ET.SubElement(placemark, "name").text = name
@@ -132,7 +134,12 @@ class kmlOutput:
             else:
                 instant_scan = None
             self.__add_kml_point(
-                name, self._folder_wifi, coordinates, self._style_orange, extended_data, timestamp=instant_scan
+                name,
+                self._folder_wifi,
+                coordinates,
+                self._style_orange,
+                extended_data,
+                timestamp=instant_scan,
             )
         elif localization_type == kmlOutput.SCAN_TYPE_GNSS:
             gps_sv = beidou_sv = 0
@@ -160,7 +167,12 @@ class kmlOutput:
             data = ET.SubElement(extended_data, "Data", name="nav")
             ET.SubElement(data, "value").text = f"{metadata.nav_message}"
             self.__add_kml_point(
-                name, self._folder_gnss, coordinates, self._style_green, extended_data, timestamp=metadata.instant_scan
+                name,
+                self._folder_gnss,
+                coordinates,
+                self._style_green,
+                extended_data,
+                timestamp=metadata.instant_scan,
             )
         elif localization_type == self.SCAN_TYPE_REFERENCE_COORDINATES:
             extended_data = ET.Element("ExtendedData")

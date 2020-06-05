@@ -32,11 +32,11 @@
 #ifndef __DEMO_WIFI_INTERFACE_H__
 #define __DEMO_WIFI_INTERFACE_H__
 
-#include "demo_base.h"
-#include "lr1110_wifi.h"
+#include "demo_transceiver_base.h"
 #include <stdint.h>
-
-#define DEMO_WIFI_MAX_RESULT_TOTAL 32
+#include "demo_base.h"
+#include "lr1110_wifi_types.h"
+#include "demo_wifi_types.h"
 
 typedef enum
 {
@@ -47,28 +47,11 @@ typedef enum
     DEMO_WIFI_TERMINATED,
 } demo_wifi_state_t;
 
-typedef struct
-{
-    lr1110_wifi_mac_address_t        mac_address;
-    lr1110_wifi_channel_t            channel;
-    lr1110_wifi_signal_type_result_t type;
-    int8_t                           rssi;
-    uint8_t                          country_code[LR1110_WIFI_STR_COUNTRY_CODE_SIZE];
-} demo_wifi_scan_single_result_t;
-
-typedef struct
-{
-    uint8_t                          nbrResults;
-    demo_wifi_scan_single_result_t   results[DEMO_WIFI_MAX_RESULT_TOTAL];
-    lr1110_wifi_cumulative_timings_t timings;
-    uint32_t                         global_consumption_uas;
-    bool                             error;
-} demo_wifi_scan_all_results_t;
-
-class DemoWifiInterface : public DemoBase
+class DemoWifiInterface : public DemoTransceiverBase
 {
    public:
-    explicit DemoWifiInterface( radio_t* radio, SignalingInterface* signaling );
+    explicit DemoWifiInterface( DeviceTransceiver* device, SignalingInterface* signaling,
+                                CommunicationInterface* communication_interface );
     virtual ~DemoWifiInterface( );
 
     virtual void Reset( );

@@ -32,13 +32,12 @@
 #include "command_get_almanac_dates.h"
 #include "com_code.h"
 #include "demo.h"
-#include "gnss_helper.h"
 #include <stdio.h>
 
 #define N_SATELLITES ( 128 )
 #define ALMANAC_DATES_STRING_MAX_LEN ( 3 * N_SATELLITES )
 
-CommandGetAlmanacDates::CommandGetAlmanacDates( radio_t* radio, Hci& hci ) : hci( &hci ), radio( radio ) {}
+CommandGetAlmanacDates::CommandGetAlmanacDates( DeviceBase* device, Hci& hci ) : hci( &hci ), device( device ) {}
 
 CommandGetAlmanacDates::~CommandGetAlmanacDates( ) {}
 
@@ -62,7 +61,7 @@ CommandEvent_t CommandGetAlmanacDates::Execute( )
     const uint16_t buffer_len                                    = ALMANAC_DATES_STRING_MAX_LEN;
 
     GnssHelperAlmanacDetails_t almanac_ages_and_crc = { 0 };
-    GnssHelper::GetAlmanacAgesAndCrcOfAllSatellites( this->radio, &almanac_ages_and_crc );
+    this->device->GetAlmanacAgesAndCrcOfAllSatellites( &almanac_ages_and_crc );
 
     for( uint8_t index_sat = 0; index_sat < N_SATELLITES; index_sat++ )
     {

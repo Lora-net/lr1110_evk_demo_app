@@ -31,29 +31,22 @@
 
 #include "guiMenuDemo.h"
 
-#define BUTTON_HEIGHT 40
-#define BUTTON_WIDTH 60
-#define LABEL_WIDTH 150
 #define MARGIN 10
 
-GuiMenuDemo::GuiMenuDemo( ) : GuiCommon( )
+GuiMenuDemo::GuiMenuDemo( ) : GuiMenuCommon( GUI_PAGE_MENU_DEMO )
 {
-    _pageType = GUI_PAGE_MENU_DEMO;
-
-    this->screen = lv_obj_create( NULL, NULL );
-    lv_obj_set_style( this->screen, &( GuiCommon::screen_style ) );
-
     this->createHeader( "DEMONSTRATIONS" );
 
-    this->createTestEntry( -70, &( this->lbl_wifi ), &( this->btn_wifi ), &( this->lbl_btn_wifi ), "Wi-Fi scan", true );
+    this->createTestEntry( -70, &( this->lbl_wifi ), &( this->btn_wifi ), &( this->lbl_btn_wifi ), "Wi-Fi scan", true,
+                           GuiMenuDemo::callback );
 
     this->createTestEntry( 0, &( this->lbl_gnss_autonomous ), &( this->btn_gnss_autonomous ),
                            &( this->lbl_btn_gnss_autonomous ), "GNSS autonomous",
-                           ( GuiCommon::_is_host_connected == true ) ? true : false );
+                           ( GuiCommon::_is_host_connected == true ) ? true : false, GuiMenuDemo::callback );
 
     this->createTestEntry( 70, &( this->lbl_gnss_assisted ), &( this->btn_gnss_assisted ),
                            &( this->lbl_btn_gnss_assisted ), "GNSS assisted",
-                           ( GuiCommon::_is_host_connected == true ) ? true : false );
+                           ( GuiCommon::_is_host_connected == true ) ? true : false, GuiMenuDemo::callback );
 
     this->createActionButton( &( this->btn_back ), "BACK", GuiMenuDemo::callback, GUI_BUTTON_POS_CENTER, -5, true );
 
@@ -76,7 +69,7 @@ GuiMenuDemo::GuiMenuDemo( ) : GuiCommon( )
     }
 }
 
-GuiMenuDemo::~GuiMenuDemo( ) { lv_obj_del( this->screen ); }
+GuiMenuDemo::~GuiMenuDemo( ) {}
 
 void GuiMenuDemo::draw( )
 {
@@ -100,32 +93,6 @@ void GuiMenuDemo::draw( )
     }
 
     lv_scr_load( this->screen );
-}
-
-void GuiMenuDemo::createTestEntry( int16_t y_pos, lv_obj_t** lbl, lv_obj_t** btn, lv_obj_t** lbl_btn,
-                                   const char* lbl_name, bool is_clickable )
-{
-    // Create the label
-    *lbl = lv_label_create( this->screen, NULL );
-    lv_obj_set_style( *lbl, &( GuiCommon::screen_style ) );
-    lv_label_set_long_mode( *lbl, LV_LABEL_LONG_BREAK );
-    lv_label_set_align( *lbl, LV_LABEL_ALIGN_LEFT );
-    lv_label_set_text( *lbl, lbl_name );
-    lv_obj_set_width( *lbl, LABEL_WIDTH );
-    lv_obj_align( *lbl, NULL, LV_ALIGN_IN_LEFT_MID, MARGIN, y_pos );
-
-    // Create the button
-    *btn = lv_btn_create( this->screen, NULL );
-    lv_btn_set_state( *btn, ( is_clickable == true ) ? LV_BTN_STATE_REL : LV_BTN_STATE_INA );
-    lv_obj_set_height( *btn, BUTTON_HEIGHT );
-    lv_obj_set_width( *btn, BUTTON_WIDTH );
-    lv_obj_set_event_cb( *btn, GuiMenuDemo::callback );
-    lv_obj_set_user_data( *btn, this );
-    lv_obj_align( *btn, NULL, LV_ALIGN_IN_RIGHT_MID, -MARGIN, y_pos );
-
-    // Create the label attached to the button
-    *lbl_btn = lv_label_create( *btn, NULL );
-    lv_label_set_text( *lbl_btn, "GO!" );
 }
 
 void GuiMenuDemo::updateHostConnectivityState( void )

@@ -1,5 +1,4 @@
 from .Commands import (
-    CommandConfigure,
     GnssOption,
     GnssCaptureMode,
     GnssAntennaSelection,
@@ -9,7 +8,10 @@ from .Commands import (
     CommandFetchResults,
     CommandReset,
     CommandSetDateLoc,
-    CommandStart,
+    CommandStartWifiScan,
+    CommandStartWifiCountryCode,
+    CommandStartGnssAutonomous,
+    CommandStartGnssAssisted,
     CommandStatus,
     CommandGetVersion,
     CommandGetAlmanacDates,

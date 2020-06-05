@@ -31,28 +31,18 @@
 
 #include "guiMenuRadioTestModes.h"
 
-#define BUTTON_HEIGHT 40
-#define BUTTON_WIDTH 60
-#define LABEL_WIDTH 150
-#define MARGIN 10
-
-GuiMenuRadioTestModes::GuiMenuRadioTestModes( ) : GuiCommon( )
+GuiMenuRadioTestModes::GuiMenuRadioTestModes( ) : GuiMenuCommon( GUI_PAGE_MENU_RADIO_TEST_MODES )
 {
-    _pageType = GUI_PAGE_MENU_RADIO_TEST_MODES;
-
-    this->screen = lv_obj_create( NULL, NULL );
-    lv_obj_set_style( this->screen, &( GuiCommon::screen_style ) );
-
     this->createHeader( "RADIO TEST MODES" );
 
     this->createTestEntry( -70, &( this->lbl_radio_tx_cw ), &( this->btn_radio_tx_cw ), &( this->lbl_btn_radio_tx_cw ),
-                           "TX Cont. Wave", true );
+                           "TX Cont. Wave", true, GuiMenuRadioTestModes::callback );
 
     this->createTestEntry( 0, &( this->lbl_radio_per ), &( this->btn_radio_per ), &( this->lbl_btn_radio_per ),
-                           "Packet Error Rate", true );
+                           "Packet Error Rate", true, GuiMenuRadioTestModes::callback );
 
     this->createTestEntry( 70, &( this->lbl_radio_ping_pong ), &( this->btn_radio_ping_pong ),
-                           &( this->lbl_btn_radio_ping_pong ), "Ping Pong", true );
+                           &( this->lbl_btn_radio_ping_pong ), "Ping Pong", true, GuiMenuRadioTestModes::callback );
 
     this->createActionButton( &( this->btn_back ), "BACK", GuiMenuRadioTestModes::callback, GUI_BUTTON_POS_CENTER, -5,
                               true );
@@ -61,35 +51,9 @@ GuiMenuRadioTestModes::GuiMenuRadioTestModes( ) : GuiCommon( )
                               -5, true );
 }
 
-GuiMenuRadioTestModes::~GuiMenuRadioTestModes( ) { lv_obj_del( this->screen ); }
+GuiMenuRadioTestModes::~GuiMenuRadioTestModes( ) {}
 
 void GuiMenuRadioTestModes::draw( ) { lv_scr_load( this->screen ); }
-
-void GuiMenuRadioTestModes::createTestEntry( int16_t y_pos, lv_obj_t** lbl, lv_obj_t** btn, lv_obj_t** lbl_btn,
-                                             const char* lbl_name, bool is_clickable )
-{
-    // Create the label
-    *lbl = lv_label_create( this->screen, NULL );
-    lv_obj_set_style( *lbl, &( GuiCommon::screen_style ) );
-    lv_label_set_long_mode( *lbl, LV_LABEL_LONG_BREAK );
-    lv_label_set_align( *lbl, LV_LABEL_ALIGN_LEFT );
-    lv_label_set_text( *lbl, lbl_name );
-    lv_obj_set_width( *lbl, LABEL_WIDTH );
-    lv_obj_align( *lbl, NULL, LV_ALIGN_IN_LEFT_MID, MARGIN, y_pos );
-
-    // Create the button
-    *btn = lv_btn_create( this->screen, NULL );
-    lv_btn_set_state( *btn, ( is_clickable == true ) ? LV_BTN_STATE_REL : LV_BTN_STATE_INA );
-    lv_obj_set_height( *btn, BUTTON_HEIGHT );
-    lv_obj_set_width( *btn, BUTTON_WIDTH );
-    lv_obj_set_event_cb( *btn, GuiMenuRadioTestModes::callback );
-    lv_obj_set_user_data( *btn, this );
-    lv_obj_align( *btn, NULL, LV_ALIGN_IN_RIGHT_MID, -MARGIN, y_pos );
-
-    // Create the label attached to the button
-    *lbl_btn = lv_label_create( *btn, NULL );
-    lv_label_set_text( *lbl_btn, "GO!" );
-}
 
 void GuiMenuRadioTestModes::callback( lv_obj_t* obj, lv_event_t event )
 {

@@ -33,8 +33,8 @@
 #include "com_code.h"
 #include "lr1110_gnss_types.h"
 
-CommandSetDateLoc::CommandSetDateLoc( radio_t* radio, Hci& hci, EnvironmentInterface& environment )
-    : CommandBase( radio, hci ), environment( environment )
+CommandSetDateLoc::CommandSetDateLoc( DeviceBase* device, Hci& hci, EnvironmentInterface& environment )
+    : CommandBase( device, hci ), environment( environment )
 {
 }
 

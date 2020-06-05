@@ -20,7 +20,6 @@ setup(
     install_requires=[
         "pyserial",
         "pyyaml",
-        "unidecode",
         "requests",
         "jsl",
         "jsonschema",

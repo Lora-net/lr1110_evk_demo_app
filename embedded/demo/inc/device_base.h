@@ -1,7 +1,7 @@
 /**
- * @file      gnss_helper.h
+ * @file      device_base.h
  *
- * \brief
+ * @brief     Definition of device base class.
  *
  * Revised BSD License
  * Copyright Semtech Corporation 2020. All rights reserved.
@@ -29,19 +29,18 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __GNSS_HELPER_H__
-#define __GNSS_HELPER_H__
+#ifndef __DEVICE_BASE_H__
+#define __DEVICE_BASE_H__
 
-#include <stdint.h>
-#include "lr1110_gnss_types.h"
 #include "configuration.h"
+#include "version.h"
 
-#define GNSS_HELPER_NUMBER_SATELLITES_ALMANAC_READ ( LR1110_GNSS_FULL_UPDATE_N_ALMANACS )
+#define GNSS_HELPER_NUMBER_SATELLITES_ALMANAC_READ ( 128 )
 
 typedef struct
 {
-    lr1110_gnss_satellite_id_t sv_id;
-    uint16_t                   almanac_age;
+    uint8_t  sv_id;
+    uint16_t almanac_age;
 } GnssHelperAgeAlmanac_t;
 
 typedef struct
@@ -50,36 +49,19 @@ typedef struct
     uint32_t               crc_almanac;
 } GnssHelperAlmanacDetails_t;
 
-class GnssHelper
+class DeviceBase
 {
    public:
-    virtual ~GnssHelper( );
-
-    /*!
-     * \brief Get the age and CRC 16bits of the almanac for the satellites given
-     * in arguments
-     *
-     * The age of the almanac is expressed in days since last GPS week rollback
-     *
-     * \param [in] sv_ids The list of satellite IDs to get almanac. Length must
-     * be at least n_sv
-     *
-     * \param [in] n_sv The number of satellites to get almanac from
-     *
-     * \param [out] age_per_satellites Array of uint16_t to be filled with age
-     * and CRC of the almanac for the satellites provided in input. The order in
-     * the array is the number of satellite IDs in sv_ids. It is up to the
-     * client of this method to provide a storage of at least n_sv structure for
-     * this array
-     */
-    static void GetAlmanacAgesAndCrcOfAllSatellites( radio_t* radio, GnssHelperAlmanacDetails_t* almanac_details );
-
-    static void UpdateAlmanac( radio_t* radio, const uint8_t* almanac_buffer, const uint8_t buffer_size );
-
-    static bool checkAlmanacUpdate( radio_t* radio, uint32_t expected_crc );
+    explicit DeviceBase( radio_t* radio );
+    virtual void ResetAndInit( )                                                                    = 0;
+    virtual void FetchVersion( version_handler_t& version_handler )                                 = 0;
+    virtual void GetAlmanacAgesAndCrcOfAllSatellites( GnssHelperAlmanacDetails_t* almanac_details ) = 0;
+    virtual void UpdateAlmanac( const uint8_t* almanac_buffer, const uint8_t buffer_size )          = 0;
+    virtual bool checkAlmanacUpdate( uint32_t expected_crc )                                        = 0;
+    radio_t*     GetRadio( ) const;
 
    protected:
-    GnssHelper( ){};
+    radio_t* radio;
 };
 
-#endif  // __GNSS_HELPER_H__
+#endif  // __DEVICE_BASE_H__

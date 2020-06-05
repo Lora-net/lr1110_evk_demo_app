@@ -34,13 +34,9 @@
 #define TMP_BUFFERS_REFRESH_LENGTH ( 30 )
 #define TMP_BUFFER_REVERSE_GEO_LOC_REFRESH_LENGTH ( 80 )
 
-GuiTestGnss::GuiTestGnss( const GuiGnssResult_t* results, guiPageType_t pageType ) : GuiCommon( ), _results( results )
+GuiTestGnss::GuiTestGnss( const GuiGnssResult_t* results, guiPageType_t pageType )
+    : GuiCommon( pageType ), _results( results )
 {
-    _pageType = pageType;
-
-    this->screen = lv_obj_create( NULL, NULL );
-    lv_obj_set_style( this->screen, &( GuiCommon::screen_style ) );
-
     switch( pageType )
     {
     case GUI_PAGE_GNSS_AUTONOMOUS_TEST:
@@ -69,7 +65,7 @@ GuiTestGnss::GuiTestGnss( const GuiGnssResult_t* results, guiPageType_t pageType
                            &( this->lbl_info_frame_2 ), "", &( this->lbl_info_frame_3 ), "" );
 }
 
-GuiTestGnss::~GuiTestGnss( ) { lv_obj_del( this->screen ); }
+GuiTestGnss::~GuiTestGnss( ) {}
 
 void GuiTestGnss::init( )
 {

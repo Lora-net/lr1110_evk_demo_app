@@ -33,13 +33,9 @@
 
 #define TMP_BUFFER_REFRESH_LENGTH ( 30 )
 
-GuiRadioTxCw::GuiRadioTxCw( const GuiRadioSetting_t* settings ) : GuiCommon( ), settings( settings )
+GuiRadioTxCw::GuiRadioTxCw( const GuiRadioSetting_t* settings )
+    : GuiCommon( GUI_PAGE_RADIO_TX_CW ), settings( settings )
 {
-    _pageType = GUI_PAGE_RADIO_TX_CW;
-
-    this->screen = lv_obj_create( NULL, NULL );
-    lv_obj_set_style( this->screen, &( GuiCommon::screen_style ) );
-
     this->createHeader( "TX CONTINUOUS WAVE" );
 
     this->createInfoFrame( &( this->info_frame ), &( this->lbl_info_frame_1 ), "", &( this->lbl_info_frame_2 ), "",
@@ -55,7 +51,7 @@ GuiRadioTxCw::GuiRadioTxCw( const GuiRadioSetting_t* settings ) : GuiCommon( ), 
     lv_obj_set_hidden( this->btn_stop, true );
 }
 
-GuiRadioTxCw::~GuiRadioTxCw( ) { lv_obj_del( this->screen ); }
+GuiRadioTxCw::~GuiRadioTxCw( ) {}
 
 void GuiRadioTxCw::init( )
 {
