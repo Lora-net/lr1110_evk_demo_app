@@ -182,6 +182,15 @@ def post_analyzis_fetch_results():
         default=None,
     )
     parser.add_argument(
+        "-i",
+        "--chip-id",
+        help="Force the Chip ID value when calling solver. (The chip ID is read from the version line in resultFile. If there is no version line and this flag is not used, then the default value is set to {})".format(
+            FileReader.DEFAULT_CHIP_UID_VERSION
+        ),
+        action="store",
+        default=None,
+    )
+    parser.add_argument(
         "--verbose", "-v", help="Verbose", action="store_true", default=False
     )
     parser.add_argument("--version", action="version", version=version)
@@ -191,11 +200,16 @@ def post_analyzis_fetch_results():
 
     request_sender = RequestSender(configuration)
     scan_results, version = FileReader.parse_file(args.resultFile)
-    request_sender.device_eui = version.chip_uid
+
+    if args.chip_id:
+        request_sender.device_eui = args.chip_id
+    else:
+        request_sender.device_eui = version.chip_uid
+
     output_file = args.outputFile
 
     scan_request_iterator = request_sender.build_request_group_iterator_from_result_lines(
-        scan_results, version
+        scan_results
     )
 
     urls_push = {

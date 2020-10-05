@@ -49,6 +49,7 @@ ResultLine = namedtuple("ResultLine", ["date", "job_counter", "job_id", "scan_in
 
 
 class FileReader:
+    DEFAULT_CHIP_UID_VERSION = "ff-ff-ff-ff-ff-ff-ff-ff"
     DATE_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
     VERSION_TOKEN = "# version:"
     REGEXP_LOG = re.compile(
@@ -77,6 +78,16 @@ class FileReader:
                     result_line = None
                 if result_line:
                     scanned_results.append(result_line)
+        if not version:
+            version = Version(
+                host_version="unknown",
+                demo_version="unknown",
+                driver_version="unknown",
+                lr1110_version="unknown",
+                almanac_crc="unknown",
+                almanac_ages="unknown",
+                chip_uid=FileReader.DEFAULT_CHIP_UID_VERSION,
+            )
         return scanned_results, version
 
     @staticmethod

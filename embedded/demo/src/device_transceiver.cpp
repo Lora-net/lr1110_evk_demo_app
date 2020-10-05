@@ -48,6 +48,7 @@ void DeviceTransceiver::ResetAndInit( )
     rf_switch_setup.enable                       = DEMO_COMMON_RF_SWITCH_ENABLE;
     rf_switch_setup.standby                      = DEMO_COMMON_RF_SWITCH_STANDBY;
     rf_switch_setup.tx                           = DEMO_COMMON_RF_SWITCH_TX;
+    rf_switch_setup.tx_hp                        = DEMO_COMMON_RF_SWITCH_TX_HP;
     rf_switch_setup.rx                           = DEMO_COMMON_RF_SWITCH_RX;
     rf_switch_setup.wifi                         = DEMO_COMMON_RF_SWITCH_WIFI;
     rf_switch_setup.gnss                         = DEMO_COMMON_RF_SWITCH_GNSS;

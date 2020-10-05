@@ -117,7 +117,7 @@ void CommandFetchResult::FetchWifiResults( const demo_wifi_scan_all_results_t& w
             local_result.mac_address[4],
             local_result.mac_address[5],
             local_result.channel,
-            local_result.type,
+            CommandFetchResult::ConvertWifiTypeToSerial( local_result.type ),
             ( uint8_t ) local_result.rssi,
             ( uint8_t )( ( local_detection_us & 0x000000FF ) >> 0 ),
             ( uint8_t )( ( local_detection_us & 0x0000FF00 ) >> 8 ),
@@ -192,4 +192,25 @@ uint8_t CommandFetchResult::AppendValueAtIndex( uint8_t* array, const uint16_t i
     array[index + 3] = ( uint8_t )( ( value & 0xFF000000 ) >> 24 );
 
     return 4;
+}
+
+uint8_t CommandFetchResult::ConvertWifiTypeToSerial( const demo_wifi_signal_type_t& wifi_result_type )
+{
+    uint8_t value = 0;
+    switch( wifi_result_type )
+    {
+    case DEMO_WIFI_TYPE_B:
+    {
+        value = 1;
+        break;
+    }
+
+    case DEMO_WIFI_TYPE_G:
+    case DEMO_WIFI_TYPE_N:
+    {
+        value = 2;
+        break;
+    }
+    }
+    return value;
 }

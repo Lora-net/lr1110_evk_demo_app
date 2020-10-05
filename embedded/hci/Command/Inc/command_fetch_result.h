@@ -67,6 +67,8 @@ class CommandFetchResult : public CommandInterface
      */
     static uint8_t AppendValueAtIndex( uint8_t* array, const uint16_t index, const uint32_t value );
 
+    static uint8_t ConvertWifiTypeToSerial( const demo_wifi_signal_type_t& wifi_result_type );
+
    private:
     Hci&                  hci;
     EnvironmentInterface& environment;

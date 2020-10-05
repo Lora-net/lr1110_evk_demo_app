@@ -27,7 +27,7 @@ Define Request sender class
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-from lr1110evk.BaseTypes import ScannedMacAddress, ScannedGnss, Version
+from lr1110evk.BaseTypes import ScannedMacAddress, ScannedGnss
 from .FileReader import FileReader
 from .RequestBase import RequestWifiGls, RequestGnssPerDevice, GnssRequestFakeUplink
 from .ResponseBase import ResponseBase
@@ -145,18 +145,8 @@ class RequestSender:
         )
         return coordinate
 
-    def build_request_group_iterator_from_result_lines(self, result_lines, versions):
+    def build_request_group_iterator_from_result_lines(self, result_lines):
         key_scan_result_groups = FileReader.generate_result_groups(result_lines)
-        if not versions:
-            versions = Version(
-                host_version="unknown",
-                demo_version="unknown",
-                driver_version="unknown",
-                lr1110_version="unknown",
-                almanac_crc="unknown",
-                almanac_ages="unknown",
-                chip_uid="Unknown",
-            )
         for key_scan_group in key_scan_result_groups:
             # key = key_scan_group[0]
             group_result_lines = list(key_scan_group[1])
