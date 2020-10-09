@@ -1,7 +1,6 @@
 from ..baseTypes import (
     HostDestination,
     GnssSolverDestination,
-    GnssDmcDestination,
     GnssSolverFrameTypeNoAssistance,
     GnssSolverFrameTypeNav,
     HostStatusBaseOk,
@@ -36,7 +35,7 @@ def id_to_class_mapper(class_list):
 
 class GetterFromId:
     ALL_DESTINATIONS = id_to_class_mapper(
-        [HostDestination, GnssSolverDestination, GnssDmcDestination]
+        [HostDestination, GnssSolverDestination]
     )
     ALL_GNSS_SOLVER_FRAME_TYPES = id_to_class_mapper(
         [GnssSolverFrameTypeNoAssistance, GnssSolverFrameTypeNav]

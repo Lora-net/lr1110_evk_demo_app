@@ -17,4 +17,4 @@ from .ResponseBase import (
     ResponseBase,
     ResponseBaseException,
 )
-from .RequestBase import RequestGnssPerDeviceFake, RequestWifiGls
+from .RequestBase import RequestGnssGls, RequestWifiGls

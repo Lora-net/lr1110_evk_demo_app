@@ -36,7 +36,7 @@
 
 #ifndef DEMO_VERSION
 #warning "No demo version provided"
-#define DEMO_VERSION "v1.3.1"
+#define DEMO_VERSION "v1.4.0"
 #endif
 
 typedef struct

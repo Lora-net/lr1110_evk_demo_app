@@ -163,89 +163,53 @@ class GeoLocServiceClientBase:
 
 
 class GeoLocServiceClientGnss(GeoLocServiceClientBase):
-    DEFAULT_BASE_URL = "https://das.loracloud.com"
-    DEFAULT_PATH_URL = "uplink/send"
+    DEFAULT_BASE_URL = "https://gls.loracloud.com"
+    DEFAULT_PATH_URL = "solve/gnss_lr1110_singleframe"
     DEFAULT_PORT = 443
-    DEFAULT_COMPATIBLE_VERSION_URL = "v1"
+    DEFAULT_COMPATIBLE_VERSION_URL = "v3"
 
     @staticmethod
     def build_header_from_authentication_token(authentication_token):
         return {
-            "Authorization": authentication_token,
+            "Ocp-Apim-Subscription-Key": authentication_token,
             "Content-Type": "application/json",
         }
 
-    def get_first_result(self, response_dict):
-        RESULT_KEY = "result"
-        # A result structure can have results for several devices. In the frame of the application
-        # we assume that there is only one result which is the one we want
-        all_results_dict = response_dict[RESULT_KEY]
-        first_result_key = list(all_results_dict.keys())[0]
-        result_first_device = all_results_dict[first_result_key][RESULT_KEY]
-        return result_first_device
-
-    def get_log_message_from_result(self, result_device):
-        LOG_MESSAGE_KEY = "log_messages"
-        LOG_MESSAGE_KEY_AGAIN = "logmsg"
-        return result_device[LOG_MESSAGE_KEY][0][LOG_MESSAGE_KEY_AGAIN]
+    def get_log_message_from_warning(self, response_dict):
+        LOG_MESSAGE_KEY = "warnings"
+        return response_dict[LOG_MESSAGE_KEY]
 
     def get_log_message_from_error(self, response_dict):
-        RESULT_KEY = "result"
-        ERROR_MESSAGE_KEY = "error"
-        # A result structure can have results for several devices. In the frame of the application
-        # we assume that there is only one result which is the one we want
-        all_results_dict = response_dict[RESULT_KEY]
-        first_error_key = list(all_results_dict.keys())[0]
-        error_first_device = all_results_dict[first_error_key][ERROR_MESSAGE_KEY]
-        print(error_first_device)
-        return error_first_device
+        ERROR_MESSAGE_KEY = "errors"
+        return response_dict[ERROR_MESSAGE_KEY]
 
-    def get_coordinate_accuracy_from_result(self, result_device):
-        POSITION_SOLUTION_KEY = "position_solution"
+    def get_coordinate_accuracy_from_result(self, response_dict):
+        RESULT_KEY = "result"
         ACCURACY_KEY = "accuracy"
         REFERENTIAL_KEY = "llh"
 
-        latitude = float(result_device[POSITION_SOLUTION_KEY][REFERENTIAL_KEY][0])
-        longitude = float(result_device[POSITION_SOLUTION_KEY][REFERENTIAL_KEY][1])
-        altitude = float(result_device[POSITION_SOLUTION_KEY][REFERENTIAL_KEY][2])
+        latitude = float(response_dict[RESULT_KEY][REFERENTIAL_KEY][0])
+        longitude = float(response_dict[RESULT_KEY][REFERENTIAL_KEY][1])
+        altitude = float(response_dict[RESULT_KEY][REFERENTIAL_KEY][2])
         coordinate = Coordinate(
             latitude=latitude, longitude=longitude, altitude=altitude
         )
-        accuracy = float(result_device[POSITION_SOLUTION_KEY][ACCURACY_KEY])
+        accuracy = float(response_dict[RESULT_KEY][ACCURACY_KEY])
         return coordinate, accuracy
 
     def build_response(self, http_code, response_text):
         response_dict = loads(response_text)
 
         try:
-            result_first_device = self.get_first_result(response_dict)
-        except TypeError as err:
-            if "NoneType" in str(err):
-                # It is due to the field "position_solution" set to null
-                failure_text = self.get_log_message_from_result(result_first_device)
-                response = ResponseFailureBase(
-                    http_code=http_code,
-                    raw_response=response_text,
-                    failure_reason_from_server=failure_text,
-                )
-                return response
-            raise err
-        except KeyError:
-            # It is due to the inexistance of the field result
-            failure_text = self.get_log_message_from_error(response_dict)
-            response = ResponseFailureBase(
-                http_code=http_code,
-                raw_response=response_text,
-                failure_reason_from_server=failure_text,
-            )
-            return response
-        try:
             coordinates, loc_accuracy = self.get_coordinate_accuracy_from_result(
-                result_first_device
+                response_dict
             )
         except TypeError as err:
             if "NoneType" in str(err):
-                failure_text = self.get_log_message_from_result(result_first_device)
+                failure_text = "errors: {}, warnings: {}".format(
+                    self.get_log_message_from_error(response_dict),
+                    self.get_log_message_from_warning(response_dict),
+                )
                 response = ResponseFailureBase(
                     http_code=http_code,
                     raw_response=response_text,

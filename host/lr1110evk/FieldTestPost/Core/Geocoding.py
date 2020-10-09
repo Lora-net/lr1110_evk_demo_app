@@ -27,7 +27,7 @@ Define Geocoding builder class
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-from yaml import load_all
+from yaml import load_all, SafeLoader
 from pkg_resources import resource_string
 from unicodedata import normalize
 
@@ -49,7 +49,9 @@ class GeocodingBuilder:
         self.name_aliases = None
 
     def load_names_aliases(self):
-        self.name_aliases = [doc for doc in load_all(self.geo_coding_file)]
+        self.name_aliases = [
+            doc for doc in load_all(self.geo_coding_file, Loader=SafeLoader)
+        ]
 
     def build_data(self, osm_json):
         road = GeocodingBuilder.extract_from_name_or_none(

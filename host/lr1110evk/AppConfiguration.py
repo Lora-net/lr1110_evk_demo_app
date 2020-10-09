@@ -31,7 +31,7 @@ class AppConfigurationBase:
 
     def _set_from_arguments(self, args):
         self.gnss_server = GeoLocServiceClientGnss.from_token_and_url_info(
-            args.dasAuthenticationToken,
+            args.glsAuthenticationToken,
             args.gnss_server_base_url,
             args.gnss_server_port,
             GeoLocServiceClientGnss.get_default_url_version(),

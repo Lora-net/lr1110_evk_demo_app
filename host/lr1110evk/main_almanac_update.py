@@ -48,13 +48,12 @@ def entry_point_update_almanac():
     default_device = "/dev/ttyACM0"
     default_baud = 921600
     default_log_filename = "log.log"
-    default_url_base = "https://das.loracloud.com"
+    default_url_base = "https://gls.loracloud.com"
 
     version = pkg_resources.get_distribution("lr1110evk").version
     parser = ArgumentParser()
     parser.add_argument(
-        "dasToken",
-        help="Authentication token to the Device And Application Server (DAS)",
+        "glsToken", help="Authentication token to the GeoLocation Server (GLS)",
     )
     parser.add_argument(
         "-u",
@@ -67,7 +66,7 @@ def entry_point_update_almanac():
     parser.add_argument(
         "-f",
         "--almanac-file",
-        help="Get the almanac information from a file instead of downloading it from web API. In this case the DAS token is not used",
+        help="Get the almanac information from a file instead of downloading it from web API. In this case the GLS token is not used",
         default=None,
     )
     parser.add_argument(
@@ -107,9 +106,9 @@ def entry_point_update_almanac():
         from base64 import decodebytes
 
         log_logger.log("Fetching almanac data from url {}...".format(args.url_base))
-        full_url_api = "{}/api/v1/almanac/full".format(args.url_base)
+        full_url_api = "{}/api/v3/almanac/full".format(args.url_base)
         request_header = {
-            "Authorization": args.dasToken,
+            "Ocp-Apim-Subscription-Key": args.glsToken,
             "Content-Type": "application/json",
         }
         almanac_server_response = requests.get(full_url_api, headers=request_header)

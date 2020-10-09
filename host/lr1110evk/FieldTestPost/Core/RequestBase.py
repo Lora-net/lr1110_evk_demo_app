@@ -43,11 +43,10 @@ class RequestBase:
         return self.to_json()
 
 
-class GnssRequestUplink:
-    def __init__(self, payload, timestamp, message_type, aiding_coordinate):
+class RequestGnssGls(RequestBase):
+    def __init__(self, payload, timestamp, aiding_coordinate):
         self.__payload = payload
         self.__timestamp = timestamp
-        self.__message_type = message_type
         self.__aiding_coordinate = aiding_coordinate
 
     @property
@@ -59,21 +58,17 @@ class GnssRequestUplink:
         return self.__timestamp
 
     @property
-    def message_type(self):
-        return self.__message_type
-
-    @property
     def aiding_coordinate(self):
         return self.__aiding_coordinate
 
-    def to_json_dict(self):
+    def _to_json_dict(self):
         json_dict = {
             "payload": self.payload[
                 2:
-            ],  # The very first byte is removed here. "Why?"" I heard you asked. "Because" is my answer.
-            "timestamp": self.timestamp,
-            "msgtype": self.message_type,
-            "gnss_capture_time": self.timestamp + 18 - 315964800,
+            ],  # The very first byte (destinationID) is removed here as it should not be sent to the solver
+            "gnss_capture_time": self.timestamp.replace(tzinfo=timezone.utc).timestamp()
+            + 18
+            - 315964800,
             # "capture_time_accuracy": 120,
         }
         if self.aiding_coordinate:
@@ -83,58 +78,6 @@ class GnssRequestUplink:
             ]
 
         return json_dict
-
-
-class GnssRequestFakeUplink(GnssRequestUplink):
-    FAKE_MESSAGE_TYPE = "gnss"
-
-    def __init__(self, payload, timestamp, aiding_coordinate):
-        super().__init__(
-            payload=payload,
-            timestamp=timestamp.replace(tzinfo=timezone.utc).timestamp(),
-            message_type=GnssRequestFakeUplink.FAKE_MESSAGE_TYPE,
-            aiding_coordinate=aiding_coordinate,
-        )
-
-
-class RequestGnssPerDevice(RequestBase):
-    def __init__(self):
-        self.__request_mapping = dict()
-
-    def append_device_request(self, dev_eui, uplink_request):
-        self.__request_mapping[dev_eui] = uplink_request
-
-    def _to_json_dict(self):
-        json_dict = {
-            dev_eui: request_uplink.to_json_dict()
-            for dev_eui, request_uplink in self.__request_mapping.items()
-        }
-        return json_dict
-
-
-import random
-
-
-class RequestGnssPerDeviceFake(RequestGnssPerDevice):
-    @staticmethod
-    def generate_random_device_eui():
-        def get_random_hex():
-            return random.randint(0, 255)
-
-        return "AA-AA-AA-00-00-{:02X}-{:02X}-{:02X}".format(
-            get_random_hex(), get_random_hex(), get_random_hex()
-        )
-
-    def append_device(self, nav_message, capture_instant, aiding_coordinate):
-        fake_uplink_request = GnssRequestFakeUplink(
-            payload=nav_message,
-            timestamp=capture_instant,
-            aiding_coordinate=aiding_coordinate,
-        )
-        fake_deveui = RequestGnssPerDeviceFake.generate_random_device_eui()
-        super().append_device_request(
-            dev_eui=fake_deveui, uplink_request=fake_uplink_request
-        )
 
 
 class RequestWifiGls(RequestBase):

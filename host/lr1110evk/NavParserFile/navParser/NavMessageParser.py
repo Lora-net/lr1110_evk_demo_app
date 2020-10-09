@@ -1,5 +1,5 @@
-from .navParser.navParser import NavParser
-from .navParser.baseTypes import GnssSolverDestination
+from .navParser import NavParser
+from .baseTypes import GnssSolverDestination
 
 
 class NavMessageParserException(Exception):
@@ -42,7 +42,7 @@ class NavMessageParser:
             raise NotGnssSolverDestinationException(parsed_nav_message.destination)
         for constellation in parsed_nav_message.constellation_results:
             for satellite in constellation.satellites:
-                satellite_id = satellite.satellite_name
-                c_n = satellite.status_info.c_n.get_name()
-                cn_vs_satellite_id[satellite_id] = c_n
+                satellite_name = satellite.satellite_name
+                c_n = satellite.c_n.get_name()
+                cn_vs_satellite_id[satellite_name] = c_n
         return cn_vs_satellite_id

@@ -116,10 +116,6 @@ def post_analyzis_fetch_results():
         help="HTTP header token to authenticate the Wi-Fi requests on LoRa Cloud Geolocation (GLS) server",
     )
     parser.add_argument(
-        "dasAuthenticationToken",
-        help="HTTP header token to authenticate the GNSS requests on LoRa Cloud Device and Application Services (DAS) server",
-    )
-    parser.add_argument(
         "-s",
         "--wifi-server-base-url",
         help="Wifi server base address to use (default={}".format(

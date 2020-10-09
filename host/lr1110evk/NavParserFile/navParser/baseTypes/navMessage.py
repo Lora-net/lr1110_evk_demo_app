@@ -1,7 +1,6 @@
 from .IdentifiableElement import (
     HostDestination,
     GnssSolverDestination,
-    GnssDmcDestination,
 )
 
 
@@ -60,15 +59,10 @@ class GnssSolverNavMessage(NavMessageBase):
         return self.__gps_time_indicator
 
     def __str__(self):
-        return (
-            f"- Assistance Position: {self.assistance_position}\n- GPS time indicator: {self.gps_time_indicator}\n- frame type: '{self.frame_type()}'"
-            + "\n- Constellations:\n - {}".format(
-                "\n - ".join(
-                    [str(constellation) for constellation in self.constellation_results]
-                )
+        return "- Assistance Position: {}\n- GPS time indicator: {}\n- frame type: '{}'".format(
+            self.assistance_position, self.gps_time_indicator, self.frame_type()
+        ) + "\n- Constellations:\n - {}".format(
+            "\n - ".join(
+                [str(constellation) for constellation in self.constellation_results]
             )
         )
-
-
-class GnssDmcNavMessage(NavMessageBase):
-    DESTINATION = GnssDmcDestination

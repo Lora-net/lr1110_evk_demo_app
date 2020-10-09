@@ -1,7 +1,6 @@
 from .IdentifiableElement import (
     HostDestination,
     GnssSolverDestination,
-    GnssDmcDestination,
     GnssSolverFrameTypeNoAssistance,
     GnssSolverFrameTypeNav,
     HostStatusBaseOk,
@@ -32,4 +31,4 @@ from .exceptions import (
     NavParserModulationTypeUnknownException,
 )
 
-from .navMessage import HostNavMessage, GnssSolverNavMessage, GnssDmcNavMessage
+from .navMessage import HostNavMessage, GnssSolverNavMessage

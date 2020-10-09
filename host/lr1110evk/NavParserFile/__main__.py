@@ -30,7 +30,7 @@ Define entry point for NAV message parser
 from argparse import ArgumentParser
 import pkg_resources
 from lr1110evk.NavParserFile.FileNavMessageParser import FileNavMessageParserInterpreter
-from NavParser.NavMessageParser import NavMessageParser
+from lr1110evk.NavParserFile.navParser.NavMessageParser import NavMessageParser
 
 
 def entry_point_nav_parser_file():

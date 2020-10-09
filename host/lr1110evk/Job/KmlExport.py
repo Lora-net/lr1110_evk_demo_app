@@ -30,8 +30,11 @@ Define KML file exporter class
 import xml.etree.cElementTree as ET
 from lr1110evk.BaseTypes import Coordinate, ScannedMacAddress, ScannedGnss
 from lr1110evk.BaseTypes.WifiChannels import WifiChannel
-from NavParser.NavMessageParser import NavMessageParser
-from NavParser.navParser import baseTypes
+from lr1110evk.NavParserFile import (
+    NavMessageParser,
+    GpsModulationType,
+    BeidouModulationType,
+)
 import os
 
 
@@ -148,9 +151,9 @@ class kmlOutput:
             nav_message = NavMessageParser.parse(nav_message)
             for constellation in nav_message.constellation_results:
                 modulation = constellation.modulation_type
-                if modulation == baseTypes.GpsModulationType:
+                if modulation == GpsModulationType:
                     gps_sv = len(constellation.satellites)
-                elif modulation == baseTypes.BeidouModulationType:
+                elif modulation == BeidouModulationType:
                     beidou_sv = len(constellation.satellites)
                 else:
                     raise NotImplementedError(

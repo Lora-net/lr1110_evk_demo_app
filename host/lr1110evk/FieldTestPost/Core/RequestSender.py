@@ -29,7 +29,7 @@ Define Request sender class
 
 from lr1110evk.BaseTypes import ScannedMacAddress, ScannedGnss
 from .FileReader import FileReader
-from .RequestBase import RequestWifiGls, RequestGnssPerDevice, GnssRequestFakeUplink
+from .RequestBase import RequestWifiGls, RequestGnssGls
 from .ResponseBase import ResponseBase
 from .ExternalCoordinate import ExternalCoordinate
 from .GeoLocServiceClientBase import GeoLocServiceBadResponseStatus
@@ -82,12 +82,12 @@ class RequestSender:
     def __init__(self, configuration):
         self.configuration = configuration
         self.TYPE_REQUEST_MAPPER = {
-            ScannedGnss: self.build_gnss_request_per_device,
+            ScannedGnss: self.build_gnss_requests,
             ScannedMacAddress: self.build_wifi_requests,
         }
         self.GEOLOC_SERVICE_MAPPER = {
             RequestWifiGls: self.configuration.wifi_server,
-            RequestGnssPerDevice: self.configuration.gnss_server,
+            RequestGnssGls: self.configuration.gnss_server,
         }
         self.device_eui = None
 
@@ -99,7 +99,7 @@ class RequestSender:
         request.macs = wifi_data
         return request
 
-    def build_gnss_request_per_device(self, gnss_scan):
+    def build_gnss_requests(self, gnss_scan):
         gnss_data = [data for data in gnss_scan if isinstance(data, ScannedGnss)]
         if len(gnss_data) > 1:
             raise TooManyNavMessagesException(gnss_data)
@@ -107,13 +107,11 @@ class RequestSender:
             raise NoNavMessageException()
         gnss_data = gnss_data[0]
         utc_time = gnss_data.instant_scan
-        request = RequestGnssPerDevice()
-        up_link_request = GnssRequestFakeUplink(
+        request = RequestGnssGls(
             payload=gnss_data.nav_message,
             timestamp=utc_time,
             aiding_coordinate=self.configuration.approximate_gnss_server_localization,
         )
-        request.append_device_request(self.device_eui, up_link_request)
         return request
 
     def get_geo_loc_service_for_request(self, request):

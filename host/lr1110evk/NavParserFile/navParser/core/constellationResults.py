@@ -17,7 +17,9 @@ class ConstellationResults:
 
     @staticmethod
     def from_nav_consumer(nav_consumer):
-        modulation_type = GetterFromId.get_modulation_type_from_id(nav_consumer.consume_field(4))
+        modulation_type = GetterFromId.get_modulation_type_from_id(
+            nav_consumer.consume_field(4)
+        )
         number_of_sv_raw = nav_consumer.consume_field(4)
         satellites = list()
         for _ in range(0, int.from_bytes(number_of_sv_raw, byteorder="little")):
@@ -28,4 +30,6 @@ class ConstellationResults:
         )
 
     def __str__(self):
-        return f"Modulation type: {self.modulation_type()!s}\n   - " + '\n   - '.join([str(sat) for sat in self.satellites])
+        return "Modulation type: {}\n   - ".format(
+            str(self.modulation_type())
+        ) + "\n   - ".join([str(sat) for sat in self.satellites])

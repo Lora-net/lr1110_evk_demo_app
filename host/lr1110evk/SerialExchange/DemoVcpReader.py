@@ -127,7 +127,7 @@ class VcpReader:
         self.storage.clear()
 
     def SendGnssDataToServer(self):
-        request = self.request_sender.build_gnss_request_per_device(self.storage)
+        request = self.request_sender.build_gnss_requests(self.storage)
         if self.embedded_version:
             request.embedded_versions = self.embedded_version
         self.print_if_verbose(

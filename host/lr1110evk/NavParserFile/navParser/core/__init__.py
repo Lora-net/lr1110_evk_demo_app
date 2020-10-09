@@ -4,6 +4,6 @@ from .navMessageConsumer import (
     NavMessageConsumerBitsExtractionOutOfBound,
 )
 from .satelliteResults import SatelliteResults
-from .satelliteInfo import SatelliteInfo
+from .cnGetterFromNav import CNGetterFromNav
 from .getterFromId import GetterFromId
 from .constellationResults import ConstellationResults

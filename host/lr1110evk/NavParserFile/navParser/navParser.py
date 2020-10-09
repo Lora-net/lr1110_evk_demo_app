@@ -1,10 +1,8 @@
 from .baseTypes import (
-    GnssDmcDestination,
     GnssSolverDestination,
     GnssSolverFrameTypeNav,
     HostDestination,
     GnssSolverDestination,
-    GnssDmcDestination,
     GnssSolverNavMessage,
     HostNavMessage,
 )
@@ -23,7 +21,6 @@ class NavParser:
         destination_to_builder_mapper = {
             HostDestination: cls.build_host_nav,
             GnssSolverDestination: cls.build_gnss_solver_nav,
-            GnssDmcDestination: cls.build_gnss_dmc_nav,
         }
         return destination_to_builder_mapper[destination]
 
@@ -40,10 +37,6 @@ class NavParser:
             nav_message, 8, 4
         )
         return GetterFromId.get_gnss_solver_frame_type_from_id(gnss_frame_type_raw)
-
-    @classmethod
-    def build_gnss_dmc_nav(cls, nav_consumer):
-        pass
 
     @classmethod
     def build_host_nav(cls, nav_consumer):
@@ -111,10 +104,3 @@ class NavParser:
         builder = cls.get_builder_from_destination(destination)
         nav_message = builder(nav_consumer)
         return nav_message
-
-
-if __name__ == "__main__":
-    nav_message_raw = bytes.fromhex(
-        "0101070808e210a8ef20e22e0014529bec007d0080a4522becb70e20513d41e5e9dd45b05a2115da3b8b67957d73c8f498caaa216e9aec23"
-    )
-    nav_message = NavParser.parse(nav_message_raw)

@@ -25,11 +25,6 @@ class GnssSolverDestination(DestinationBase):
     _name = "GNSS solver"
 
 
-class GnssDmcDestination(DestinationBase):
-    _id = b"\x02"
-    _name = "GNSS DMC"
-
-
 class GnssSolverFrameTypeBase(IdentifiedElements):
     def __str__(self):
         return "{}".format(self.get_name())
@@ -136,7 +131,7 @@ class CnRangeVeryLow(CnRangeBase):
 
 class ModulationTypeBase(IdentifiedElements):
     def __str__(self):
-        return f"{self.get_name()}"
+        return "{}".format(self.get_name())
 
 
 class GpsModulationType(ModulationTypeBase):

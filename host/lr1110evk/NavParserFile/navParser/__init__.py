@@ -1,12 +1,10 @@
 from .core import (
-    SatelliteInfo,
+    CNGetterFromNav,
     SatelliteResults,
     ConstellationResults,
-    NavMessageConsumerBitsExtractionOutOfBound
+    NavMessageConsumerBitsExtractionOutOfBound,
 )
 from .baseTypes import (
-    GnssDmcDestination,
-    GnssDmcNavMessage,
     GnssSolverDestination,
     GnssSolverFrameTypeNav,
     GnssSolverFrameTypeNoAssistance,
@@ -15,7 +13,10 @@ from .baseTypes import (
     CnRangeVeryHigh,
     CnRangeHigh,
     CnRangeLow,
-    CnRangeVeryLow
+    CnRangeVeryLow,
+    GpsModulationType,
+    BeidouModulationType,
 )
 
 from .navParser import NavParser
+from .NavMessageParser import NavMessageParser
