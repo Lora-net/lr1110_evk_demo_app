@@ -42,8 +42,7 @@ class GuiResultsGnss : public GuiCommon
     GuiResultsGnss( const GuiGnssResult_t* results, guiPageType_t pageType );
     virtual ~GuiResultsGnss( );
 
-    virtual void draw( );
-    virtual void updateResults( guiEvent_t event );
+    void findAndDisplayNextPage( bool up );
 
     static void callback( lv_obj_t* obj, lv_event_t event );
 
@@ -57,7 +56,6 @@ class GuiResultsGnss : public GuiCommon
     void                   setResults( );
     uint8_t                _pageTotal;
     uint8_t                _pageCurrent;
-    uint8_t                _index;
     const GuiGnssResult_t* _results;
 };
 

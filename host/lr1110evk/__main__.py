@@ -36,13 +36,24 @@ from .Job import (
 from .FieldTestPost.Core import GeoLocServiceClientGnss, GeoLocServiceClientWifi
 from .SerialExchange.DemoVcpReader import VcpReader
 from .AppConfiguration import DemoAppConfiguration
-from argparse import ArgumentParser
+from .Job import JobValidator
+from json import dumps
+from argparse import ArgumentParser, Action
 
 from datetime import datetime
 import pkg_resources
 from os import path, makedirs, getcwd
 from shutil import copyfile
 from serial.serialutil import SerialException
+
+
+class PrintJsonSchemaAction(Action):
+    def __init__(self, *args, **kwargs):
+        super().__init__(nargs=0, *args, **kwargs)
+
+    def __call__(self, parser, values, namespace, option_string):
+        print(dumps(JobValidator.get_schema(), indent=4))
+        parser.exit()
 
 
 def test_cli():
@@ -60,6 +71,13 @@ def test_cli():
         "-r",
         default=None,
         help="Name of the subdirectory that holds results files for the current run. Default is 'fieldTests_' with time appended.",
+    )
+    parser.add_argument(
+        "--json-schema",
+        "-j",
+        default=False,
+        action=PrintJsonSchemaAction,
+        help="Print the json schema of the job file and return",
     )
     parser.add_argument("jobFile")
     parser.add_argument("--version", action="version", version=version)

@@ -102,7 +102,7 @@ class FileReader:
             scan_line == ResultLogger.NO_RESULT_TOKEN
             or scan_line == ResultLogger.EXCEPTION_TOKEN
         ):
-            scan = f"Scan exception: {scan_line}"
+            scan = "Scan exception: {}".format(scan_line)
         else:
             try:
                 scan = ScannedMacAddress.from_csv_line(date_scan, scan_line)
@@ -113,7 +113,9 @@ class FileReader:
                     try:
                         scan = ExternalCoordinate.from_csv_line(scan_line)
                     except ExternalCoordinateMalformedCsvLineException as malformed_exc:
-                        scan = f"Malformed result: {malformed_exc.malformed_csv_line}"
+                        scan = "Malformed result: {}".format(
+                            malformed_exc.malformed_csv_line
+                        )
         result_line = ResultLine(
             date=date_scan, job_counter=job_counter, job_id=job_id, scan_info=scan
         )

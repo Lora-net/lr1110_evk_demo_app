@@ -40,9 +40,6 @@ class GuiResultsWifi : public GuiCommon
     GuiResultsWifi( const GuiWifiResult_t* results );
     virtual ~GuiResultsWifi( );
 
-    virtual void draw( );
-    virtual void updateResults( guiEvent_t event );
-
     static void callback( lv_obj_t* obj, lv_event_t event );
 
     lv_obj_t* table;
@@ -52,11 +49,12 @@ class GuiResultsWifi : public GuiCommon
     lv_obj_t* btn_back;
 
    private:
-    void                   findNextChannel( bool up );
-    void                   setChannelResults( );
-    bool                   _isSeveralPages;
-    uint8_t                _index;
-    const GuiWifiResult_t* _results;
+    void                          findAndDisplayFirstNonEmptyChannel( );
+    void                          findAndDisplayNextChannel( bool up );
+    void                          setChannelResults( );
+    uint8_t                       _index;
+    const GuiWifiResult_t*        _results;
+    const GuiWifiResultChannel_t* _current_chan;
 };
 
 #endif

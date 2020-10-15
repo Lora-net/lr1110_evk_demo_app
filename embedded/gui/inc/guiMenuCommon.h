@@ -40,7 +40,7 @@ class GuiMenuCommon : public GuiCommon
     GuiMenuCommon( guiPageType_t pageType );
     virtual ~GuiMenuCommon( );
 
-    void createTestEntry( int16_t y_pos, lv_obj_t** lbl, lv_obj_t** btn, lv_obj_t** lbl_btn, const char* lbl_name,
+    void createTestEntry( uint8_t index, lv_obj_t** lbl, lv_obj_t** btn, lv_obj_t** lbl_btn, const char* lbl_name,
                           bool is_clickable, lv_event_cb_t event_cb );
 };
 

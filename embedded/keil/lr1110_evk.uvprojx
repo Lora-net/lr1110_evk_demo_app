@@ -10,7 +10,7 @@
       <TargetName>stm32l476rg</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>6120000::V6.12::.\ARMCLANG</pCCUsed>
+      <pCCUsed>6140000::V6.14::ARMCLANG</pCCUsed>
       <uAC6>1</uAC6>
       <TargetOption>
         <TargetCommonOption>
@@ -185,6 +185,7 @@
             <uocXRam>0</uocXRam>
             <RvdsVP>2</RvdsVP>
             <RvdsMve>0</RvdsMve>
+            <RvdsCdeCp>0</RvdsCdeCp>
             <hadIRAM2>1</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
@@ -333,12 +334,12 @@
             <vShortWch>1</vShortWch>
             <v6Lto>0</v6Lto>
             <v6WtE>0</v6WtE>
-            <v6Rtti>0</v6Rtti>
+            <v6Rtti>1</v6Rtti>
             <VariousControls>
               <MiscControls>-Wno-deprecated-register</MiscControls>
               <Define>USE_FULL_LL_DRIVER, LV_CONF_INCLUDE_SIMPLE</Define>
               <Undefine></Undefine>
-              <IncludePath>..\lr1110_driver\src;..\STM32L4xx_HAL_Driver\Inc;..\STM32L4xx_HAL_Driver\Inc\Legacy;..\CMSIS\Core\Include;..\CMSIS\Device\ST\STM32L4xx\Include;..\application\inc;..\system\inc;..\gui\inc;..\display_touch\inc;..\supervisor\inc;..\communication\inc;..\demo\inc;..\hci\Command\Inc;..\hci;..\lvgl;..\lvgl\src;..\lvgl\src\lv_core;..\lvgl\src\lv_draw;..\lvgl\src\lv_font;..\lvgl\src\lv_hal;..\lvgl\src\lv_misc;..\lvgl\src\lv_objx;..\lvgl\src\lv_themes</IncludePath>
+              <IncludePath>..\lr1110_driver\src;..\STM32L4xx_HAL_Driver\Inc;..\STM32L4xx_HAL_Driver\Inc\Legacy;..\CMSIS\Core\Include;..\CMSIS\Device\ST\STM32L4xx\Include;..\application\inc;..\system\inc;..\gui\inc;..\display_touch\inc;..\supervisor\inc;..\demo\inc;..\hci\Command\Inc;..\hci;..\lvgl;..\lvgl\src;..\lvgl\src\lv_core;..\lvgl\src\lv_draw;..\lvgl\src\lv_font;..\lvgl\src\lv_hal;..\lvgl\src\lv_misc;..\lvgl\src\lv_objx;..\lvgl\src\lv_themes;..\communication\inc;..\lr1110_modem_driver\src;..\connectivity\inc;..\device\inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -351,7 +352,7 @@
             <NoWarn>0</NoWarn>
             <uSurpInc>0</uSurpInc>
             <useXO>0</useXO>
-            <uClangAs>0</uClangAs>
+            <ClangAsOpt>4</ClangAsOpt>
             <VariousControls>
               <MiscControls></MiscControls>
               <Define></Define>
@@ -396,6 +397,11 @@
               <FileName>timer_interface_implementation.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\application\src\timer_interface_implementation.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lr1110_modem_hal.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\src\lr1110_modem_hal.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -692,30 +698,30 @@
               <FileType>8</FileType>
               <FilePath>..\gui\src\guiMenuCommon.cpp</FilePath>
             </File>
+            <File>
+              <FileName>guiEui.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\gui\src\guiEui.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>guiConnectivity.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\gui\src\guiConnectivity.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>guiConfigGnssAssistancePosition.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\gui\src\guiConfigGnssAssistancePosition.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>communication</GroupName>
           <Files>
             <File>
-              <FileName>communication_demo.cpp</FileName>
+              <FileName>communication_utils.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\communication\src\communication_demo.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>communication_field_test.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\communication\src\communication_field_test.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>communication_interface.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\communication\src\communication_interface.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>communication_manager.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\communication\src\communication_manager.cpp</FilePath>
+              <FilePath>..\communication\src\communication_utils.cpp</FilePath>
             </File>
             <File>
               <FileName>communication_print_only.cpp</FileName>
@@ -723,9 +729,24 @@
               <FilePath>..\communication\src\communication_print_only.cpp</FilePath>
             </File>
             <File>
-              <FileName>communication_utils.cpp</FileName>
+              <FileName>communication_manager.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\communication\src\communication_utils.cpp</FilePath>
+              <FilePath>..\communication\src\communication_manager.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>communication_interface.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\communication\src\communication_interface.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>communication_field_test.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\communication\src\communication_field_test.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>communication_demo.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\communication\src\communication_demo.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -743,29 +764,19 @@
           <GroupName>demo</GroupName>
           <Files>
             <File>
-              <FileName>demo_base.cpp</FileName>
+              <FileName>demo_manager_interface.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\demo\src\demo_base.cpp</FilePath>
+              <FilePath>..\demo\src\demo_manager_interface.cpp</FilePath>
             </File>
             <File>
-              <FileName>demo.cpp</FileName>
+              <FileName>demo_transceiver_gnss_autonomous.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\demo\src\demo.cpp</FilePath>
+              <FilePath>..\demo\src\demo_transceiver_gnss_autonomous.cpp</FilePath>
             </File>
             <File>
-              <FileName>demo_gnss_autonomous.cpp</FileName>
+              <FileName>demo_transceiver_gnss_assisted.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\demo\src\demo_gnss_autonomous.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>demo_gnss_assisted.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\demo\src\demo_gnss_assisted.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>demo_gnss_base.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\demo\src\demo_gnss_base.cpp</FilePath>
+              <FilePath>..\demo\src\demo_transceiver_gnss_assisted.cpp</FilePath>
             </File>
             <File>
               <FileName>environment_interface.cpp</FileName>
@@ -773,59 +784,119 @@
               <FilePath>..\demo\src\environment_interface.cpp</FilePath>
             </File>
             <File>
-              <FileName>demo_wifi_interface.cpp</FileName>
+              <FileName>demo_transceiver_wifi_interface.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\demo\src\demo_wifi_interface.cpp</FilePath>
+              <FilePath>..\demo\src\demo_transceiver_wifi_interface.cpp</FilePath>
             </File>
             <File>
-              <FileName>demo_wifi_country_code.cpp</FileName>
+              <FileName>demo_transceiver_wifi_country_code.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\demo\src\demo_wifi_country_code.cpp</FilePath>
+              <FilePath>..\demo\src\demo_transceiver_wifi_country_code.cpp</FilePath>
             </File>
             <File>
-              <FileName>demo_wifi_scan.cpp</FileName>
+              <FileName>demo_transceiver_wifi_scan.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\demo\src\demo_wifi_scan.cpp</FilePath>
+              <FilePath>..\demo\src\demo_transceiver_wifi_scan.cpp</FilePath>
             </File>
             <File>
-              <FileName>demo_tx_cw.cpp</FileName>
+              <FileName>demo_transceiver_radio_tx_cw.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\demo\src\demo_tx_cw.cpp</FilePath>
+              <FilePath>..\demo\src\demo_transceiver_radio_tx_cw.cpp</FilePath>
             </File>
             <File>
-              <FileName>demo_ping_pong.cpp</FileName>
+              <FileName>demo_transceiver_radio_ping_pong.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\demo\src\demo_ping_pong.cpp</FilePath>
+              <FilePath>..\demo\src\demo_transceiver_radio_ping_pong.cpp</FilePath>
             </File>
             <File>
-              <FileName>demo_radio_per.cpp</FileName>
+              <FileName>demo_transceiver_radio_per.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\demo\src\demo_radio_per.cpp</FilePath>
+              <FilePath>..\demo\src\demo_transceiver_radio_per.cpp</FilePath>
             </File>
             <File>
-              <FileName>demo_radio_interface.cpp</FileName>
+              <FileName>demo_transceiver_radio_interface.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\demo\src\demo_radio_interface.cpp</FilePath>
+              <FilePath>..\demo\src\demo_transceiver_radio_interface.cpp</FilePath>
             </File>
             <File>
-              <FileName>device_transceiver.cpp</FileName>
+              <FileName>demo_interface.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\demo\src\device_transceiver.cpp</FilePath>
+              <FilePath>..\demo\src\demo_interface.cpp</FilePath>
             </File>
             <File>
-              <FileName>demo_transceiver_base.cpp</FileName>
+              <FileName>demo_transceiver_gnss_interface.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\demo\src\demo_transceiver_base.cpp</FilePath>
+              <FilePath>..\demo\src\demo_transceiver_gnss_interface.cpp</FilePath>
             </File>
             <File>
-              <FileName>device_base.cpp</FileName>
+              <FileName>demo_transceiver_interface.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\demo\src\device_base.cpp</FilePath>
+              <FilePath>..\demo\src\demo_transceiver_interface.cpp</FilePath>
             </File>
             <File>
-              <FileName>demo_wifi_types.cpp</FileName>
+              <FileName>demo_manager_transceiver.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\demo\src\demo_wifi_types.cpp</FilePath>
+              <FilePath>..\demo\src\demo_manager_transceiver.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>interruption_irq.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\demo\src\interruption_irq.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>interruption_modem.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\demo\src\interruption_modem.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>demo_manager_modem.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\demo\src\demo_manager_modem.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>demo_modem_gnss_assisted.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\demo\src\demo_modem_gnss_assisted.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>demo_modem_gnss_autonomous.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\demo\src\demo_modem_gnss_autonomous.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>demo_modem_gnss_interface.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\demo\src\demo_modem_gnss_interface.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>demo_modem_interface.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\demo\src\demo_modem_interface.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>demo_modem_wifi.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\demo\src\demo_modem_wifi.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>demo_modem_radio_converters.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\demo\src\demo_modem_radio_converters.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>demo_modem_radio_rx_continuous.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\demo\src\demo_modem_radio_rx_continuous.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>demo_modem_radio_tx_continuous.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\demo\src\demo_modem_radio_tx_continuous.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>demo_modem_radio_tx_cw.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\demo\src\demo_modem_radio_tx_cw.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1355,6 +1426,81 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>device</GroupName>
+          <Files>
+            <File>
+              <FileName>device_transceiver.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\device\src\device_transceiver.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>device_interface.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\device\src\device_interface.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>device_modem.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\device\src\device_modem.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>lr1110_modem_driver</GroupName>
+          <Files>
+            <File>
+              <FileName>lr1110_modem_driver_version.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\lr1110_modem_driver\src\lr1110_modem_driver_version.c</FilePath>
+            </File>
+            <File>
+              <FileName>lr1110_modem_gnss.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\lr1110_modem_driver\src\lr1110_modem_gnss.c</FilePath>
+            </File>
+            <File>
+              <FileName>lr1110_modem_lorawan.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\lr1110_modem_driver\src\lr1110_modem_lorawan.c</FilePath>
+            </File>
+            <File>
+              <FileName>lr1110_modem_system.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\lr1110_modem_driver\src\lr1110_modem_system.c</FilePath>
+            </File>
+            <File>
+              <FileName>lr1110_modem_wifi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\lr1110_modem_driver\src\lr1110_modem_wifi.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>connectivity_manager</GroupName>
+          <Files>
+            <File>
+              <FileName>connectivity_manager_interface.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\connectivity\src\connectivity_manager_interface.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>connectivity_manager_modem.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\connectivity\src\connectivity_manager_modem.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>connectivity_conversions.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\connectivity\src\connectivity_conversions.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>connectivity_manager_transceiver.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\connectivity\src\connectivity_manager_transceiver.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>::Compiler</GroupName>
         </Group>
       </Groups>
@@ -1373,5 +1519,20 @@
     </components>
     <files/>
   </RTE>
+
+  <LayerInfo>
+    <Layers>
+      <Layer>
+        <LayName>&lt;Project Info&gt;</LayName>
+        <LayDesc></LayDesc>
+        <LayUrl></LayUrl>
+        <LayKeys></LayKeys>
+        <LayCat></LayCat>
+        <LayLic></LayLic>
+        <LayTarg>0</LayTarg>
+        <LayPrjMark>1</LayPrjMark>
+      </Layer>
+    </Layers>
+  </LayerInfo>
 
 </Project>

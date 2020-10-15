@@ -40,19 +40,20 @@ class CommunicationPrintOnly : public CommunicationInterface
    public:
     CommunicationPrintOnly( );
     virtual ~CommunicationPrintOnly( );
-    virtual void Runtime( ) override;
-    virtual bool GetDateAndApproximateLocation( uint32_t& gps_second, float& latitude, float& longitude,
-                                                float& altitude ) override;
-    virtual bool GetResults( float& latitude, float& longitude, float& altitude, float& accuracy, char* geo_coding,
-                             const uint8_t geo_coding_max_length ) override;
-    virtual void vLog( const char* fmt, va_list argp ) override;
-    virtual void Store( const demo_wifi_scan_all_results_t& wifi_results );
-    virtual void Store( const demo_gnss_all_results_t& gnss_results, uint32_t delay_since_capture );
-    virtual void Store( const version_handler_t& version );
-    virtual void EraseDataStored( );
-    virtual void SendDataStoredToServer( );
-    virtual bool HasNewCommand( ) const override;
-    virtual CommandInterface* FetchCommand( ) override;
+
+    void              Runtime( ) override;
+    bool              GetDateAndApproximateLocation( uint32_t& gps_second, float& latitude, float& longitude,
+                                                     float& altitude ) override;
+    bool              GetResults( float& latitude, float& longitude, float& altitude, float& accuracy, char* geo_coding,
+                                  const uint8_t geo_coding_max_length ) override;
+    void              vLog( const char* fmt, va_list argp ) override;
+    void              Store( const demo_wifi_scan_all_results_t& wifi_results ) override;
+    void              Store( const demo_gnss_all_results_t& gnss_results, uint32_t delay_since_capture ) override;
+    void              Store( const version_handler_t& version ) override;
+    void              EraseDataStored( ) override;
+    void              SendDataStoredToServer( ) override;
+    bool              HasNewCommand( ) const override;
+    CommandInterface* FetchCommand( ) override;
 };
 
 #endif  // __COMMUNICATION_PRINT_ONLY_H__

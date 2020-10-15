@@ -33,16 +33,14 @@
 #define __GUI_CONFIG_GNSS_H__
 
 #include "guiCommon.h"
+#include "version.h"
 
 class GuiConfigGnss : public GuiCommon
 {
    public:
-    GuiConfigGnss( guiPageType_t pageType, GuiGnssDemoSetting_t* settings,
-                   const GuiGnssDemoSetting_t* settings_default );
+    GuiConfigGnss( guiPageType_t pageType, GuiGnssDemoSetting_t* settings, const GuiGnssDemoSetting_t* settings_default,
+                   version_handler_t* version_handler );
     virtual ~GuiConfigGnss( );
-
-    virtual void init( );
-    virtual void draw( );
 
     static void callback( lv_obj_t* obj, lv_event_t event );
     static void callbackSettings( lv_obj_t* obj, lv_event_t event );
@@ -67,4 +65,4 @@ class GuiConfigGnss : public GuiCommon
     const char* btnm_constellations_map[3] = { "GPS", "BEIDOU", "" };
 };
 
-#endif
+#endif  // __GUI_CONFIG_GNSS_H__

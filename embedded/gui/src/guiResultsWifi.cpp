@@ -31,18 +31,14 @@
 
 #include "guiResultsWifi.h"
 
-#define TMP_BUFFER_SET_CHANNEL_RESULTS_LENGTH ( 25 )
+#define TMP_BUFFER_CHANNEL_RESULTS_LENGTH ( 25 )
 
 GuiResultsWifi::GuiResultsWifi( const GuiWifiResult_t* results )
-    : GuiCommon( GUI_PAGE_WIFI_RESULTS ), _results( results )
+    : GuiCommon( GUI_PAGE_WIFI_RESULTS ), _results( results ), _current_chan( NULL )
 {
     this->createHeader( "Wi-Fi SCANNING - RESULTS" );
 
-    this->createActionButton( &( this->btn_back ), "BACK", GuiResultsWifi::callback, GUI_BUTTON_POS_CENTER, -5, true );
-
-    this->createActionButton( &( this->btn_left ), "<", GuiResultsWifi::callback, GUI_BUTTON_POS_LEFT, -5, false );
-
-    this->createActionButton( &( this->btn_right ), ">", GuiResultsWifi::callback, GUI_BUTTON_POS_RIGHT, -5, false );
+    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
 
     this->lbl_info_page = lv_label_create( this->screen, NULL );
     lv_obj_set_style( this->lbl_info_page, &( GuiCommon::screen_style ) );
@@ -60,120 +56,115 @@ GuiResultsWifi::GuiResultsWifi( const GuiWifiResult_t* results )
     lv_table_set_col_width( this->table, 0, 150 );
     lv_table_set_col_width( this->table, 1, 80 );
     lv_obj_align( this->table, NULL, LV_ALIGN_IN_TOP_MID, 0, 80 );
+
+    this->findAndDisplayFirstNonEmptyChannel( );
+
+    this->createActionButton( &( this->btn_back ), "BACK", GuiResultsWifi::callback, GUI_BUTTON_POS_CENTER, -5, true );
+
+    this->createActionButton(
+        &( this->btn_left ), "<", GuiResultsWifi::callback, GUI_BUTTON_POS_LEFT, -5,
+        ( this->_current_chan != NULL ) && ( this->_current_chan->nbMacAddr != this->_results->nbMacAddrTotal )
+            ? true
+            : false );
+
+    this->createActionButton(
+        &( this->btn_right ), ">", GuiResultsWifi::callback, GUI_BUTTON_POS_RIGHT, -5,
+        ( this->_current_chan != NULL ) && ( this->_current_chan->nbMacAddr != this->_results->nbMacAddrTotal )
+            ? true
+            : false );
+
+    lv_scr_load( this->screen );
 }
 
 GuiResultsWifi::~GuiResultsWifi( ) {}
 
-void GuiResultsWifi::draw( )
+void GuiResultsWifi::setChannelResults( )
 {
-    const GuiWifiResultChannel_t* chan = NULL;
+    char buffer[TMP_BUFFER_CHANNEL_RESULTS_LENGTH];
 
-    // Find the first non - empty channel
+    if( this->_index < GUI_WIFI_CHANNELS )
+    {
+        snprintf( buffer, TMP_BUFFER_CHANNEL_RESULTS_LENGTH, "Wi-Fi B Ch%i", ( this->_index + 1 ) );
+    }
+    else
+    {
+        snprintf( buffer, TMP_BUFFER_CHANNEL_RESULTS_LENGTH, "Wi-Fi G Ch%i", ( this->_index + 1 ) % GUI_WIFI_CHANNELS );
+    }
+
+    lv_label_set_text( this->lbl_info_page, buffer );
+
+    lv_table_set_row_cnt( this->table, this->_current_chan->nbMacAddr );
+
+    for( uint8_t index = 0; index < this->_current_chan->nbMacAddr; index++ )
+    {
+        lv_table_set_cell_value( this->table, index, 0, this->_current_chan->data[index].macAddr );
+        lv_table_set_cell_align( this->table, index, 0, LV_LABEL_ALIGN_LEFT );
+
+        snprintf( buffer, TMP_BUFFER_CHANNEL_RESULTS_LENGTH, "%idBm", this->_current_chan->data[index].rssi );
+        lv_table_set_cell_value( this->table, index, 1, buffer );
+        lv_table_set_cell_align( this->table, index, 1, LV_LABEL_ALIGN_RIGHT );
+    }
+}
+
+void GuiResultsWifi::findAndDisplayFirstNonEmptyChannel( )
+{
     for( uint8_t index = 0; index < GUI_WIFI_CHANNELS * 2; index++ )
     {
         if( index < GUI_WIFI_CHANNELS )
         {
-            if( _results->typeB.channel[index].nbMacAddr > 0 )
+            if( this->_results->typeB.channel[index].nbMacAddr > 0 )
             {
-                chan   = &_results->typeB.channel[index];
-                _index = index;
+                this->_current_chan = &_results->typeB.channel[index];
+                this->_index        = index;
                 break;
             }
         }
         else
         {
-            if( _results->typeG.channel[index % GUI_WIFI_CHANNELS].nbMacAddr > 0 )
+            if( this->_results->typeG.channel[index % GUI_WIFI_CHANNELS].nbMacAddr > 0 )
             {
-                chan   = &_results->typeG.channel[index % GUI_WIFI_CHANNELS];
-                _index = index;
+                this->_current_chan = &_results->typeG.channel[index % GUI_WIFI_CHANNELS];
+                this->_index        = index;
                 break;
             }
         }
     }
 
-    // Update navigation button states
-    if( ( chan != NULL ) && ( chan->nbMacAddr != _results->nbMacAddrTotal ) )
-    {
-        lv_btn_set_state( this->btn_left, LV_BTN_STATE_REL );
-        lv_btn_set_state( this->btn_right, LV_BTN_STATE_REL );
-    }
-    else
-    {
-        lv_btn_set_state( this->btn_left, LV_BTN_STATE_INA );
-        lv_btn_set_state( this->btn_right, LV_BTN_STATE_INA );
-    }
-
-    this->setChannelResults( );
-
-    lv_scr_load( this->screen );
-}
-
-void GuiResultsWifi::updateResults( guiEvent_t event )
-{
-    this->findNextChannel( ( event == GUI_EVENT_LEFT ) ? false : true );
     this->setChannelResults( );
 }
 
-void GuiResultsWifi::setChannelResults( )
-{
-    char                          buffer[TMP_BUFFER_SET_CHANNEL_RESULTS_LENGTH];
-    const GuiWifiResultChannel_t* chan;
-
-    // Create page information
-    if( this->_index < GUI_WIFI_CHANNELS )
-    {
-        chan = &_results->typeB.channel[this->_index];
-        snprintf( buffer, TMP_BUFFER_SET_CHANNEL_RESULTS_LENGTH, "Wi-Fi B Ch%i", ( this->_index + 1 ) );
-    }
-    else
-    {
-        chan = &_results->typeG.channel[this->_index % GUI_WIFI_CHANNELS];
-        snprintf( buffer, TMP_BUFFER_SET_CHANNEL_RESULTS_LENGTH, "Wi-Fi G Ch%i", ( _index + 1 ) % GUI_WIFI_CHANNELS );
-    }
-
-    lv_label_set_text( this->lbl_info_page, buffer );
-
-    lv_table_set_row_cnt( this->table, chan->nbMacAddr );
-
-    for( uint8_t index = 0; index < chan->nbMacAddr; index++ )
-    {
-        lv_table_set_cell_value( table, index, 0, chan->data[index].macAddr );
-        lv_table_set_cell_align( table, index, 0, LV_LABEL_ALIGN_LEFT );
-
-        snprintf( buffer, TMP_BUFFER_SET_CHANNEL_RESULTS_LENGTH, "%idBm", chan->data[index].rssi );
-        lv_table_set_cell_value( table, index, 1, buffer );
-        lv_table_set_cell_align( table, index, 1, LV_LABEL_ALIGN_RIGHT );
-    }
-}
-
-void GuiResultsWifi::findNextChannel( bool up )
+void GuiResultsWifi::findAndDisplayNextChannel( bool up )
 {
     while( true )
     {
         if( up == true )
         {
-            _index = ( _index + 1 ) % ( GUI_WIFI_CHANNELS * 2 );
+            this->_index = ( this->_index + 1 ) % ( GUI_WIFI_CHANNELS * 2 );
         }
         else
         {
-            _index = ( _index == 0 ) ? ( GUI_WIFI_CHANNELS * 2 - 1 ) : ( _index - 1 );
+            this->_index = ( this->_index == 0 ) ? ( GUI_WIFI_CHANNELS * 2 - 1 ) : ( this->_index - 1 );
         }
 
-        if( _index < GUI_WIFI_CHANNELS )
+        if( this->_index < GUI_WIFI_CHANNELS )
         {
-            if( _results->typeB.channel[_index].nbMacAddr > 0 )
+            if( this->_results->typeB.channel[this->_index].nbMacAddr > 0 )
             {
+                this->_current_chan = &_results->typeB.channel[this->_index];
                 break;
             }
         }
         else
         {
-            if( _results->typeG.channel[_index % GUI_WIFI_CHANNELS].nbMacAddr > 0 )
+            if( this->_results->typeG.channel[this->_index % GUI_WIFI_CHANNELS].nbMacAddr > 0 )
             {
+                this->_current_chan = &_results->typeG.channel[this->_index % GUI_WIFI_CHANNELS];
                 break;
             }
         }
     }
+
+    this->setChannelResults( );
 }
 
 void GuiResultsWifi::callback( lv_obj_t* obj, lv_event_t event )
@@ -188,11 +179,11 @@ void GuiResultsWifi::callback( lv_obj_t* obj, lv_event_t event )
         }
         else if( obj == self->btn_left )
         {
-            GuiCommon::_event = GUI_EVENT_LEFT;
+            self->findAndDisplayNextChannel( false );
         }
         else if( obj == self->btn_right )
         {
-            GuiCommon::_event = GUI_EVENT_RIGHT;
+            self->findAndDisplayNextChannel( true );
         }
     }
 }

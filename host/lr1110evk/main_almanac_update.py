@@ -28,7 +28,7 @@ Entry points for LR1110 Almanac update
 """
 
 import pkg_resources
-from argparse import ArgumentParser
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from .Job import (
     UpdateAlmanacCheckFailure,
     UpdateAlmanacDownloadFailure,
@@ -44,29 +44,116 @@ from .SerialExchange import (
 )
 
 
+class ServerSolver:
+    HUMAN_READABLE_NAME = None
+    DEFAULT_DOMAIN = None
+    DEFAULT_PATH = None
+    HEADER_AUTH_TOKEN = None
+    HEADER_CONTENT_TYPE_TOKEN = None
+
+    def __init__(self, domain, path):
+        self.__domain = domain
+        self.__path = path
+
+    def build_url(self):
+        return "{}/{}".format(self.domain, self.path)
+
+    def build_header(self, auth_value):
+        return {
+            self.get_header_auth_token(): auth_value,
+            self.get_header_content_type_token(): "application/json",
+        }
+
+    @property
+    def domain(self):
+        return self.__domain
+
+    @domain.setter
+    def domain(self, domain):
+        self.__domain = domain
+
+    @property
+    def path(self):
+        return self.__path
+
+    @path.setter
+    def path(self, path):
+        self.__path = path
+
+    @classmethod
+    def build_default_server_solver(cls):
+        return cls(domain=cls.DEFAULT_DOMAIN, path=cls.DEFAULT_PATH,)
+
+    @classmethod
+    def get_header_content_type_token(cls):
+        return cls.HEADER_CONTENT_TYPE_TOKEN
+
+    @classmethod
+    def get_header_auth_token(cls):
+        return cls.HEADER_AUTH_TOKEN
+
+    @classmethod
+    def get_human_readable_name(cls):
+        return cls.HUMAN_READABLE_NAME
+
+    def __str__(self):
+        return "{} ({})".format(self.get_human_readable_name(), self.build_url())
+
+
+class GlsServerSolver(ServerSolver):
+    HUMAN_READABLE_NAME = "GLS"
+    DEFAULT_DOMAIN = "https://gls.loracloud.com"
+    DEFAULT_PATH = "api/v3/almanac/full"
+    HEADER_AUTH_TOKEN = "Ocp-Apim-Subscription-Key"
+    HEADER_CONTENT_TYPE_TOKEN = "Content-Type"
+
+
+class DasServerSolver(ServerSolver):
+    HUMAN_READABLE_NAME = "DAS"
+    DEFAULT_DOMAIN = "https://das.loracloud.com"
+    DEFAULT_PATH = "api/v1/almanac/full"
+    HEADER_AUTH_TOKEN = "Authorization"
+    HEADER_CONTENT_TYPE_TOKEN = "Accept"
+
+
 def entry_point_update_almanac():
     default_device = "/dev/ttyACM0"
     default_baud = 921600
     default_log_filename = "log.log"
-    default_url_base = "https://gls.loracloud.com"
+    default_solver = DasServerSolver.build_default_server_solver()
+
+    description = """EVK Demo App companion software that update almanac of LR1110 device.
+    This software can fetch almanac from two servers:
+       - GeoLocation Server (GLS): default URL is {}
+       - Device and Application Server (DAS): default URL is {}
+    By default, {} server is used.
+
+    Optionnaly, almanac can also be read from file, which avoid contacting a server.""".format(
+        GlsServerSolver.build_default_server_solver().build_url(),
+        DasServerSolver.build_default_server_solver().build_url(),
+        default_solver,
+    )
 
     version = pkg_resources.get_distribution("lr1110evk").version
-    parser = ArgumentParser()
+    parser = ArgumentParser(
+        description=description, formatter_class=RawDescriptionHelpFormatter
+    )
     parser.add_argument(
-        "glsToken", help="Authentication token to the GeoLocation Server (GLS)",
+        "token", help="Authentication token to the selected server",
+    )
+    parser.add_argument(
+        "-g", "--gls", help="Use GLS server instead of DAS", action="store_true",
     )
     parser.add_argument(
         "-u",
-        "--url-base",
-        help="Base URL to use when fetching almanac. Default is {}".format(
-            default_url_base
-        ),
-        default=default_url_base,
+        "--url-domain",
+        help="Modify the domain name of the URL to use when fetching almanac",
+        default=None,
     )
     parser.add_argument(
         "-f",
         "--almanac-file",
-        help="Get the almanac information from a file instead of downloading it from web API. In this case the GLS token is not used",
+        help="Get the almanac information from a file instead of downloading it from web API. In this case the authentication server token is not used",
         default=None,
     )
     parser.add_argument(
@@ -92,6 +179,16 @@ def entry_point_update_almanac():
     parser.add_argument("--version", action="version", version=version)
     args = parser.parse_args()
 
+    # Check whether user wants GLS or DAS
+    if args.gls is True:
+        solver = GlsServerSolver.build_default_server_solver()
+    else:
+        solver = default_solver
+
+    # Checks whether user wants to override URL domain or path
+    if args.url_domain is not None:
+        solver.domain = args.url_domain
+
     log_logger = Logger(args.log_filename)
     log_logger.print_also_on_stdin = True
 
@@ -105,12 +202,10 @@ def entry_point_update_almanac():
         import requests
         from base64 import decodebytes
 
-        log_logger.log("Fetching almanac data from url {}...".format(args.url_base))
-        full_url_api = "{}/api/v3/almanac/full".format(args.url_base)
-        request_header = {
-            "Ocp-Apim-Subscription-Key": args.glsToken,
-            "Content-Type": "application/json",
-        }
+        full_url_api = solver.build_url()
+        log_logger.log("Fetching almanac data from url {}...".format(full_url_api))
+        request_header = solver.build_header(args.token)
+
         almanac_server_response = requests.get(full_url_api, headers=request_header)
 
         try:

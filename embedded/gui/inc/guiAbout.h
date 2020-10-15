@@ -42,8 +42,6 @@ class GuiAbout : public GuiCommon
     GuiAbout( version_handler_t* version_handler );
     virtual ~GuiAbout( );
 
-    virtual void draw( );
-
     static void callback( lv_obj_t* obj, lv_event_t event );
 
    private:

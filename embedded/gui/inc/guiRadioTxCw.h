@@ -40,12 +40,8 @@ class GuiRadioTxCw : public GuiCommon
     GuiRadioTxCw( const GuiRadioSetting_t* settings );
     virtual ~GuiRadioTxCw( );
 
-    virtual void init( );
-    virtual void draw( );
-    virtual void refresh( );
     virtual void start( );
     virtual void stop( );
-    virtual void updateHostConnectivityState( );
 
     static void callback( lv_obj_t* obj, lv_event_t event );
 

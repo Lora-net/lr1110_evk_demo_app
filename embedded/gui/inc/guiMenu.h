@@ -33,14 +33,13 @@
 #define __GUI_MENU_H__
 
 #include "guiMenuCommon.h"
+#include "version.h"
 
 class GuiMenu : public GuiMenuCommon
 {
    public:
-    GuiMenu( );
+    GuiMenu( version_handler_t* version_handler );
     virtual ~GuiMenu( );
-
-    virtual void draw( );
 
     static void callback( lv_obj_t* obj, lv_event_t event );
 
@@ -51,6 +50,12 @@ class GuiMenu : public GuiMenuCommon
     lv_obj_t* lbl_demos;
     lv_obj_t* btn_demos;
     lv_obj_t* lbl_btn_demos;
+    lv_obj_t* lbl_connectivity;
+    lv_obj_t* btn_connectivity;
+    lv_obj_t* lbl_btn_connectivity;
+    lv_obj_t* lbl_eui;
+    lv_obj_t* btn_eui;
+    lv_obj_t* lbl_btn_eui;
 };
 
 #endif

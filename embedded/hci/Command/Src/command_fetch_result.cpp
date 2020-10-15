@@ -37,7 +37,7 @@
 // later on
 #include "stm32l4xx_ll_utils.h"
 
-CommandFetchResult::CommandFetchResult( Hci& hci, EnvironmentInterface& environment, Demo& demo_holder )
+CommandFetchResult::CommandFetchResult( Hci& hci, EnvironmentInterface& environment, DemoManagerInterface& demo_holder )
     : hci( hci ), environment( environment ), demo_holder( demo_holder )
 {
 }
@@ -206,6 +206,11 @@ uint8_t CommandFetchResult::ConvertWifiTypeToSerial( const demo_wifi_signal_type
     }
 
     case DEMO_WIFI_TYPE_G:
+    {
+        value = 2;
+        break;
+    }
+
     case DEMO_WIFI_TYPE_N:
     {
         value = 2;

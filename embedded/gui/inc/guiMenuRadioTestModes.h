@@ -33,14 +33,13 @@
 #define __GUI_MENU_RADIO_TEST_MODES_H__
 
 #include "guiMenuCommon.h"
+#include "version.h"
 
 class GuiMenuRadioTestModes : public GuiMenuCommon
 {
    public:
-    GuiMenuRadioTestModes( );
+    GuiMenuRadioTestModes( version_handler_t* version_handler );
     virtual ~GuiMenuRadioTestModes( );
-
-    virtual void draw( );
 
     static void callback( lv_obj_t* obj, lv_event_t event );
 

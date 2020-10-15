@@ -307,7 +307,9 @@ class GeoLocServiceClientReverseGeoCoding(GeoLocServiceClientBase):
         )
 
     def produce_response_from_request(self, request_data: Coordinate):
-        url_request = f"{self.server_address}?latitude={request_data.latitude}&longitude={request_data.longitude}"
+        url_request = "{}?latitude={}&longitude={}".format(
+            self.server_address, request_data.latitude, request_data.longitude
+        )
         response = requests.get(url=url_request,)
         return response
 

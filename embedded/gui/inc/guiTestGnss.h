@@ -37,14 +37,13 @@
 class GuiTestGnss : public GuiCommon
 {
    public:
-    GuiTestGnss( const GuiGnssResult_t* results, guiPageType_t pageType );
+    GuiTestGnss( const GuiGnssResult_t* results, guiPageType_t pageType, bool at_least_one_scan_done );
     virtual ~GuiTestGnss( );
 
-    virtual void init( );
     virtual void start( );
-    virtual void draw( );
     virtual void refresh( );
     virtual void updateHostConnectivityState( void );
+    virtual void updateNetworkConnectivityState( );
 
     static void callback( lv_obj_t* obj, lv_event_t event );
 
@@ -57,8 +56,10 @@ class GuiTestGnss : public GuiCommon
     lv_obj_t* btn_send;
     lv_obj_t* btn_back;
     lv_obj_t* btn_config;
+    lv_obj_t* btn_assist;
 
    private:
+    void                   updateButtons( );
     const GuiGnssResult_t* _results;
 };
 

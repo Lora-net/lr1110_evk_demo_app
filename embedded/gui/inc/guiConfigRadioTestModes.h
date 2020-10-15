@@ -33,15 +33,14 @@
 #define __GUI_CONFIG_RADIO_TEST_MODES_H__
 
 #include "guiCommon.h"
+#include "version.h"
 
 class GuiConfigRadioTestModes : public GuiCommon
 {
    public:
-    GuiConfigRadioTestModes( GuiRadioSetting_t* settings_current, const GuiRadioSetting_t* settings_default );
+    GuiConfigRadioTestModes( GuiRadioSetting_t* settings_current, const GuiRadioSetting_t* settings_default,
+                             version_handler_t* version_handler );
     virtual ~GuiConfigRadioTestModes( );
-
-    virtual void init( );
-    virtual void draw( );
 
     void ConfigParamGeneric( );
     void ConfigParamLora( );
@@ -96,6 +95,8 @@ class GuiConfigRadioTestModes : public GuiCommon
     GuiRadioSetting_t        settings_temp;
     GuiRadioSetting_t*       settings_current;
     const GuiRadioSetting_t* settings_default;
+
+    version_device_type_t device_type;
 };
 
 #endif  // __GUI_CONFIG_RADIO_TEST_MODES_H__

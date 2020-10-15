@@ -43,54 +43,43 @@ Gui::Gui( ) : refresh_pending( false ), event( GUI_LAST_EVENT_NONE )
 
 Gui::~Gui( ) {}
 
-void Gui::Init( GuiDemoSettings_t* settings, GuiDemoSettings_t* settings_default, version_handler_t* version_handler )
+void Gui::Init( GuiDemoSettings_t* settings, GuiDemoSettings_t* settings_default,
+                GuiGnssDemoAssistancePosition_t* assistance_position,
+                GuiGnssDemoAssistancePosition_t* assistance_position_default, version_handler_t* version_handler )
 {
-    this->demo_settings         = *settings;
-    this->demo_settings_default = *settings_default;
-    this->version_handler       = version_handler;
+    this->demo_settings                             = *settings;
+    this->demo_settings_default                     = *settings_default;
+    this->gnss_assistance_position                  = *assistance_position;
+    this->gnss_assistance_position_default          = *assistance_position_default;
+    this->version_handler                           = version_handler;
+    this->network_connectivity_settings.region      = GUI_NETWORK_CONNECTIVITY_REGION_EU868;
+    this->network_connectivity_settings.adr_profile = GUI_NETWORK_CONNECTIVITY_ADR_NETWORK_SERVER_CONTROLLED;
 
-    guiPages.guiSplashscreen = new GuiSplashScreen( );
-
-    guiPages.guiAbout = new GuiAbout( this->version_handler );
-
-    guiPages.guiMenu = new GuiMenu( );
-
-    guiPages.guiMenuRadioTestModes   = new GuiMenuRadioTestModes( );
-    guiPages.guiConfigRadioTestModes = new GuiConfigRadioTestModes( &( this->demo_settings.radio_settings ),
-                                                                    &( this->demo_settings_default.radio_settings ) );
-
-    guiPages.guiMenuDemo = new GuiMenuDemo( );
-
-    guiPages.guiCurrent = guiPages.guiSplashscreen;
-    guiPages.guiNext    = guiPages.guiCurrent;
-    guiPages.guiCurrent->draw( );
-
-    this->demo_results.wifi_result.nbMacAddrTotal = 0;
+    this->guiCurrent = new GuiSplashScreen( this->version_handler );
 }
 
 void Gui::Runtime( )
 {
-    guiEvent_t event_from_display;
+    guiEvent_t    event_from_display = GUI_EVENT_NONE;
+    guiPageType_t next_page_type     = GUI_PAGE_NONE;
 
-    event_from_display = guiPages.guiCurrent->getAndClearEvent( );
+    this->event = GUI_LAST_EVENT_NONE;
+
+    event_from_display = this->guiCurrent->getAndClearEvent( );
 
     if( event_from_display != GUI_EVENT_NONE )
     {
-        switch( guiPages.guiCurrent->getType( ) )
+        switch( this->guiCurrent->getType( ) )
         {
         case GUI_PAGE_SPLASHSCREEN:
         {
             switch( event_from_display )
             {
             case GUI_EVENT_NEXT:
-                delete guiPages.guiSplashscreen;
-                delete guiPages.guiAbout;
-                guiPages.guiSplashscreen = NULL;
-                guiPages.guiAbout        = NULL;
-                this->guiPages.guiNext   = this->guiPages.guiMenu;
+                next_page_type = GUI_PAGE_MENU;
                 break;
             case GUI_EVENT_ABOUT:
-                this->guiPages.guiNext = this->guiPages.guiAbout;
+                next_page_type = GUI_PAGE_ABOUT;
                 break;
             default:
                 break;
@@ -103,7 +92,7 @@ void Gui::Runtime( )
             switch( event_from_display )
             {
             case GUI_EVENT_BACK:
-                this->guiPages.guiNext = this->guiPages.guiSplashscreen;
+                next_page_type = GUI_PAGE_SPLASHSCREEN;
                 break;
             default:
                 break;
@@ -116,10 +105,54 @@ void Gui::Runtime( )
             switch( event_from_display )
             {
             case GUI_EVENT_LAUNCH_RADIO_TEST_MODE:
-                this->guiPages.guiNext = this->guiPages.guiMenuRadioTestModes;
+                next_page_type = GUI_PAGE_MENU_RADIO_TEST_MODES;
                 break;
             case GUI_EVENT_LAUNCH_DEMO:
-                this->guiPages.guiNext = this->guiPages.guiMenuDemo;
+                next_page_type = GUI_PAGE_MENU_DEMO;
+                break;
+            case GUI_EVENT_LAUNCH_CONNECTIVITY:
+                next_page_type = GUI_PAGE_CONNECTIVITY;
+                break;
+            case GUI_EVENT_EUI:
+                next_page_type = GUI_PAGE_EUI;
+                break;
+            default:
+                break;
+            }
+            break;
+        }
+
+        case GUI_PAGE_CONNECTIVITY:
+        {
+            switch( event_from_display )
+            {
+            case GUI_EVENT_JOIN:
+                this->event = GUI_LAST_EVENT_JOIN;
+                break;
+            case GUI_EVENT_ABORT:
+                this->event = GUI_LAST_EVENT_LEAVE;
+                break;
+            case GUI_EVENT_LEAVE:
+                this->event = GUI_LAST_EVENT_LEAVE;
+                break;
+            case GUI_EVENT_RESTORE_EUI_KEYS:
+                this->event = GUI_LAST_EVENT_RESET_SEMTECH_DEFAULT_COMMISSIONING;
+                break;
+            case GUI_EVENT_BACK:
+                next_page_type = GUI_PAGE_MENU;
+                break;
+            default:
+                break;
+            }
+            break;
+        }
+
+        case GUI_PAGE_EUI:
+        {
+            switch( event_from_display )
+            {
+            case GUI_EVENT_BACK:
+                next_page_type = GUI_PAGE_MENU;
                 break;
             default:
                 break;
@@ -132,28 +165,20 @@ void Gui::Runtime( )
             switch( event_from_display )
             {
             case GUI_EVENT_START_TX_CW:
-                this->guiPages.guiRadioTxCw = new GuiRadioTxCw( &( this->demo_settings.radio_settings ) );
-                this->guiPages.guiNext      = this->guiPages.guiRadioTxCw;
-                this->guiPages.guiNext->init( );
+                next_page_type = GUI_PAGE_RADIO_TX_CW;
                 break;
             case GUI_EVENT_START_PER_TX:
             case GUI_EVENT_START_PER_RX:
-                this->guiPages.guiRadioPer = new GuiRadioPer( &( this->demo_settings.radio_settings ),
-                                                              &( this->demo_results.radio_per_result ) );
-                this->guiPages.guiNext     = this->guiPages.guiRadioPer;
-                this->guiPages.guiNext->init( );
+                next_page_type = GUI_PAGE_RADIO_PER;
                 break;
             case GUI_EVENT_START_PING_PONG:
-                this->guiPages.guiRadioPingPong = new GuiRadioPingPong( &( this->demo_settings.radio_settings ),
-                                                                        &( this->demo_results.radio_pingpong_result ) );
-                this->guiPages.guiNext          = this->guiPages.guiRadioPingPong;
-                this->guiPages.guiNext->init( );
+                next_page_type = GUI_PAGE_RADIO_PING_PONG;
                 break;
             case GUI_EVENT_CONFIG:
-                this->guiPages.guiNext = this->guiPages.guiConfigRadioTestModes;
+                next_page_type = GUI_PAGE_RADIO_TEST_MODES_CONFIG;
                 break;
             case GUI_EVENT_BACK:
-                this->guiPages.guiNext = this->guiPages.guiMenu;
+                next_page_type = GUI_PAGE_MENU;
                 break;
             default:
                 break;
@@ -166,11 +191,11 @@ void Gui::Runtime( )
             switch( event_from_display )
             {
             case GUI_EVENT_BACK:
-                this->guiPages.guiNext = this->guiPages.guiMenuRadioTestModes;
+                next_page_type = GUI_PAGE_MENU_RADIO_TEST_MODES;
                 break;
             case GUI_EVENT_SAVE:
-                guiPages.guiNext = guiPages.guiMenuRadioTestModes;
-                this->event      = GUI_LAST_EVENT_UPDATE_DEMO_RADIO;
+                next_page_type = GUI_PAGE_MENU_RADIO_TEST_MODES;
+                this->event    = GUI_LAST_EVENT_UPDATE_DEMO_RADIO;
                 break;
             default:
                 break;
@@ -183,18 +208,18 @@ void Gui::Runtime( )
             switch( event_from_display )
             {
             case GUI_EVENT_START_TX_CW:
-                this->guiPages.guiCurrent->start( );
+                this->guiCurrent->start( );
                 this->event = GUI_LAST_EVENT_START_DEMO_TX_CW;
                 break;
             case GUI_EVENT_STOP:
-                this->guiPages.guiCurrent->stop( );
+                this->guiCurrent->stop( );
                 this->event = GUI_LAST_EVENT_STOP_DEMO;
                 break;
             case GUI_EVENT_BACK:
-                delete this->guiPages.guiRadioTxCw;
-                this->guiPages.guiRadioTxCw = NULL;
-                this->guiPages.guiNext      = this->guiPages.guiMenuRadioTestModes;
-                this->event                 = GUI_LAST_EVENT_STOP_DEMO;
+                next_page_type = GUI_PAGE_MENU_RADIO_TEST_MODES;
+                this->event    = GUI_LAST_EVENT_STOP_DEMO;
+                break;
+            default:
                 break;
             }
             break;
@@ -205,22 +230,22 @@ void Gui::Runtime( )
             switch( event_from_display )
             {
             case GUI_EVENT_START_PER_TX:
-                this->guiPages.guiCurrent->start( );
+                this->guiCurrent->start( );
                 this->event = GUI_LAST_EVENT_START_DEMO_PER_TX;
                 break;
             case GUI_EVENT_START_PER_RX:
-                this->guiPages.guiCurrent->start( );
+                this->guiCurrent->start( );
                 this->event = GUI_LAST_EVENT_START_DEMO_PER_RX;
                 break;
             case GUI_EVENT_STOP:
-                this->guiPages.guiCurrent->stop( );
+                this->guiCurrent->stop( );
                 this->event = GUI_LAST_EVENT_STOP_DEMO;
                 break;
             case GUI_EVENT_BACK:
-                delete this->guiPages.guiRadioPer;
-                this->guiPages.guiRadioPer = NULL;
-                this->guiPages.guiNext     = this->guiPages.guiMenuRadioTestModes;
-                this->event                = GUI_LAST_EVENT_STOP_DEMO;
+                next_page_type = GUI_PAGE_MENU_RADIO_TEST_MODES;
+                this->event    = GUI_LAST_EVENT_STOP_DEMO;
+                break;
+            default:
                 break;
             }
             break;
@@ -231,18 +256,18 @@ void Gui::Runtime( )
             switch( event_from_display )
             {
             case GUI_EVENT_START_PING_PONG:
-                this->guiPages.guiCurrent->start( );
+                this->guiCurrent->start( );
                 this->event = GUI_LAST_EVENT_START_DEMO_PING_PONG;
                 break;
             case GUI_EVENT_STOP:
-                this->guiPages.guiCurrent->stop( );
+                this->guiCurrent->stop( );
                 this->event = GUI_LAST_EVENT_STOP_DEMO;
                 break;
             case GUI_EVENT_BACK:
-                delete this->guiPages.guiRadioPingPong;
-                this->guiPages.guiRadioPingPong = NULL;
-                this->guiPages.guiNext          = this->guiPages.guiMenuRadioTestModes;
-                this->event                     = GUI_LAST_EVENT_STOP_DEMO;
+                next_page_type = GUI_PAGE_MENU_RADIO_TEST_MODES;
+                this->event    = GUI_LAST_EVENT_STOP_DEMO;
+                break;
+            default:
                 break;
             }
             break;
@@ -253,40 +278,21 @@ void Gui::Runtime( )
             switch( event_from_display )
             {
             case GUI_EVENT_START_WIFI:
-                guiPages.guiTestWifi   = new GuiTestWifi( &demo_results.wifi_result );
-                guiPages.guiResultWifi = new GuiResultsWifi( &demo_results.wifi_result );
-                guiPages.guiConfigWifi = new GuiConfigWifi( &( this->demo_settings.wifi_settings ),
-                                                            &( this->demo_settings_default.wifi_settings ) );
-                this->guiPages.guiNext = this->guiPages.guiTestWifi;
-                this->guiPages.guiNext->init( );
+                next_page_type               = GUI_PAGE_WIFI_TEST;
+                this->at_least_one_scan_done = false;
                 break;
             case GUI_EVENT_START_GNSS_AUTONOMOUS:
-                guiPages.guiTestGnssAutonomous =
-                    new GuiTestGnss( &demo_results.gnss_result, GUI_PAGE_GNSS_AUTONOMOUS_TEST );
-                guiPages.guiResultGnssAutonomous =
-                    new GuiResultsGnss( &demo_results.gnss_result, GUI_PAGE_GNSS_AUTONOMOUS_RESULTS );
-                guiPages.guiConfigGnssAutonomous = new GuiConfigGnss(
-                    GUI_PAGE_GNSS_AUTONOMOUS_CONFIG, &( this->demo_settings.gnss_autonomous_settings ),
-                    &( this->demo_settings_default.gnss_autonomous_settings ) );
-                this->guiPages.guiNext = this->guiPages.guiTestGnssAutonomous;
-                this->guiPages.guiNext->init( );
+                next_page_type               = GUI_PAGE_GNSS_AUTONOMOUS_TEST;
+                this->at_least_one_scan_done = false;
                 break;
             case GUI_EVENT_START_GNSS_ASSISTED:
-                guiPages.guiTestGnssAssisted =
-                    new GuiTestGnss( &demo_results.gnss_result, GUI_PAGE_GNSS_ASSISTED_TEST );
-                guiPages.guiResultGnssAssisted =
-                    new GuiResultsGnss( &demo_results.gnss_result, GUI_PAGE_GNSS_ASSISTED_RESULTS );
-                guiPages.guiConfigGnssAssisted =
-                    new GuiConfigGnss( GUI_PAGE_GNSS_ASSISTED_CONFIG, &( this->demo_settings.gnss_assisted_settings ),
-                                       &( this->demo_settings_default.gnss_assisted_settings ) );
-                this->guiPages.guiNext = this->guiPages.guiTestGnssAssisted;
-                this->guiPages.guiNext->init( );
+                next_page_type               = GUI_PAGE_GNSS_ASSISTED_TEST;
+                this->at_least_one_scan_done = false;
                 break;
             case GUI_EVENT_BACK:
-                this->guiPages.guiNext = this->guiPages.guiMenu;
+                next_page_type = GUI_PAGE_MENU;
                 break;
             default:
-                this->event = GUI_LAST_EVENT_NONE;
                 break;
             }
             break;
@@ -296,31 +302,26 @@ void Gui::Runtime( )
         {
             switch( event_from_display )
             {
+            case GUI_EVENT_START_WIFI:
+                this->guiCurrent->start( );
+                this->event                  = GUI_LAST_EVENT_START_DEMO_WIFI;
+                this->at_least_one_scan_done = true;
+                break;
             case GUI_EVENT_STOP:
                 this->event = GUI_LAST_EVENT_STOP_DEMO;
                 break;
             case GUI_EVENT_BACK:
-                delete guiPages.guiTestWifi;
-                delete guiPages.guiResultWifi;
-                delete guiPages.guiConfigWifi;
-                guiPages.guiTestWifi   = NULL;
-                guiPages.guiResultWifi = NULL;
-                guiPages.guiConfigWifi = NULL;
-                guiPages.guiNext       = guiPages.guiMenuDemo;
-                this->event            = GUI_LAST_EVENT_STOP_DEMO;
-                break;
-            case GUI_EVENT_START_WIFI:
-                guiPages.guiCurrent->start( );
-                this->event = GUI_LAST_EVENT_START_DEMO_WIFI;
+                next_page_type = GUI_PAGE_MENU_DEMO;
+                this->event    = GUI_LAST_EVENT_STOP_DEMO;
                 break;
             case GUI_EVENT_RESULTS:
-                guiPages.guiNext = guiPages.guiResultWifi;
+                next_page_type = GUI_PAGE_WIFI_RESULTS;
                 break;
             case GUI_EVENT_SEND:
                 this->event = GUI_LAST_EVENT_SEND;
                 break;
             case GUI_EVENT_CONFIG:
-                guiPages.guiNext = guiPages.guiConfigWifi;
+                next_page_type = GUI_PAGE_WIFI_CONFIG;
                 break;
             default:
                 break;
@@ -333,11 +334,7 @@ void Gui::Runtime( )
             switch( event_from_display )
             {
             case GUI_EVENT_BACK:
-                guiPages.guiNext = guiPages.guiTestWifi;
-                break;
-            case GUI_EVENT_LEFT:
-            case GUI_EVENT_RIGHT:
-                guiPages.guiCurrent->updateResults( event_from_display );
+                next_page_type = GUI_PAGE_WIFI_TEST;
                 break;
             default:
                 break;
@@ -350,11 +347,11 @@ void Gui::Runtime( )
             switch( event_from_display )
             {
             case GUI_EVENT_BACK:
-                guiPages.guiNext = guiPages.guiTestWifi;
+                next_page_type = GUI_PAGE_WIFI_TEST;
                 break;
             case GUI_EVENT_SAVE:
-                guiPages.guiNext = guiPages.guiTestWifi;
-                this->event      = GUI_LAST_EVENT_UPDATE_DEMO_WIFI;
+                next_page_type = GUI_PAGE_WIFI_TEST;
+                this->event    = GUI_LAST_EVENT_UPDATE_DEMO_WIFI;
                 break;
             default:
                 break;
@@ -370,27 +367,22 @@ void Gui::Runtime( )
                 this->event = GUI_LAST_EVENT_STOP_DEMO;
                 break;
             case GUI_EVENT_BACK:
-                delete guiPages.guiTestGnssAutonomous;
-                delete guiPages.guiResultGnssAutonomous;
-                delete guiPages.guiConfigGnssAutonomous;
-                guiPages.guiTestGnssAutonomous   = NULL;
-                guiPages.guiResultGnssAutonomous = NULL;
-                guiPages.guiConfigGnssAutonomous = NULL;
-                this->event                      = GUI_LAST_EVENT_STOP_DEMO;
-                guiPages.guiNext                 = guiPages.guiMenuDemo;
+                next_page_type = GUI_PAGE_MENU_DEMO;
+                this->event    = GUI_LAST_EVENT_STOP_DEMO;
                 break;
             case GUI_EVENT_START_GNSS_AUTONOMOUS:
-                guiPages.guiCurrent->start( );
-                this->event = GUI_LAST_EVENT_START_DEMO_GNSS_AUTONOMOUS;
+                this->guiCurrent->start( );
+                this->event                  = GUI_LAST_EVENT_START_DEMO_GNSS_AUTONOMOUS;
+                this->at_least_one_scan_done = true;
                 break;
             case GUI_EVENT_RESULTS:
-                guiPages.guiNext = guiPages.guiResultGnssAutonomous;
+                next_page_type = GUI_PAGE_GNSS_AUTONOMOUS_RESULTS;
                 break;
             case GUI_EVENT_SEND:
                 this->event = GUI_LAST_EVENT_SEND;
                 break;
             case GUI_EVENT_CONFIG:
-                guiPages.guiNext = guiPages.guiConfigGnssAutonomous;
+                next_page_type = GUI_PAGE_GNSS_AUTONOMOUS_CONFIG;
                 break;
             default:
                 break;
@@ -403,11 +395,7 @@ void Gui::Runtime( )
             switch( event_from_display )
             {
             case GUI_EVENT_BACK:
-                guiPages.guiNext = guiPages.guiTestGnssAutonomous;
-                break;
-            case GUI_EVENT_LEFT:
-            case GUI_EVENT_RIGHT:
-                guiPages.guiCurrent->updateResults( event_from_display );
+                next_page_type = GUI_PAGE_GNSS_AUTONOMOUS_TEST;
                 break;
             default:
                 break;
@@ -420,11 +408,11 @@ void Gui::Runtime( )
             switch( event_from_display )
             {
             case GUI_EVENT_BACK:
-                guiPages.guiNext = guiPages.guiTestGnssAutonomous;
+                next_page_type = GUI_PAGE_GNSS_AUTONOMOUS_TEST;
                 break;
             case GUI_EVENT_SAVE:
-                guiPages.guiNext = guiPages.guiTestGnssAutonomous;
-                this->event      = GUI_LAST_EVENT_UPDATE_DEMO_GNSS_AUTONOMOUS;
+                next_page_type = GUI_PAGE_GNSS_AUTONOMOUS_TEST;
+                this->event    = GUI_LAST_EVENT_UPDATE_DEMO_GNSS_AUTONOMOUS;
                 break;
             default:
                 break;
@@ -435,31 +423,29 @@ void Gui::Runtime( )
         case GUI_PAGE_GNSS_ASSISTED_TEST:
             switch( event_from_display )
             {
+            case GUI_EVENT_START_GNSS_ASSISTED:
+                this->guiCurrent->start( );
+                this->event                  = GUI_LAST_EVENT_START_DEMO_GNSS_ASSISTED;
+                this->at_least_one_scan_done = true;
+                break;
             case GUI_EVENT_STOP:
                 this->event = GUI_LAST_EVENT_STOP_DEMO;
                 break;
             case GUI_EVENT_BACK:
-                delete guiPages.guiTestGnssAssisted;
-                delete guiPages.guiResultGnssAssisted;
-                delete guiPages.guiConfigGnssAssisted;
-                guiPages.guiTestGnssAssisted   = NULL;
-                guiPages.guiResultGnssAssisted = NULL;
-                guiPages.guiConfigGnssAssisted = NULL;
-                this->event                    = GUI_LAST_EVENT_STOP_DEMO;
-                guiPages.guiNext               = guiPages.guiMenuDemo;
-                break;
-            case GUI_EVENT_START_GNSS_ASSISTED:
-                guiPages.guiCurrent->start( );
-                this->event = GUI_LAST_EVENT_START_DEMO_GNSS_ASSISTED;
+                next_page_type = GUI_PAGE_MENU_DEMO;
+                this->event    = GUI_LAST_EVENT_STOP_DEMO;
                 break;
             case GUI_EVENT_RESULTS:
-                guiPages.guiNext = guiPages.guiResultGnssAssisted;
+                next_page_type = GUI_PAGE_GNSS_ASSISTED_RESULTS;
                 break;
             case GUI_EVENT_SEND:
                 this->event = GUI_LAST_EVENT_SEND;
                 break;
             case GUI_EVENT_CONFIG:
-                guiPages.guiNext = guiPages.guiConfigGnssAssisted;
+                next_page_type = GUI_PAGE_GNSS_ASSISTED_CONFIG;
+                break;
+            case GUI_EVENT_ASSISTANCE_POSITION:
+                next_page_type = GUI_PAGE_GNSS_ASSISTANCE_POSITION_CONFIG;
                 break;
             default:
                 break;
@@ -471,11 +457,7 @@ void Gui::Runtime( )
             switch( event_from_display )
             {
             case GUI_EVENT_BACK:
-                guiPages.guiNext = guiPages.guiTestGnssAssisted;
-                break;
-            case GUI_EVENT_LEFT:
-            case GUI_EVENT_RIGHT:
-                guiPages.guiCurrent->updateResults( event_from_display );
+                next_page_type = GUI_PAGE_GNSS_ASSISTED_TEST;
                 break;
             default:
                 break;
@@ -487,11 +469,28 @@ void Gui::Runtime( )
             switch( event_from_display )
             {
             case GUI_EVENT_BACK:
-                guiPages.guiNext = guiPages.guiTestGnssAssisted;
+                next_page_type = GUI_PAGE_GNSS_ASSISTED_TEST;
                 break;
             case GUI_EVENT_SAVE:
-                guiPages.guiNext = guiPages.guiTestGnssAssisted;
-                this->event      = GUI_LAST_EVENT_UPDATE_DEMO_GNSS_ASSISTED;
+                next_page_type = GUI_PAGE_GNSS_ASSISTED_TEST;
+                this->event    = GUI_LAST_EVENT_UPDATE_DEMO_GNSS_ASSISTED;
+                break;
+            default:
+                break;
+            }
+            break;
+        }
+
+        case GUI_PAGE_GNSS_ASSISTANCE_POSITION_CONFIG:
+        {
+            switch( event_from_display )
+            {
+            case GUI_EVENT_BACK:
+                next_page_type = GUI_PAGE_GNSS_ASSISTED_TEST;
+                break;
+            case GUI_EVENT_SAVE:
+                next_page_type = GUI_PAGE_GNSS_ASSISTED_TEST;
+                this->event    = GUI_LAST_EVENT_UPDATE_DEMO_GNSS_ASSISTANCE_POSITION;
                 break;
             default:
                 break;
@@ -502,18 +501,14 @@ void Gui::Runtime( )
         default:
             break;
         }
-
-        if( ( guiPages.guiCurrent == NULL ) || ( guiPages.guiCurrent->getType( ) != guiPages.guiNext->getType( ) ) )
-        {
-            guiPages.guiNext->draw( );
-            guiPages.guiCurrent = guiPages.guiNext;
-        }
     }
+
+    this->CreateNewPage( next_page_type );
 
     if( this->refresh_pending == true )
     {
         this->refresh_pending = false;
-        guiPages.guiCurrent->refresh( );
+        this->guiCurrent->refresh( );
     }
 
     lv_task_handler( );
@@ -533,15 +528,31 @@ void Gui::GetGnssAssistedSettings( GuiGnssDemoSetting_t* settings )
     *settings = this->demo_settings.gnss_assisted_settings;
 }
 
+void Gui::GetGnssAssistancePosition( GuiGnssDemoAssistancePosition_t* assistance_position )
+{
+    *assistance_position = this->gnss_assistance_position;
+}
+
+void Gui::GetNetworkConnectivitySettings( GuiNetworkConnectivitySettings_t* connectivity_settings )
+{
+    *connectivity_settings = this->network_connectivity_settings;
+}
+
+void Gui::EnableConnectivity( ) const { GuiCommon::_has_connectivity = true; }
+
+void Gui::DisableConnectivity( ) const { GuiCommon::_has_connectivity = false; }
+
 void Gui::InterruptHandler( bool is_down )
 {
     interruptPending = true;
     Gui::isTouched   = is_down;
 }
 
-void Gui::HostConnectivityChange( bool is_connected )
+void Gui::HostConnectivityChange( bool is_connected ) { this->guiCurrent->updateHostConnectivityState( is_connected ); }
+
+void Gui::NetworkConnectivityChange( const GuiNetworkConnectivityStatus_t* new_connectivity_status )
 {
-    guiPages.guiCurrent->updateHostConnectivityState( is_connected );
+    this->guiCurrent->updateNetworkConnectivityState( new_connectivity_status );
 }
 
 GuiLastEvent_t Gui::GetLastEvent( )
@@ -585,3 +596,135 @@ void Gui::UpdateReverseGeoCoding( const GuiResultGeoLoc_t& new_reverse_geo_codin
 void Gui::SetDemoStatus( GuiDemoStatus_t& demo_status ) {}
 
 bool Gui::HasRefreshPending( ) const { return this->refresh_pending; }
+
+void Gui::CreateNewPage( guiPageType_t page_type )
+{
+    if( page_type != GUI_PAGE_NONE )
+    {
+        delete this->guiCurrent;
+        this->guiCurrent = NULL;
+
+        switch( page_type )
+        {
+        case GUI_PAGE_SPLASHSCREEN:
+        {
+            this->guiCurrent = new GuiSplashScreen( this->version_handler );
+            break;
+        }
+        case GUI_PAGE_ABOUT:
+        {
+            this->guiCurrent = new GuiAbout( this->version_handler );
+            break;
+        }
+        case GUI_PAGE_MENU:
+        {
+            this->guiCurrent = new GuiMenu( this->version_handler );
+            break;
+        }
+        case GUI_PAGE_CONNECTIVITY:
+        {
+            this->guiCurrent = new GuiConnectivity( &( this->network_connectivity_settings ) );
+            break;
+        }
+        case GUI_PAGE_MENU_DEMO:
+        {
+            this->guiCurrent = new GuiMenuDemo( this->version_handler );
+            break;
+        }
+        case GUI_PAGE_MENU_RADIO_TEST_MODES:
+        {
+            this->guiCurrent = new GuiMenuRadioTestModes( this->version_handler );
+            break;
+        }
+        case GUI_PAGE_EUI:
+        {
+            this->guiCurrent = new GuiEui( this->version_handler );
+            break;
+        }
+        case GUI_PAGE_WIFI_TEST:
+        {
+            this->guiCurrent = new GuiTestWifi( &demo_results.wifi_result, this->at_least_one_scan_done );
+            break;
+        }
+        case GUI_PAGE_WIFI_CONFIG:
+        {
+            this->guiCurrent = new GuiConfigWifi( &( this->demo_settings.wifi_settings ),
+                                                  &( this->demo_settings_default.wifi_settings ) );
+            break;
+        }
+        case GUI_PAGE_WIFI_RESULTS:
+        {
+            this->guiCurrent = new GuiResultsWifi( &demo_results.wifi_result );
+            break;
+        }
+        case GUI_PAGE_GNSS_AUTONOMOUS_TEST:
+        {
+            this->guiCurrent = new GuiTestGnss( &demo_results.gnss_result, GUI_PAGE_GNSS_AUTONOMOUS_TEST,
+                                                this->at_least_one_scan_done );
+            break;
+        }
+        case GUI_PAGE_GNSS_AUTONOMOUS_CONFIG:
+        {
+            this->guiCurrent =
+                new GuiConfigGnss( GUI_PAGE_GNSS_AUTONOMOUS_CONFIG, &demo_settings.gnss_autonomous_settings,
+                                   &demo_settings_default.gnss_autonomous_settings, this->version_handler );
+            break;
+        }
+        case GUI_PAGE_GNSS_AUTONOMOUS_RESULTS:
+        {
+            this->guiCurrent = new GuiResultsGnss( &demo_results.gnss_result, GUI_PAGE_GNSS_AUTONOMOUS_RESULTS );
+            break;
+        }
+        case GUI_PAGE_GNSS_ASSISTED_TEST:
+        {
+            this->guiCurrent =
+                new GuiTestGnss( &demo_results.gnss_result, GUI_PAGE_GNSS_ASSISTED_TEST, this->at_least_one_scan_done );
+            break;
+        }
+        case GUI_PAGE_GNSS_ASSISTED_CONFIG:
+        {
+            this->guiCurrent =
+                new GuiConfigGnss( GUI_PAGE_GNSS_ASSISTED_CONFIG, &demo_settings.gnss_assisted_settings,
+                                   &demo_settings_default.gnss_assisted_settings, this->version_handler );
+            break;
+        }
+        case GUI_PAGE_GNSS_ASSISTED_RESULTS:
+        {
+            this->guiCurrent = new GuiResultsGnss( &demo_results.gnss_result, GUI_PAGE_GNSS_ASSISTED_RESULTS );
+            break;
+        }
+        case GUI_PAGE_GNSS_ASSISTANCE_POSITION_CONFIG:
+        {
+            this->guiCurrent = new GuiConfigGnssAssistancePosition( &( this->gnss_assistance_position ),
+                                                                    &( this->gnss_assistance_position_default ) );
+            break;
+        }
+        case GUI_PAGE_RADIO_TEST_MODES_CONFIG:
+        {
+            this->guiCurrent = new GuiConfigRadioTestModes(
+                &demo_settings.radio_settings, &demo_settings_default.radio_settings, this->version_handler );
+            break;
+        }
+        case GUI_PAGE_RADIO_TX_CW:
+        {
+            this->guiCurrent = new GuiRadioTxCw( &demo_settings.radio_settings );
+            break;
+        }
+        case GUI_PAGE_RADIO_PER:
+        {
+            this->guiCurrent = new GuiRadioPer( &demo_settings.radio_settings, &demo_results.radio_per_result );
+            break;
+        }
+        case GUI_PAGE_RADIO_PING_PONG:
+        {
+            this->guiCurrent =
+                new GuiRadioPingPong( &demo_settings.radio_settings, &demo_results.radio_pingpong_result );
+            break;
+        }
+        default:
+        {
+            break;
+        }
+        }
+    }
+}

@@ -64,9 +64,9 @@ void CommunicationPrintOnly::Store( const demo_wifi_scan_all_results_t& wifi_res
         demo_wifi_scan_single_result_t local_result = wifi_results.results[result_index];
 
         printf(
-            "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x, CHANNEL_%i, %s, %i, %li, %li, "
-            "%li, "
-            "%li\n",
+            "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x, CHANNEL_%i, %s, %i, %u, %u, "
+            "%u, "
+            "%u\n",
             local_result.mac_address[0], local_result.mac_address[1], local_result.mac_address[2],
             local_result.mac_address[3], local_result.mac_address[4], local_result.mac_address[5], local_result.channel,
             CommunicationInterface::WifiTypeToStr( local_result.type ), local_result.rssi,
@@ -77,24 +77,40 @@ void CommunicationPrintOnly::Store( const demo_wifi_scan_all_results_t& wifi_res
 
 void CommunicationPrintOnly::Store( const demo_gnss_all_results_t& gnss_results, uint32_t delay_since_capture )
 {
-    printf( "# GNSS result captured %lu second(s) ago:\n", delay_since_capture );
+    printf( "# GNSS result captured %u second(s) ago:\n", delay_since_capture );
     for( uint16_t index = 0; index < gnss_results.nav_message.size; index++ )
     {
         printf( "%02x", gnss_results.nav_message.message[index] );
     }
-    printf( ", %lu, %lu, %lu", delay_since_capture, gnss_results.timings.radio_ms,
-            gnss_results.timings.computation_ms );
+    printf( ", %u, %u, %u", delay_since_capture, gnss_results.timings.radio_ms, gnss_results.timings.computation_ms );
     printf( "\n" );
 }
 
 void CommunicationPrintOnly::Store( const version_handler_t& version )
 {
-    printf(
-        "Software version: %s\nDriver version: %s\nChip version: 0x%04x\nAlmanac date: 0x%x\nChip UID: "
-        "%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x\n",
-        version.version_sw, version.version_driver, version.version_chip_fw, version.almanac_date, version.chip_uid[0],
-        version.chip_uid[1], version.chip_uid[2], version.chip_uid[3], version.chip_uid[4], version.chip_uid[5],
-        version.chip_uid[6], version.chip_uid[7] );
+    switch( version.device_type )
+    {
+    case VERSION_DEVICE_TRANSCEIVER:
+    {
+        printf(
+            "Software version: %s\nDriver version: %s\nChip version: 0x%04x\nAlmanac date: 0x%x\nChip UID: "
+            "%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x\n",
+            version.version_sw, version.version_driver, version.transceiver.version_chip_fw, version.almanac_date,
+            version.chip_uid[0], version.chip_uid[1], version.chip_uid[2], version.chip_uid[3], version.chip_uid[4],
+            version.chip_uid[5], version.chip_uid[6], version.chip_uid[7] );
+        break;
+    }
+    case VERSION_DEVICE_MODEM:
+    {
+        printf(
+            "Software version: %s\nDriver version: %s\nChip version: 0x%06x\nAlmanac date: 0x%x\nChip UID: "
+            "%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x\n",
+            version.version_sw, version.version_driver, version.modem.version_chip_fw, version.almanac_date,
+            version.chip_uid[0], version.chip_uid[1], version.chip_uid[2], version.chip_uid[3], version.chip_uid[4],
+            version.chip_uid[5], version.chip_uid[6], version.chip_uid[7] );
+        break;
+    }
+    }
 }
 
 void CommunicationPrintOnly::EraseDataStored( ) { return; }

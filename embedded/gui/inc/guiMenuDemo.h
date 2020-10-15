@@ -33,19 +33,21 @@
 #define __GUI_MENU_DEMO_H__
 
 #include "guiMenuCommon.h"
+#include "version.h"
 
 class GuiMenuDemo : public GuiMenuCommon
 {
    public:
-    GuiMenuDemo( );
+    GuiMenuDemo( version_handler_t* version_handler );
     virtual ~GuiMenuDemo( );
 
-    virtual void draw( );
     virtual void updateHostConnectivityState( );
+    virtual void updateNetworkConnectivityState( );
 
     static void callback( lv_obj_t* obj, lv_event_t event );
 
    private:
+    void      updateButtons( );
     lv_obj_t* lbl_wifi;
     lv_obj_t* btn_wifi;
     lv_obj_t* lbl_btn_wifi;

@@ -32,23 +32,44 @@
 #ifndef __VERSION_H__
 #define __VERSION_H__
 
-#include "lr1110_system_types.h"
+#define DEMO_VERSION "v2.0.0"
 
-#ifndef DEMO_VERSION
-#warning "No demo version provided"
-#define DEMO_VERSION "v1.4.0"
-#endif
+#define VERSION_STRING_LENGTH 10
+#define EUI_LENGTH 8
+#define PIN_LENGTH 4
+
+typedef enum
+{
+    VERSION_DEVICE_TRANSCEIVER,
+    VERSION_DEVICE_MODEM,
+} version_device_type_t;
 
 typedef struct
 {
-    char                version_sw[10];
-    char                version_driver[10];
-    uint8_t             version_chip_type;
-    uint8_t             version_chip_hw;
-    uint16_t            version_chip_fw;
-    lr1110_system_uid_t chip_uid;
-    uint16_t            almanac_date;
-    uint32_t            almanac_crc;
+    version_device_type_t device_type;
+    char                  version_sw[VERSION_STRING_LENGTH];
+    char                  version_driver[VERSION_STRING_LENGTH];
+    uint8_t               chip_uid[EUI_LENGTH];
+    uint8_t               dev_eui[EUI_LENGTH];
+    uint8_t               join_eui[EUI_LENGTH];
+    uint8_t               pin[PIN_LENGTH];
+    uint16_t              almanac_date;
+    uint32_t              almanac_crc;
+    union
+    {
+        struct
+        {
+            uint8_t  version_chip_type;
+            uint8_t  version_chip_hw;
+            uint16_t version_chip_fw;
+        } transceiver;
+        struct
+        {
+            uint8_t  version_chip_type;
+            uint32_t version_chip_bootloader;
+            uint32_t version_chip_fw;
+        } modem;
+    };
 } version_handler_t;
 
 #endif

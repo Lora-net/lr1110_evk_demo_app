@@ -37,14 +37,13 @@
 class GuiTestWifi : public GuiCommon
 {
    public:
-    GuiTestWifi( const GuiWifiResult_t* results );
+    GuiTestWifi( const GuiWifiResult_t* results, bool at_least_one_scan_done );
     virtual ~GuiTestWifi( );
 
-    virtual void init( );
-    virtual void draw( );
     virtual void refresh( );
     virtual void start( );
     virtual void updateHostConnectivityState( );
+    virtual void updateNetworkConnectivityState( );
 
     static void callback( lv_obj_t* obj, lv_event_t event );
 
@@ -59,6 +58,7 @@ class GuiTestWifi : public GuiCommon
     lv_obj_t* btn_config;
 
    private:
+    void                   updateButtons( );
     const GuiWifiResult_t* _results;
 };
 

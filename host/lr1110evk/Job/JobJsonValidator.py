@@ -41,6 +41,7 @@ class WiFiChanelField(StringField):
             pattern="^{}$".format(
                 "|".join([chan.name for chan in WifiChannels.WIFI_CHANNELS])
             ),
+            description="The set of Wi-Fi channels to scan.",
             *args,
             **kwargs
         )
@@ -48,69 +49,113 @@ class WiFiChanelField(StringField):
 
 class WiFiTypeField(StringField):
     def __init__(self, *args, **kwargs):
-        super(WiFiTypeField, self).__init__(pattern="^TYPE_(B|G)$")
+        super(WiFiTypeField, self).__init__(
+            pattern="^TYPE_(B|G)$", description="Wi-Fi type to scan for."
+        )
 
 
 class WifiApiField(StringField):
     def __init__(self, *args, **kwargs):
         super(WifiApiField, self).__init__(
-            pattern="^(wifi_scan|country_code)$", *args, **kwargs
+            pattern="^(wifi_scan|country_code)$",
+            description="The Wi-Fi API to use for passive scan operation.",
+            *args,
+            **kwargs
         )
 
 
 class WifiModeField(StringField):
     def __init__(self, *args, **kwargs):
-        super(WifiModeField, self).__init__(pattern="^(beacon_and_packet|beacon_only)$")
+        super(WifiModeField, self).__init__(
+            pattern="^(beacon_and_packet|beacon_only)$",
+            description="The Acquisition Mode to configure for passive scan operations.",
+        )
 
 
 class GnssOptionField(StringField):
     def __init__(self, *args, **kwargs):
-        super(GnssOptionField, self).__init__(pattern="^(best_effort|default)$")
+        super(GnssOptionField, self).__init__(
+            pattern="^(best_effort|default)$", description="Also known as Effort Mode."
+        )
 
 
 class GnssCaptureModeField(StringField):
     def __init__(self, *args, **kwargs):
-        super(GnssCaptureModeField, self).__init__(pattern="^(single|dual)$")
+        super(GnssCaptureModeField, self).__init__(
+            pattern="^(single|dual)$",
+            description="Select the single or dual GNSS scanning strategy. Single scan does only one scan. Dual scan executes two consecutive scans.",
+        )
 
 
 class GnssAntennaSelectionField(StringField):
     def __init__(self, *args, **kwargs):
         super(GnssAntennaSelectionField, self).__init__(
-            pattern="^(no_selection|select_antenna_1|select_antenna_2)$"
+            pattern="^(no_selection|select_antenna_1|select_antenna_2)$",
+            description="Select a specific antenna before executing the GNSS scan. This option if used requires a dedicated hardware.",
         )
 
 
 class GnssConstellationField(StringField):
     def __init__(self, *args, **kwargs):
-        super(GnssConstellationField, self).__init__(pattern="^(gps|beidou)$")
+        super(GnssConstellationField, self).__init__(
+            pattern="^(gps|beidou)$",
+            description="Indicates which constellation to be scanned for during scanning operation.",
+        )
 
 
 class CommonJobDocument(Document):
-    name = StringField()
-    n_iterations = NumberField(minimum=0, multiple=1)
-    reset_before_job_start = BooleanField()
+    name = StringField(description="Name of the job.")
+    n_iterations = NumberField(
+        minimum=0,
+        multiple=1,
+        description="Configure the number of time the job should be repeated before executing the next job.",
+    )
+    reset_before_job_start = BooleanField(
+        description="Configures the reset of LR1110 strategy for this job. If set to true, the LR1110 is reset before executing this job. If set to false, it is not reset before executing this job."
+    )
 
 
 class WifiJobDocument(CommonJobDocument):
     wifi_api = WifiApiField(required=True)
     wifi_channels = ArrayField(WiFiChanelField())
     wifi_types = ArrayField(WiFiTypeField())
-    wifi_nbr_retrial = NumberField(minimum=0, multiple=1)
-    wifi_max_result_per_scan = NumberField(minimum=0, multiple=1)
-    wifi_timeout = NumberField(minimum=0, multiple=1)
+    wifi_nbr_retrial = NumberField(
+        minimum=0,
+        multiple=1,
+        description="Sets the number of Wi-Fi passive scan attempts to try per channels.",
+    )
+    wifi_max_result_per_scan = NumberField(
+        minimum=0,
+        multiple=1,
+        description="Indicates the maximal number of Wi-Fi MAC addresses to fetch during passive scan operation.",
+    )
+    wifi_timeout = NumberField(
+        minimum=0,
+        multiple=1,
+        description="Configures the maximal wait duration for a Wi-Fi preamble before considering a Wi-Fi channel is empty of signal. Expressed in ms.",
+    )
     wifi_mode = WifiModeField()
 
 
 class AssistedCoordinateDocument(Document):
-    latitude = NumberField()
-    longitude = NumberField()
-    altitude = NumberField()
+    latitude = NumberField(
+        description="Latitude to provide to the GNSS scan API. Expressed in decimal degree."
+    )
+    longitude = NumberField(
+        description="Longitude to provide to the GNSS scan API. Expressed in decimal degree."
+    )
+    altitude = NumberField(description="Altitude to provide to the GNSS scan API.")
 
 
 class GnssAutonomousDocument(CommonJobDocument):
     gnss_autonomous_option = GnssOptionField()
     gnss_autonomous_capture_mode = GnssCaptureModeField()
-    gnss_autonomous_nb_satellite = NumberField(multiple_of=1, minimum=0, maximum=255)
+    gnss_autonomous_nb_satellite = NumberField(
+        multiple_of=1,
+        minimum=0,
+        maximum=255,
+        description="Number of satellites to fetch during GNSS scan operation.",
+    )
     gnss_autonomous_antenna_selection = GnssAntennaSelectionField()
     gnss_autonomous_constellations = ArrayField(GnssConstellationField())
 
@@ -118,14 +163,21 @@ class GnssAutonomousDocument(CommonJobDocument):
 class GnssAssistedDocument(CommonJobDocument):
     gnss_assisted_option = GnssOptionField()
     gnss_assisted_capture_mode = GnssCaptureModeField()
-    gnss_assisted_nb_satellite = NumberField(multiple_of=1, minimum=0, maximum=255)
+    gnss_assisted_nb_satellite = NumberField(
+        multiple_of=1,
+        minimum=0,
+        maximum=255,
+        description="Number of satellites to fetch during GNSS scan operation.",
+    )
     gnss_assisted_antenna_selection = GnssAntennaSelectionField()
     gnss_assisted_constellations = ArrayField(GnssConstellationField())
     assisted_coordinate = DocumentField(AssistedCoordinateDocument)
 
 
 class JobsDocument(Document):
-    infinite_loops = BooleanField()
+    infinite_loops = BooleanField(
+        description="Configures the repetition of the jobs. If set to true, the job file will be repeated infinitely. If set to false, the field test will end at the end of the last job in this file."
+    )
     jobs = ArrayField(
         OneOfField(
             fields=[
@@ -133,7 +185,8 @@ class JobsDocument(Document):
                 DocumentField(GnssAutonomousDocument),
                 DocumentField(GnssAssistedDocument),
             ]
-        )
+        ),
+        description="Array of jobs description to be executed during field tests.",
     )
 
 
@@ -152,3 +205,7 @@ class JobValidator:
     @staticmethod
     def validate_job_json_stream(json_stream):
         validate(schema=JobValidator._schema, instance=json_stream)
+
+    @staticmethod
+    def get_schema():
+        return JobValidator._schema

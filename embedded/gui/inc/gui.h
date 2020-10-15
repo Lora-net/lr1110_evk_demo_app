@@ -35,6 +35,7 @@
 #include "guiCommon.h"
 #include "guiFormat.h"
 #include "guiMenu.h"
+#include "guiConnectivity.h"
 #include "guiMenuRadioTestModes.h"
 #include "guiConfigRadioTestModes.h"
 #include "guiRadioTxCw.h"
@@ -49,34 +50,12 @@
 #include "guiTestGnss.h"
 #include "guiConfigWifi.h"
 #include "guiConfigGnss.h"
+#include "guiConfigGnssAssistancePosition.h"
+#include "guiEui.h"
 #include <stdint.h>
 #include <string.h>
 #include "stdio.h"
 #include "version.h"
-
-typedef struct
-{
-    GuiSplashScreen*         guiSplashscreen;
-    GuiAbout*                guiAbout;
-    GuiMenu*                 guiMenu;
-    GuiMenuDemo*             guiMenuDemo;
-    GuiMenuRadioTestModes*   guiMenuRadioTestModes;
-    GuiConfigRadioTestModes* guiConfigRadioTestModes;
-    GuiRadioTxCw*            guiRadioTxCw;
-    GuiRadioPer*             guiRadioPer;
-    GuiRadioPingPong*        guiRadioPingPong;
-    GuiTestWifi*             guiTestWifi;
-    GuiResultsWifi*          guiResultWifi;
-    GuiConfigWifi*           guiConfigWifi;
-    GuiTestGnss*             guiTestGnssAutonomous;
-    GuiResultsGnss*          guiResultGnssAutonomous;
-    GuiConfigGnss*           guiConfigGnssAutonomous;
-    GuiTestGnss*             guiTestGnssAssisted;
-    GuiResultsGnss*          guiResultGnssAssisted;
-    GuiConfigGnss*           guiConfigGnssAssisted;
-    GuiCommon*               guiCurrent;
-    GuiCommon*               guiNext;
-} GuiPages_t;
 
 typedef enum
 {
@@ -94,6 +73,11 @@ typedef enum
     GUI_LAST_EVENT_UPDATE_DEMO_WIFI,
     GUI_LAST_EVENT_UPDATE_DEMO_GNSS_AUTONOMOUS,
     GUI_LAST_EVENT_UPDATE_DEMO_GNSS_ASSISTED,
+    GUI_LAST_EVENT_UPDATE_DEMO_GNSS_ASSISTANCE_POSITION,
+    GUI_LAST_EVENT_PRINT_EUI,
+    GUI_LAST_EVENT_JOIN,
+    GUI_LAST_EVENT_LEAVE,
+    GUI_LAST_EVENT_RESET_SEMTECH_DEFAULT_COMMISSIONING,
 } GuiLastEvent_t;
 
 class Gui
@@ -103,7 +87,9 @@ class Gui
     virtual ~Gui( );
 
     virtual void Init( GuiDemoSettings_t* settings, GuiDemoSettings_t* settings_default,
-                       version_handler_t* version_handler );
+                       GuiGnssDemoAssistancePosition_t* assistance_position,
+                       GuiGnssDemoAssistancePosition_t* assistance_position_default,
+                       version_handler_t*               version_handler );
     virtual void Runtime( );
     static void  InterruptHandler( bool is_down );
 
@@ -111,8 +97,14 @@ class Gui
     void GetWifiSettings( GuiWifiDemoSetting_t* settings );
     void GetGnssAutonomousSettings( GuiGnssDemoSetting_t* settings );
     void GetGnssAssistedSettings( GuiGnssDemoSetting_t* settings );
+    void GetGnssAssistancePosition( GuiGnssDemoAssistancePosition_t* assistance_position );
+    void GetNetworkConnectivitySettings( GuiNetworkConnectivitySettings_t* connectivity_settings );
+
+    void EnableConnectivity( ) const;
+    void DisableConnectivity( ) const;
 
     void HostConnectivityChange( bool is_connected );
+    void NetworkConnectivityChange( const GuiNetworkConnectivityStatus_t* new_connectivity_status );
 
     virtual GuiLastEvent_t GetLastEvent( );
     void                   UpdateRadioPingPongResult( GuiRadioPingPongResult_t& gui_demo_result );
@@ -142,18 +134,23 @@ class Gui
     }
 
    protected:
-    const GuiDemoResult_t& GetDemoResult( ) const { return this->demo_results; }
-    GuiDemoSettings_t      demo_settings;
-    GuiDemoSettings_t      demo_settings_default;
+    const GuiDemoResult_t&           GetDemoResult( ) const { return this->demo_results; }
+    GuiDemoSettings_t                demo_settings;
+    GuiDemoSettings_t                demo_settings_default;
+    GuiGnssDemoAssistancePosition_t  gnss_assistance_position;
+    GuiGnssDemoAssistancePosition_t  gnss_assistance_position_default;
+    GuiNetworkConnectivitySettings_t network_connectivity_settings;
+    bool                             at_least_one_scan_done;
 
    private:
+    void                 CreateNewPage( guiPageType_t page_type );
     bool                 refresh_pending;
     static volatile bool interruptPending;
     static bool          isTouched;
     GuiLastEvent_t       event;
     GuiDemoResult_t      demo_results;
-    GuiPages_t           guiPages;
     version_handler_t*   version_handler;
+    GuiCommon*           guiCurrent;
 };
 
 #endif  // __GUI_H__

@@ -33,7 +33,7 @@
 #define __COMMAND_BASE_H__
 
 #include "command_interface.h"
-#include "device_base.h"
+#include "device_interface.h"
 #include "hci.h"
 
 typedef enum
@@ -48,19 +48,19 @@ typedef enum
 class CommandBase : public CommandInterface
 {
    public:
-    CommandBase( DeviceBase* device, Hci& hci );
+    CommandBase( DeviceInterface* device, Hci& hci );
     virtual ~CommandBase( );
 
     virtual CommandEvent_t Execute( );
 
    protected:
-    virtual bool Job( ) { return false; }
-    void         SetEventStartDemo( CommandBaseDemoId_t demo_to_start );
-    void         SetEventStopDemo( );
-    void         SetEventResetDemo( void );
-    void         SetNoEvent( );
-    void         SendResponseBuffer( const uint8_t* buffer, const uint16_t buffer_length );
-    DeviceBase*  device;
+    virtual bool     Job( ) { return false; }
+    void             SetEventStartDemo( CommandBaseDemoId_t demo_to_start );
+    void             SetEventStopDemo( );
+    void             SetEventResetDemo( void );
+    void             SetNoEvent( );
+    void             SendResponseBuffer( const uint8_t* buffer, const uint16_t buffer_length );
+    DeviceInterface* device;
 
    private:
     Hci*           hci;

@@ -40,7 +40,7 @@
 class CommandUpdateAlmanac : public CommandBase
 {
    public:
-    CommandUpdateAlmanac( DeviceBase* device, Hci& hci );
+    CommandUpdateAlmanac( DeviceInterface* device, Hci& hci );
     virtual ~CommandUpdateAlmanac( );
 
     virtual uint16_t GetComCode( );

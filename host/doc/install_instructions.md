@@ -54,7 +54,8 @@ pip install "lr1110FieldTest-<version_number>.tar.gz"
 ```
 
 This command must not fail.
-If it does fail, ensure the pip program is correctly installed (refers to [previous section](#ensure-you-can-run-pip).
+If it does fail, ensure the pip program is correctly installed (refer to [previous section](#ensure-you-can-run-pip).
+An exception may also occur if `wheel` package is not installed (refer to [Wheel package is not installed](wheel-package-is-not-installed)).
 Check that your `PATH` environment variable contains the folder where the pip.exe is installed.
 
 ## Checking the installation
@@ -230,6 +231,21 @@ pip3 --version
 ```
 
 If the above returns the correct version number associated with the correct python installation, you can keep following this guide by replacing all calls to `pip` program by the alternate name `pip3`.
+
+#### Wheel package is not installed
+
+The symptom of the missing `wheel` package error is typically a long error trace displayed after calling the `pip install` command.
+The error trace typically contains messages like `ERROR: Command errored out with exit status 1:` and `WARNING: The wheel package is not available.`.
+
+This error appears when an installation process needs to build a `wheel` package, but it is not installed. To solve it, execute first the command:
+
+```bash
+$ pip install wheel
+```
+
+Then try again the `pip install` command that were failing previously.
+
+You should only need to do this once. The further package installation will not need to re-install the `wheel` package.
 
 ### Issues with installed software
 

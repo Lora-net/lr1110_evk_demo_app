@@ -30,10 +30,9 @@
  */
 
 #include "guiSplashScreen.h"
-#include "version.h"
 #include "semtech_logo.h"
 
-GuiSplashScreen::GuiSplashScreen( ) : GuiCommon( GUI_PAGE_SPLASHSCREEN )
+GuiSplashScreen::GuiSplashScreen( version_handler_t* version_handler ) : GuiCommon( GUI_PAGE_SPLASHSCREEN )
 {
     lv_obj_t* icon = lv_img_create( this->screen, NULL );
     lv_obj_align( icon, NULL, LV_ALIGN_IN_TOP_LEFT, 17, 0 );
@@ -43,9 +42,26 @@ GuiSplashScreen::GuiSplashScreen( ) : GuiCommon( GUI_PAGE_SPLASHSCREEN )
     lv_obj_set_style( lbl_title, &( GuiCommon::title_style ) );
     lv_label_set_long_mode( lbl_title, LV_LABEL_LONG_BREAK );
     lv_label_set_align( lbl_title, LV_LABEL_ALIGN_CENTER );
-    lv_label_set_text( lbl_title, "LR1110\nEVALUATION KIT" );
+    switch( version_handler->device_type )
+    {
+    case VERSION_DEVICE_TRANSCEIVER:
+    {
+        lv_label_set_text( lbl_title, "LR1110\nDEMO APPLICATION" );
+        break;
+    }
+    case VERSION_DEVICE_MODEM:
+    {
+        lv_label_set_text( lbl_title, "LoRa BASICS MODEM-E\nDEMO APPLICATION" );
+        break;
+    }
+    default:
+    {
+        lv_label_set_text( lbl_title, "ERROR\nERROR" );
+        break;
+    }
+    }
     lv_obj_set_width( lbl_title, 240 );
-    lv_obj_align( lbl_title, NULL, LV_ALIGN_CENTER, 0, 0 );
+    lv_obj_align( lbl_title, NULL, LV_ALIGN_CENTER, 0, -20 );
 
     lv_obj_t* lbl_version = lv_label_create( screen, NULL );
     lv_obj_set_style( lbl_version, &( GuiCommon::screen_style ) );
@@ -59,11 +75,11 @@ GuiSplashScreen::GuiSplashScreen( ) : GuiCommon( GUI_PAGE_SPLASHSCREEN )
                               true );
 
     this->createActionButton( &( this->btn_about ), "ABOUT", GuiSplashScreen::callback, GUI_BUTTON_POS_LEFT, -5, true );
+
+    lv_scr_load( this->screen );
 }
 
 GuiSplashScreen::~GuiSplashScreen( ) {}
-
-void GuiSplashScreen::draw( ) { lv_scr_load( this->screen ); }
 
 void GuiSplashScreen::callback( lv_obj_t* obj, lv_event_t event )
 {

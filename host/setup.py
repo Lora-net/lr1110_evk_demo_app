@@ -27,6 +27,7 @@ setup(
             "NavParser = lr1110evk.NavParserFile.__main__:entry_point_nav_parser_file",
             "UsbConnectionCheck = lr1110evk.SerialExchange.SerialHandlerConnectionTest:entry_point_connection_tester",
             "AlmanacUpdate = lr1110evk.main_almanac_update:entry_point_update_almanac",
+            "KmlGenerator = lr1110evk.Tools.KmlGenerator.__main__:main",
         ]
     },
 )

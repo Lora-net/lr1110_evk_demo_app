@@ -31,29 +31,37 @@
 
 #include "guiMenuRadioTestModes.h"
 
-GuiMenuRadioTestModes::GuiMenuRadioTestModes( ) : GuiMenuCommon( GUI_PAGE_MENU_RADIO_TEST_MODES )
+GuiMenuRadioTestModes::GuiMenuRadioTestModes( version_handler_t* version_handler )
+    : GuiMenuCommon( GUI_PAGE_MENU_RADIO_TEST_MODES )
 {
+    uint8_t index = 0;
+
     this->createHeader( "RADIO TEST MODES" );
 
-    this->createTestEntry( -70, &( this->lbl_radio_tx_cw ), &( this->btn_radio_tx_cw ), &( this->lbl_btn_radio_tx_cw ),
-                           "TX Cont. Wave", true, GuiMenuRadioTestModes::callback );
+    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
 
-    this->createTestEntry( 0, &( this->lbl_radio_per ), &( this->btn_radio_per ), &( this->lbl_btn_radio_per ),
+    this->createTestEntry( index++, &( this->lbl_radio_tx_cw ), &( this->btn_radio_tx_cw ),
+                           &( this->lbl_btn_radio_tx_cw ), "TX Cont. Wave", true, GuiMenuRadioTestModes::callback );
+
+    this->createTestEntry( index++, &( this->lbl_radio_per ), &( this->btn_radio_per ), &( this->lbl_btn_radio_per ),
                            "Packet Error Rate", true, GuiMenuRadioTestModes::callback );
 
-    this->createTestEntry( 70, &( this->lbl_radio_ping_pong ), &( this->btn_radio_ping_pong ),
-                           &( this->lbl_btn_radio_ping_pong ), "Ping Pong", true, GuiMenuRadioTestModes::callback );
+    if( version_handler->device_type == VERSION_DEVICE_TRANSCEIVER )
+    {
+        this->createTestEntry( index++, &( this->lbl_radio_ping_pong ), &( this->btn_radio_ping_pong ),
+                               &( this->lbl_btn_radio_ping_pong ), "Ping Pong", true, GuiMenuRadioTestModes::callback );
+    }
 
     this->createActionButton( &( this->btn_back ), "BACK", GuiMenuRadioTestModes::callback, GUI_BUTTON_POS_CENTER, -5,
                               true );
 
     this->createActionButton( &( this->btn_config ), "CONFIG", GuiMenuRadioTestModes::callback, GUI_BUTTON_POS_RIGHT,
                               -5, true );
+
+    lv_scr_load( this->screen );
 }
 
 GuiMenuRadioTestModes::~GuiMenuRadioTestModes( ) {}
-
-void GuiMenuRadioTestModes::draw( ) { lv_scr_load( this->screen ); }
 
 void GuiMenuRadioTestModes::callback( lv_obj_t* obj, lv_event_t event )
 {

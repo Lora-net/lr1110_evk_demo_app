@@ -40,9 +40,6 @@ class GuiConfigWifi : public GuiCommon
     GuiConfigWifi( GuiWifiDemoSetting_t* settings_current, const GuiWifiDemoSetting_t* settings_default );
     virtual ~GuiConfigWifi( );
 
-    virtual void init( );
-    virtual void draw( );
-
     static void callback( lv_obj_t* obj, lv_event_t event );
     static void callbackSettings( lv_obj_t* obj, lv_event_t event );
 

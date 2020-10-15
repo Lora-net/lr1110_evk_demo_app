@@ -35,7 +35,7 @@
 #include "system_time.h"
 #include "system_uart.h"
 
-#define COMMUNICATION_DEMO_TIMEOUT_SERIAL_RECEIVE_MS ( 2500 )
+#define COMMUNICATION_DEMO_TIMEOUT_SERIAL_RECEIVE_MS ( 5000 )
 #define COMMUNICATION_DEMO_GET_RESULT_BUFFER_LENGTH ( 128 )
 #define COMMUNICATION_DEMO_TMP_FORMAT_LENGTH ( 32 )
 #define COMMUNICATION_DEMO_COMMAND_TOKEN_DATE "DATE"
@@ -87,18 +87,33 @@ void CommunicationDemo::Store( const demo_gnss_all_results_t& gnss_results, uint
     {
         printf( "%02x", gnss_results.nav_message.message[index] );
     }
-    printf( ", %lu, %lu, %lu", delay_since_capture, gnss_results.timings.radio_ms,
-            gnss_results.timings.computation_ms );
+    printf( ", %u, %u, %u", delay_since_capture, gnss_results.timings.radio_ms, gnss_results.timings.computation_ms );
     printf( "\n" );
 }
 
 void CommunicationDemo::Store( const version_handler_t& version )
 {
-    CommunicationDemo::Store( "%s:%s:%s:0x%04x:0x%x:%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x\n",
-                              COMMUNICATION_DEMO_COMMAND_TOKEN_STORE_VERSION, version.version_sw,
-                              version.version_driver, version.version_chip_fw, version.almanac_date,
-                              version.chip_uid[0], version.chip_uid[1], version.chip_uid[2], version.chip_uid[3],
-                              version.chip_uid[4], version.chip_uid[5], version.chip_uid[6], version.chip_uid[7] );
+    switch( version.device_type )
+    {
+    case VERSION_DEVICE_TRANSCEIVER:
+    {
+        CommunicationDemo::Store( "%s:%s:%s:0x%04x:0x%x:%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x\n",
+                                  COMMUNICATION_DEMO_COMMAND_TOKEN_STORE_VERSION, version.version_sw,
+                                  version.version_driver, version.transceiver.version_chip_fw, version.almanac_date,
+                                  version.chip_uid[0], version.chip_uid[1], version.chip_uid[2], version.chip_uid[3],
+                                  version.chip_uid[4], version.chip_uid[5], version.chip_uid[6], version.chip_uid[7] );
+        break;
+    }
+    case VERSION_DEVICE_MODEM:
+    {
+        CommunicationDemo::Store( "%s:%s:%s:0x%06x:0x%x:%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x\n",
+                                  COMMUNICATION_DEMO_COMMAND_TOKEN_STORE_VERSION, version.version_sw,
+                                  version.version_driver, version.modem.version_chip_fw, version.almanac_date,
+                                  version.chip_uid[0], version.chip_uid[1], version.chip_uid[2], version.chip_uid[3],
+                                  version.chip_uid[4], version.chip_uid[5], version.chip_uid[6], version.chip_uid[7] );
+        break;
+    }
+    }
 }
 
 bool CommunicationDemo::GetDateAndApproximateLocation( uint32_t& gps_second, float& latitude, float& longitude,
@@ -112,7 +127,7 @@ bool CommunicationDemo::GetDateAndApproximateLocation( uint32_t& gps_second, flo
                                     COMMUNICATION_DEMO_TIMEOUT_SERIAL_RECEIVE_MS );
     if( status == COMMUNICATION_DEMO_STATUS_OK )
     {
-        sscanf( data_loc_blob, "%lu,%f,%f,%f", &gps_second, &altitude, &latitude, &longitude );
+        sscanf( data_loc_blob, "%u,%f,%f,%f", &gps_second, &altitude, &latitude, &longitude );
         success = true;
     }
     else

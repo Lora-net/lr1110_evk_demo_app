@@ -159,7 +159,7 @@ class ResponseFailureBase(ResponseBase):
         raise ResponseNoCoordinateException(self.failure_reason)
 
     def __str__(self):
-        return f"{self.failure_reason}"
+        return "{}".format(self.failure_reason)
 
 
 class ResponseSuccessReverseGeoLoc(ResponseBase):

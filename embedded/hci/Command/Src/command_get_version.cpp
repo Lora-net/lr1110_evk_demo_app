@@ -32,7 +32,7 @@
 #include "command_get_version.h"
 #include "com_code.h"
 #include "version.h"
-#include "demo.h"
+#include "demo_manager_interface.h"
 #include <stdio.h>
 
 #define VERSION_STRING_MAX_LEN 272
@@ -57,16 +57,41 @@ bool CommandGetVersion::ConfigureFromPayload( const uint8_t* buffer, const uint1
 
 CommandEvent_t CommandGetVersion::Execute( )
 {
-    char buffer_response[VERSION_STRING_MAX_LEN] = { 0 };
+    char    buffer_response[VERSION_STRING_MAX_LEN] = { 0 };
+    uint8_t buffer_len;
 
-    const uint8_t buffer_len =
-        snprintf( buffer_response, VERSION_STRING_MAX_LEN,
-                  "%s;%s;0x%02x;0x%02x;0x%04x;0x%04x;%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x",
-                  version_handler->version_sw, version_handler->version_driver, version_handler->version_chip_hw,
-                  version_handler->version_chip_type, version_handler->version_chip_fw, version_handler->almanac_crc,
-                  version_handler->chip_uid[0], version_handler->chip_uid[1], version_handler->chip_uid[2],
-                  version_handler->chip_uid[3], version_handler->chip_uid[4], version_handler->chip_uid[5],
-                  version_handler->chip_uid[6], version_handler->chip_uid[7] );
+    switch( version_handler->device_type )
+    {
+    case VERSION_DEVICE_TRANSCEIVER:
+    {
+        buffer_len = snprintf(
+            buffer_response, VERSION_STRING_MAX_LEN,
+            "%s;%s;0x%02x;0x%02x;0x%04x;0x%04x;%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x", version_handler->version_sw,
+            version_handler->version_driver, version_handler->transceiver.version_chip_hw,
+            version_handler->transceiver.version_chip_type, version_handler->transceiver.version_chip_fw,
+            version_handler->almanac_crc, version_handler->chip_uid[0], version_handler->chip_uid[1],
+            version_handler->chip_uid[2], version_handler->chip_uid[3], version_handler->chip_uid[4],
+            version_handler->chip_uid[5], version_handler->chip_uid[6], version_handler->chip_uid[7] );
+        break;
+    }
+    case VERSION_DEVICE_MODEM:
+    {
+        buffer_len = snprintf( buffer_response, VERSION_STRING_MAX_LEN,
+                               "%s;%s;0x%08x;0x%02x;0x%06x;0x%04x;%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x",
+                               version_handler->version_sw, version_handler->version_driver,
+                               version_handler->modem.version_chip_bootloader, version_handler->modem.version_chip_type,
+                               version_handler->modem.version_chip_fw, version_handler->almanac_crc,
+                               version_handler->chip_uid[0], version_handler->chip_uid[1], version_handler->chip_uid[2],
+                               version_handler->chip_uid[3], version_handler->chip_uid[4], version_handler->chip_uid[5],
+                               version_handler->chip_uid[6], version_handler->chip_uid[7] );
+        break;
+    }
+    default:
+    {
+        buffer_len = 0;
+        break;
+    }
+    }
 
     this->hci->SendResponse( this->GetComCode( ), ( uint8_t* ) buffer_response, buffer_len );
 

@@ -38,12 +38,18 @@
 #define TMP_BUFFER_CALLBACK_LENGTH ( 10 )
 
 GuiConfigRadioTestModes::GuiConfigRadioTestModes( GuiRadioSetting_t*       settings_current,
-                                                  const GuiRadioSetting_t* settings_default )
+                                                  const GuiRadioSetting_t* settings_default,
+                                                  version_handler_t*       version_handler )
     : GuiCommon( GUI_PAGE_RADIO_TEST_MODES_CONFIG ),
       settings_current( settings_current ),
-      settings_default( settings_default )
+      settings_default( settings_default ),
+      device_type( version_handler->device_type )
 {
-    this->createHeader( "RADIO - CONFIGURATION" );
+    this->settings_temp = *( this->settings_current );
+
+    this->createHeader( "RADIO CONFIGURATION" );
+
+    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
 
     /* Create a Tab view object and configure it */
     this->tabview = lv_tabview_create( this->screen, NULL );
@@ -54,7 +60,11 @@ GuiConfigRadioTestModes::GuiConfigRadioTestModes( GuiRadioSetting_t*       setti
 
     this->tab_generic = lv_tabview_add_tab( this->tabview, "Generic" );
     this->tab_lora    = lv_tabview_add_tab( this->tabview, "LoRa" );
-    this->tab_gfsk    = lv_tabview_add_tab( this->tabview, "GFSK" );
+
+    if( this->device_type == VERSION_DEVICE_TRANSCEIVER )
+    {
+        this->tab_gfsk = lv_tabview_add_tab( this->tabview, "GFSK" );
+    }
 
     this->create_ta( &( this->ta_freq ), this->tab_generic, 10, "Frequency (Hz)", 9, "868000000",
                      GuiConfigRadioTestModes::callback_ta );
@@ -62,8 +72,11 @@ GuiConfigRadioTestModes::GuiConfigRadioTestModes( GuiRadioSetting_t*       setti
     this->create_ta( &( this->ta_pl_len ), this->tab_generic, 45, "Payload length", 3, "5",
                      GuiConfigRadioTestModes::callback_ta );
 
-    this->create_ta( &( this->ta_pkt ), this->tab_generic, 80, "Nb of packets", 5, "100",
-                     GuiConfigRadioTestModes::callback_ta );
+    if( this->device_type == VERSION_DEVICE_TRANSCEIVER )
+    {
+        this->create_ta( &( this->ta_pkt ), this->tab_generic, 80, "Nb of packets", 5, "100",
+                         GuiConfigRadioTestModes::callback_ta );
+    }
 
     this->create_ddlist( &( this->ddlist_pwr ), this->tab_generic, 115, "Power (dBm)", lp_pa_options,
                          GuiConfigRadioTestModes::callback_ddlist );
@@ -72,18 +85,34 @@ GuiConfigRadioTestModes::GuiConfigRadioTestModes( GuiRadioSetting_t*       setti
                               GuiConfigRadioTestModes::callback_sw, 30, true );
 
     this->createChoiceSwitch( &( this->sw_pa ), this->tab_generic, "LP PA", "HP PA",
-                              GuiConfigRadioTestModes::callback_sw, 65, true );
+                              GuiConfigRadioTestModes::callback_sw, 65,
+                              ( this->device_type == VERSION_DEVICE_TRANSCEIVER ) ? true : false );
 
-    this->create_ddlist( &( this->lora_ddlist_sf ), this->tab_lora, 20, "Spreading Factor",
-                         "SF5\n"
-                         "SF6\n"
-                         "SF7\n"
-                         "SF8\n"
-                         "SF9\n"
-                         "SF10\n"
-                         "SF11\n"
-                         "SF12",
-                         GuiConfigRadioTestModes::callback_ddlist );
+    switch( device_type )
+    {
+    case VERSION_DEVICE_TRANSCEIVER:
+        this->create_ddlist( &( this->lora_ddlist_sf ), this->tab_lora, 20, "Spreading Factor",
+                             "SF5\n"
+                             "SF6\n"
+                             "SF7\n"
+                             "SF8\n"
+                             "SF9\n"
+                             "SF10\n"
+                             "SF11\n"
+                             "SF12",
+                             GuiConfigRadioTestModes::callback_ddlist );
+        break;
+    case VERSION_DEVICE_MODEM:
+        this->create_ddlist( &( this->lora_ddlist_sf ), this->tab_lora, 20, "Spreading Factor",
+                             "SF7\n"
+                             "SF8\n"
+                             "SF9\n"
+                             "SF10\n"
+                             "SF11\n"
+                             "SF12",
+                             GuiConfigRadioTestModes::callback_ddlist );
+        break;
+    }
 
     this->create_ddlist( &( this->lora_ddlist_bw ), this->tab_lora, 50, "Bandwidth",
                          "125kHz\n"
@@ -98,44 +127,50 @@ GuiConfigRadioTestModes::GuiConfigRadioTestModes( GuiRadioSetting_t*       setti
                          "4/8",
                          GuiConfigRadioTestModes::callback_ddlist );
 
-    this->create_ddlist( &( this->lora_ddlist_iq ), this->tab_lora, 110, "IQ",
-                         "Standard\n"
-                         "Inverted",
-                         GuiConfigRadioTestModes::callback_ddlist );
+    if( this->device_type == VERSION_DEVICE_TRANSCEIVER )
+    {
+        this->create_ddlist( &( this->lora_ddlist_iq ), this->tab_lora, 110, "IQ",
+                             "Standard\n"
+                             "Inverted",
+                             GuiConfigRadioTestModes::callback_ddlist );
 
-    this->create_ddlist( &( this->lora_ddlist_crc ), this->tab_lora, 140, "CRC",
-                         "OFF\n"
-                         "ON",
-                         GuiConfigRadioTestModes::callback_ddlist );
+        this->create_ddlist( &( this->lora_ddlist_crc ), this->tab_lora, 140, "CRC",
+                             "OFF\n"
+                             "ON",
+                             GuiConfigRadioTestModes::callback_ddlist );
 
-    this->create_ddlist( &( this->lora_ddlist_hdr ), this->tab_lora, 170, "Header type",
-                         "Implicit\n"
-                         "Explicit",
-                         GuiConfigRadioTestModes::callback_ddlist );
+        this->create_ddlist( &( this->lora_ddlist_hdr ), this->tab_lora, 170, "Header type",
+                             "Implicit\n"
+                             "Explicit",
+                             GuiConfigRadioTestModes::callback_ddlist );
+    }
 
-    this->create_ta( &( this->gfsk_ta_br ), this->tab_gfsk, 10, "Bitrate (bps)", 6, "150000",
-                     GuiConfigRadioTestModes::callback_ta );
+    if( this->device_type == VERSION_DEVICE_TRANSCEIVER )
+    {
+        this->create_ta( &( this->gfsk_ta_br ), this->tab_gfsk, 10, "Bitrate (bps)", 6, "150000",
+                         GuiConfigRadioTestModes::callback_ta );
 
-    this->create_ta( &( this->gfsk_ta_fdev ), this->tab_gfsk, 45, "Freq. dev. (Hz)", 6, "50000",
-                     GuiConfigRadioTestModes::callback_ta );
+        this->create_ta( &( this->gfsk_ta_fdev ), this->tab_gfsk, 45, "Freq. dev. (Hz)", 6, "50000",
+                         GuiConfigRadioTestModes::callback_ta );
 
-    this->create_ddlist( &( this->gfsk_ddlist_crc ), this->tab_gfsk, 80, "CRC",
-                         "OFF\n"
-                         "1B\n"
-                         "2B\n"
-                         "1B inv.\n"
-                         "2B inv.",
-                         GuiConfigRadioTestModes::callback_ddlist );
+        this->create_ddlist( &( this->gfsk_ddlist_crc ), this->tab_gfsk, 80, "CRC",
+                             "OFF\n"
+                             "1B\n"
+                             "2B\n"
+                             "1B inv.\n"
+                             "2B inv.",
+                             GuiConfigRadioTestModes::callback_ddlist );
 
-    this->create_ddlist( &( this->gfsk_ddlist_hdr ), this->tab_gfsk, 110, "Header type",
-                         "Implicit\n"
-                         "Explicit",
-                         GuiConfigRadioTestModes::callback_ddlist );
+        this->create_ddlist( &( this->gfsk_ddlist_hdr ), this->tab_gfsk, 110, "Header type",
+                             "Implicit\n"
+                             "Explicit",
+                             GuiConfigRadioTestModes::callback_ddlist );
 
-    this->create_ddlist( &( this->gfsk_ddlist_dcfree ), this->tab_gfsk, 140, "DC free",
-                         "OFF\n"
-                         "ON",
-                         GuiConfigRadioTestModes::callback_ddlist );
+        this->create_ddlist( &( this->gfsk_ddlist_dcfree ), this->tab_gfsk, 140, "DC free",
+                             "OFF\n"
+                             "ON",
+                             GuiConfigRadioTestModes::callback_ddlist );
+    }
 
     this->createActionButton( &( this->btn_cancel ), "CANCEL", GuiConfigRadioTestModes::callback, GUI_BUTTON_POS_LEFT,
                               -5, true );
@@ -155,24 +190,21 @@ GuiConfigRadioTestModes::GuiConfigRadioTestModes( GuiRadioSetting_t*       setti
     lv_obj_set_user_data( this->kb_num, this );
     lv_obj_move_foreground( this->kb_num );
     lv_obj_set_hidden( this->kb_num, true );
-}
-
-GuiConfigRadioTestModes::~GuiConfigRadioTestModes( ) {}
-
-void GuiConfigRadioTestModes::init( ) {}
-
-void GuiConfigRadioTestModes::draw( )
-{
-    this->settings_temp = *( this->settings_current );
 
     this->ConfigActionButton( );
 
     this->ConfigParamGeneric( );
     this->ConfigParamLora( );
-    this->ConfigParamGfsk( );
+
+    if( this->device_type == VERSION_DEVICE_TRANSCEIVER )
+    {
+        this->ConfigParamGfsk( );
+    }
 
     lv_scr_load( this->screen );
 }
+
+GuiConfigRadioTestModes::~GuiConfigRadioTestModes( ) {}
 
 void GuiConfigRadioTestModes::ConfigParamGeneric( )
 {
@@ -181,8 +213,11 @@ void GuiConfigRadioTestModes::ConfigParamGeneric( )
     snprintf( str, TMP_BUFFER_CONFIG_PARAM_GENERIC_LENGTH, "%d", this->settings_temp.rf_freq_in_hz );
     lv_ta_set_text( this->ta_freq, str );
 
-    snprintf( str, TMP_BUFFER_CONFIG_PARAM_GENERIC_LENGTH, "%d", this->settings_temp.nb_of_packets );
-    lv_ta_set_text( this->ta_pkt, str );
+    if( this->device_type == VERSION_DEVICE_TRANSCEIVER )
+    {
+        snprintf( str, TMP_BUFFER_CONFIG_PARAM_GENERIC_LENGTH, "%d", this->settings_temp.nb_of_packets );
+        lv_ta_set_text( this->ta_pkt, str );
+    }
 
     snprintf( str, TMP_BUFFER_CONFIG_PARAM_GENERIC_LENGTH, "%d", this->settings_temp.payload_length );
     lv_ta_set_text( this->ta_pl_len, str );
@@ -241,17 +276,22 @@ void GuiConfigRadioTestModes::ConfigParamGeneric( )
 
 void GuiConfigRadioTestModes::ConfigParamLora( )
 {
-    lv_ddlist_set_selected( this->lora_ddlist_sf, this->settings_temp.lora.sf );
+    lv_ddlist_set_selected( this->lora_ddlist_sf, ( this->device_type == VERSION_DEVICE_TRANSCEIVER )
+                                                      ? this->settings_temp.lora.sf
+                                                      : this->settings_temp.lora.sf - 2 );
 
     lv_ddlist_set_selected( this->lora_ddlist_bw, this->settings_temp.lora.bw );
 
     lv_ddlist_set_selected( this->lora_ddlist_cr, this->settings_temp.lora.cr );
 
-    lv_ddlist_set_selected( this->lora_ddlist_iq, ( this->settings_temp.lora.is_iq_inverted == false ) ? 0 : 1 );
+    if( this->device_type == VERSION_DEVICE_TRANSCEIVER )
+    {
+        lv_ddlist_set_selected( this->lora_ddlist_iq, ( this->settings_temp.lora.is_iq_inverted == false ) ? 0 : 1 );
 
-    lv_ddlist_set_selected( this->lora_ddlist_crc, ( this->settings_temp.lora.is_crc_activated == false ) ? 0 : 1 );
+        lv_ddlist_set_selected( this->lora_ddlist_crc, ( this->settings_temp.lora.is_crc_activated == false ) ? 0 : 1 );
 
-    lv_ddlist_set_selected( this->lora_ddlist_hdr, ( this->settings_temp.lora.is_hdr_implicit == false ) ? 0 : 1 );
+        lv_ddlist_set_selected( this->lora_ddlist_hdr, ( this->settings_temp.lora.is_hdr_implicit == false ) ? 0 : 1 );
+    }
 }
 
 void GuiConfigRadioTestModes::ConfigParamGfsk( )
@@ -371,7 +411,10 @@ void GuiConfigRadioTestModes::callback( lv_obj_t* obj, lv_event_t event )
             self->settings_temp = *( self->settings_default );
             self->ConfigParamGeneric( );
             self->ConfigParamLora( );
-            self->ConfigParamGfsk( );
+            if( self->device_type == VERSION_DEVICE_TRANSCEIVER )
+            {
+                self->ConfigParamGfsk( );
+            }
             self->ConfigActionButton( );
         }
         else if( obj == self->btn_save )
@@ -563,7 +606,8 @@ void GuiConfigRadioTestModes::callback_ddlist( lv_obj_t* obj, lv_event_t event )
 
         else if( obj == self->lora_ddlist_sf )
         {
-            self->settings_temp.lora.sf = id;
+            // The "+ 2" trick is done because modem and transceiver does not behave the same
+            self->settings_temp.lora.sf = ( self->device_type == VERSION_DEVICE_TRANSCEIVER ) ? id : id + 2;
         }
 
         else if( obj == self->lora_ddlist_bw )

@@ -34,13 +34,13 @@
 
 #include "command_interface.h"
 #include "hci.h"
-#include "device_base.h"
+#include "device_interface.h"
 #include "lr1110_gnss_types.h"
 
 class CommandGetAlmanacDates : public CommandInterface
 {
    public:
-    CommandGetAlmanacDates( DeviceBase* device, Hci& hci );
+    CommandGetAlmanacDates( DeviceInterface* device, Hci& hci );
     virtual ~CommandGetAlmanacDates( );
 
     virtual uint16_t       GetComCode( );
@@ -52,8 +52,8 @@ class CommandGetAlmanacDates : public CommandInterface
                                             uint16_t* dates );
 
    private:
-    Hci*        hci;
-    DeviceBase* device;
+    Hci*             hci;
+    DeviceInterface* device;
 };
 
 #endif  // __COMMAND_GET_ALMANAC_DATES_H__

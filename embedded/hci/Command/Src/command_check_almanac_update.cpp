@@ -34,7 +34,7 @@
 
 #define COMMAND_CHECK_ALMANAC_UPDATE_BUFFER_SIZE ( 4 )
 
-CommandCheckAlmanacUpdate::CommandCheckAlmanacUpdate( DeviceBase* device, Hci& hci )
+CommandCheckAlmanacUpdate::CommandCheckAlmanacUpdate( DeviceInterface* device, Hci& hci )
     : CommandBase( device, hci ), expected_crc( 0 )
 {
 }

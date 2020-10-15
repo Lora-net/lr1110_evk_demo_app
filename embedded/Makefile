@@ -49,6 +49,7 @@ BUILD_DIR = build
 # C sources
 C_SOURCES =  \
 application/src/lr1110_hal.c \
+application/src/lr1110_modem_hal.c \
 STM32L4xx_HAL_Driver/Src/stm32l4xx_ll_spi.c \
 STM32L4xx_HAL_Driver/Src/stm32l4xx_ll_tim.c \
 STM32L4xx_HAL_Driver/Src/stm32l4xx_ll_lptim.c \
@@ -82,7 +83,12 @@ lr1110_driver/src/lr1110_radio.c \
 lr1110_driver/src/lr1110_regmem.c \
 lr1110_driver/src/lr1110_system.c \
 lr1110_driver/src/lr1110_wifi.c \
-gcc/syscalls.c \
+lr1110_modem_driver/src/lr1110_modem_driver_version.c \
+lr1110_modem_driver/src/lr1110_modem_gnss.c \
+lr1110_modem_driver/src/lr1110_modem_lorawan.c \
+lr1110_modem_driver/src/lr1110_modem_system.c \
+lr1110_modem_driver/src/lr1110_modem_wifi.c \
+gcc/redirect.c \
 gcc/usart_redirect.c
 
 # Integration of the LVGL library
@@ -101,27 +107,44 @@ communication/src/communication_interface.cpp \
 communication/src/communication_print_only.cpp \
 communication/src/communication_demo.cpp \
 communication/src/communication_field_test.cpp \
+connectivity/src/connectivity_manager_interface.cpp \
+connectivity/src/connectivity_manager_modem.cpp \
+connectivity/src/connectivity_manager_transceiver.cpp \
 demo/src/environment_interface.cpp \
-demo/src/demo_base.cpp \
-demo/src/demo_transceiver_base.cpp \
-demo/src/demo_wifi_interface.cpp \
-demo/src/demo_wifi_scan.cpp \
-demo/src/demo_wifi_country_code.cpp \
-demo/src/demo_wifi_types.cpp \
-demo/src/demo_gnss_autonomous.cpp \
-demo/src/demo_gnss_base.cpp \
-demo/src/demo_gnss_assisted.cpp \
-demo/src/demo_radio_interface.cpp \
-demo/src/demo_ping_pong.cpp \
-demo/src/demo_tx_cw.cpp \
-demo/src/demo_radio_per.cpp \
-demo/src/demo.cpp\
-demo/src/device_base.cpp \
-demo/src/device_transceiver.cpp \
+demo/src/demo_modem_interface.cpp \
+demo/src/demo_modem_wifi.cpp \
+demo/src/demo_modem_gnss_interface.cpp \
+demo/src/demo_modem_gnss_autonomous.cpp \
+demo/src/demo_modem_gnss_assisted.cpp \
+demo/src/demo_modem_radio_tx_continuous.cpp \
+demo/src/demo_modem_radio_tx_cw.cpp \
+demo/src/demo_modem_radio_rx_continuous.cpp \
+embedded/demo/src/demo_modem_radio_converters.cpp \
+demo/src/demo_interface.cpp \
+demo/src/demo_transceiver_interface.cpp \
+demo/src/demo_transceiver_wifi_interface.cpp \
+demo/src/demo_transceiver_wifi_scan.cpp \
+demo/src/demo_transceiver_wifi_country_code.cpp \
+demo/src/demo_transceiver_gnss_autonomous.cpp \
+demo/src/demo_transceiver_gnss_interface.cpp \
+demo/src/demo_transceiver_gnss_assisted.cpp \
+demo/src/demo_transceiver_radio_interface.cpp \
+demo/src/demo_transceiver_radio_ping_pong.cpp \
+demo/src/demo_transceiver_radio_tx_cw.cpp \
+demo/src/demo_transceiver_radio_per.cpp \
+demo/src/demo_manager_interface.cpp \
+demo/src/demo_manager_transceiver.cpp \
+demo/src/demo_manager_modem.cpp \
+device/src/device_interface.cpp \
+device/src/device_transceiver.cpp \
+device/src/device_modem.cpp \
+demo/src/interruption_irq.cpp \
+demo/src/interruption_modem.cpp \
 gui/src/gui.cpp \
 gui/src/guiCommon.cpp \
 gui/src/guiMenuCommon.cpp \
 gui/src/guiMenu.cpp \
+gui/src/guiConnectivity.cpp \
 gui/src/guiMenuRadioTestModes.cpp \
 gui/src/guiConfigRadioTestModes.cpp \
 gui/src/guiRadioTxCw.cpp \
@@ -136,7 +159,10 @@ gui/src/guiTestGnss.cpp \
 gui/src/guiTestWifi.cpp \
 gui/src/guiConfigWifi.cpp \
 gui/src/guiConfigGnss.cpp \
+gui/src/guiConfigGnssAssistancePosition.cpp \
+gui/src/guiEui.cpp \
 supervisor/src/supervisor.cpp \
+connectivity/src/connectivity_conversions.cpp \
 hci/hci.cpp \
 hci/Command/Src/command_base.cpp \
 hci/Command/Src/command_factory.cpp \
@@ -215,9 +241,11 @@ AS_INCLUDES =
 C_INCLUDES =  \
 -Iapplication/inc \
 -Icommunication/inc \
+-Iconnectivity/inc \
 -ICMSIS/Device/ST/STM32L4xx/Include \
 -ICMSIS/Core/Include \
 -Idemo/inc \
+-Idevice/inc \
 -Idisplay_touch/inc \
 -Igui/inc\
 -Ilvgl \
@@ -233,6 +261,7 @@ C_INCLUDES =  \
 -Isupervisor/inc \
 -Isystem/inc \
 -Ilr1110_driver/src \
+-Ilr1110_modem_driver/src \
 -Ihci \
 -Ihci/Command/Inc
 

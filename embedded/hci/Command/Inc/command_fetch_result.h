@@ -34,12 +34,12 @@
 
 #include "command_interface.h"
 #include "hci.h"
-#include "demo.h"
+#include "demo_manager_interface.h"
 
 class CommandFetchResult : public CommandInterface
 {
    public:
-    CommandFetchResult( Hci& hci, EnvironmentInterface& environment, Demo& demo_holder );
+    CommandFetchResult( Hci& hci, EnvironmentInterface& environment, DemoManagerInterface& demo_holder );
     virtual ~CommandFetchResult( );
 
     virtual uint16_t       GetComCode( );
@@ -72,7 +72,7 @@ class CommandFetchResult : public CommandInterface
    private:
     Hci&                  hci;
     EnvironmentInterface& environment;
-    Demo&                 demo_holder;
+    DemoManagerInterface& demo_holder;
 };
 
 #endif  // __COMMAND_FETCH_RESULT_H__

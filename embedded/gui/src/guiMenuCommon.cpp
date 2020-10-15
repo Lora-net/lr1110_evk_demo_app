@@ -36,11 +36,14 @@
 #define LABEL_WIDTH 150
 #define MARGIN 10
 
+#define TEST_ENTRY_BASE -80
+#define TEST_ENTRY_DISTANCE 60
+
 GuiMenuCommon::GuiMenuCommon( guiPageType_t pageType ) : GuiCommon( pageType ) {}
 
 GuiMenuCommon::~GuiMenuCommon( ) {}
 
-void GuiMenuCommon::createTestEntry( int16_t y_pos, lv_obj_t** lbl, lv_obj_t** btn, lv_obj_t** lbl_btn,
+void GuiMenuCommon::createTestEntry( uint8_t index, lv_obj_t** lbl, lv_obj_t** btn, lv_obj_t** lbl_btn,
                                      const char* lbl_name, bool is_clickable, lv_event_cb_t event_cb )
 {
     // Create the label
@@ -50,7 +53,7 @@ void GuiMenuCommon::createTestEntry( int16_t y_pos, lv_obj_t** lbl, lv_obj_t** b
     lv_label_set_align( *lbl, LV_LABEL_ALIGN_LEFT );
     lv_label_set_text( *lbl, lbl_name );
     lv_obj_set_width( *lbl, LABEL_WIDTH );
-    lv_obj_align( *lbl, NULL, LV_ALIGN_IN_LEFT_MID, MARGIN, y_pos );
+    lv_obj_align( *lbl, NULL, LV_ALIGN_IN_LEFT_MID, MARGIN, TEST_ENTRY_BASE + index * TEST_ENTRY_DISTANCE );
 
     // Create the button
     *btn = lv_btn_create( this->screen, NULL );
@@ -59,7 +62,7 @@ void GuiMenuCommon::createTestEntry( int16_t y_pos, lv_obj_t** lbl, lv_obj_t** b
     lv_obj_set_width( *btn, BUTTON_WIDTH );
     lv_obj_set_event_cb( *btn, event_cb );
     lv_obj_set_user_data( *btn, this );
-    lv_obj_align( *btn, NULL, LV_ALIGN_IN_RIGHT_MID, -MARGIN, y_pos );
+    lv_obj_align( *btn, NULL, LV_ALIGN_IN_RIGHT_MID, -MARGIN, TEST_ENTRY_BASE + index * TEST_ENTRY_DISTANCE );
 
     // Create the label attached to the button
     *lbl_btn = lv_label_create( *btn, NULL );

@@ -33,20 +33,36 @@
 
 #define MARGIN 10
 
-GuiMenuDemo::GuiMenuDemo( ) : GuiMenuCommon( GUI_PAGE_MENU_DEMO )
+GuiMenuDemo::GuiMenuDemo( version_handler_t* version_handler ) : GuiMenuCommon( GUI_PAGE_MENU_DEMO )
 {
+    uint8_t index = 0;
+
     this->createHeader( "DEMONSTRATIONS" );
 
-    this->createTestEntry( -70, &( this->lbl_wifi ), &( this->btn_wifi ), &( this->lbl_btn_wifi ), "Wi-Fi scan", true,
-                           GuiMenuDemo::callback );
+    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
 
-    this->createTestEntry( 0, &( this->lbl_gnss_autonomous ), &( this->btn_gnss_autonomous ),
-                           &( this->lbl_btn_gnss_autonomous ), "GNSS autonomous",
-                           ( GuiCommon::_is_host_connected == true ) ? true : false, GuiMenuDemo::callback );
+    this->createTestEntry( index++, &( this->lbl_wifi ), &( this->btn_wifi ), &( this->lbl_btn_wifi ), "Wi-Fi scan",
+                           true, GuiMenuDemo::callback );
 
-    this->createTestEntry( 70, &( this->lbl_gnss_assisted ), &( this->btn_gnss_assisted ),
-                           &( this->lbl_btn_gnss_assisted ), "GNSS assisted",
-                           ( GuiCommon::_is_host_connected == true ) ? true : false, GuiMenuDemo::callback );
+    this->createTestEntry(
+        index++, &( this->lbl_gnss_autonomous ), &( this->btn_gnss_autonomous ), &( this->lbl_btn_gnss_autonomous ),
+        ( GuiCommon::_is_host_connected == true ) || ( GuiCommon::_network_connectivity_status.is_time_sync == true )
+            ? "GNSS autonomous"
+            : "GNSS autonomous*",
+        ( GuiCommon::_is_host_connected == true ) || ( GuiCommon::_network_connectivity_status.is_time_sync == true )
+            ? true
+            : false,
+        GuiMenuDemo::callback );
+
+    this->createTestEntry(
+        index++, &( this->lbl_gnss_assisted ), &( this->btn_gnss_assisted ), &( this->lbl_btn_gnss_assisted ),
+        ( GuiCommon::_is_host_connected == true ) || ( GuiCommon::_network_connectivity_status.is_time_sync == true )
+            ? "GNSS assisted"
+            : "GNSS assisted*",
+        ( GuiCommon::_is_host_connected == true ) || ( GuiCommon::_network_connectivity_status.is_time_sync == true )
+            ? true
+            : false,
+        GuiMenuDemo::callback );
 
     this->createActionButton( &( this->btn_back ), "BACK", GuiMenuDemo::callback, GUI_BUTTON_POS_CENTER, -5, true );
 
@@ -54,68 +70,41 @@ GuiMenuDemo::GuiMenuDemo( ) : GuiMenuCommon( GUI_PAGE_MENU_DEMO )
     lv_obj_set_style( this->lbl_connectivity, &( GuiCommon::note_style ) );
     lv_label_set_long_mode( this->lbl_connectivity, LV_LABEL_LONG_BREAK );
     lv_label_set_align( this->lbl_connectivity, LV_LABEL_ALIGN_LEFT );
-    lv_label_set_text( this->lbl_connectivity, "* Launch host app" );
+
+    switch( version_handler->device_type )
+    {
+    case VERSION_DEVICE_TRANSCEIVER:
+    {
+        lv_label_set_text( this->lbl_connectivity, "* Launch host app" );
+        break;
+    }
+    case VERSION_DEVICE_MODEM:
+    {
+        lv_label_set_text( this->lbl_connectivity, "* Wait for time sync" );
+        break;
+    }
+    default:
+    {
+        lv_label_set_text( this->lbl_connectivity, "* Error" );
+        break;
+    }
+    }
+
     lv_obj_set_width( this->lbl_connectivity, 80 );
     lv_obj_align( this->lbl_connectivity, NULL, LV_ALIGN_IN_BOTTOM_LEFT, MARGIN, -10 );
-
-    if( GuiCommon::_is_host_connected == true )
-    {
-        lv_obj_set_hidden( this->lbl_connectivity, true );
-    }
-    else
-    {
-        lv_label_set_text( this->lbl_gnss_autonomous, "GNSS autonomous*" );
-        lv_label_set_text( this->lbl_gnss_assisted, "GNSS assisted*" );
-    }
-}
-
-GuiMenuDemo::~GuiMenuDemo( ) {}
-
-void GuiMenuDemo::draw( )
-{
-    lv_btn_set_state( btn_gnss_autonomous,
-                      ( GuiCommon::_is_host_connected == true ) ? LV_BTN_STATE_REL : LV_BTN_STATE_INA );
-
-    lv_btn_set_state( btn_gnss_assisted,
-                      ( GuiCommon::_is_host_connected == true ) ? LV_BTN_STATE_REL : LV_BTN_STATE_INA );
-
-    if( GuiCommon::_is_host_connected == true )
-    {
-        lv_obj_set_hidden( this->lbl_connectivity, true );
-        lv_label_set_text( this->lbl_gnss_autonomous, "GNSS autonomous" );
-        lv_label_set_text( this->lbl_gnss_assisted, "GNSS assisted" );
-    }
-    else
-    {
-        lv_obj_set_hidden( this->lbl_connectivity, false );
-        lv_label_set_text( this->lbl_gnss_autonomous, "GNSS autonomous*" );
-        lv_label_set_text( this->lbl_gnss_assisted, "GNSS assisted*" );
-    }
+    lv_obj_set_hidden( this->lbl_connectivity, ( ( GuiCommon::_is_host_connected == true ) ||
+                                                 ( GuiCommon::_network_connectivity_status.is_time_sync == true ) )
+                                                   ? true
+                                                   : false );
 
     lv_scr_load( this->screen );
 }
 
-void GuiMenuDemo::updateHostConnectivityState( void )
-{
-    lv_btn_set_state( btn_gnss_autonomous,
-                      ( GuiCommon::_is_host_connected == true ) ? LV_BTN_STATE_REL : LV_BTN_STATE_INA );
+GuiMenuDemo::~GuiMenuDemo( ) {}
 
-    lv_btn_set_state( btn_gnss_assisted,
-                      ( GuiCommon::_is_host_connected == true ) ? LV_BTN_STATE_REL : LV_BTN_STATE_INA );
+void GuiMenuDemo::updateHostConnectivityState( void ) { this->updateButtons( ); }
 
-    if( GuiCommon::_is_host_connected == true )
-    {
-        lv_obj_set_hidden( this->lbl_connectivity, true );
-        lv_label_set_text( this->lbl_gnss_autonomous, "GNSS autonomous" );
-        lv_label_set_text( this->lbl_gnss_assisted, "GNSS assisted" );
-    }
-    else
-    {
-        lv_obj_set_hidden( this->lbl_connectivity, false );
-        lv_label_set_text( this->lbl_gnss_autonomous, "GNSS autonomous*" );
-        lv_label_set_text( this->lbl_gnss_assisted, "GNSS assisted*" );
-    }
-}
+void GuiMenuDemo::updateNetworkConnectivityState( ) { this->updateButtons( ); }
 
 void GuiMenuDemo::callback( lv_obj_t* obj, lv_event_t event )
 {
@@ -139,5 +128,31 @@ void GuiMenuDemo::callback( lv_obj_t* obj, lv_event_t event )
         {
             GuiCommon::_event = GUI_EVENT_BACK;
         }
+    }
+}
+
+void GuiMenuDemo::updateButtons( )
+{
+    lv_btn_set_state( btn_gnss_autonomous, ( ( GuiCommon::_is_host_connected == true ) ||
+                                             ( GuiCommon::_network_connectivity_status.is_time_sync == true ) )
+                                               ? LV_BTN_STATE_REL
+                                               : LV_BTN_STATE_INA );
+
+    lv_btn_set_state( btn_gnss_assisted, ( ( GuiCommon::_is_host_connected == true ) ||
+                                           ( GuiCommon::_network_connectivity_status.is_time_sync == true ) )
+                                             ? LV_BTN_STATE_REL
+                                             : LV_BTN_STATE_INA );
+
+    if( ( GuiCommon::_is_host_connected == true ) || ( GuiCommon::_network_connectivity_status.is_time_sync == true ) )
+    {
+        lv_obj_set_hidden( this->lbl_connectivity, true );
+        lv_label_set_text( this->lbl_gnss_autonomous, "GNSS autonomous" );
+        lv_label_set_text( this->lbl_gnss_assisted, "GNSS assisted" );
+    }
+    else
+    {
+        lv_obj_set_hidden( this->lbl_connectivity, false );
+        lv_label_set_text( this->lbl_gnss_autonomous, "GNSS autonomous*" );
+        lv_label_set_text( this->lbl_gnss_assisted, "GNSS assisted*" );
     }
 }

@@ -32,7 +32,7 @@
 #include "command_start_demo.h"
 #include "com_code.h"
 
-CommandStartDemo::CommandStartDemo( DeviceBase* device, Hci& hci, Demo& demo_holder )
+CommandStartDemo::CommandStartDemo( DeviceInterface* device, Hci& hci, DemoManagerInterface& demo_holder )
     : CommandBase( device, hci ), demo_id_to_start( COMMAND_BASE_NO_DEMO ), demo_holder( demo_holder )
 {
     this->demo_settings.wifi_settings.channels     = DEMO_WIFI_CHANNELS_DEFAULT >> 1;
@@ -115,15 +115,15 @@ bool CommandStartDemo::ConfigureWifiScan( const uint8_t* buffer, const uint16_t 
     bool success = false;
     if( buffer_size == 8 )
     {
-        const uint16_t           wifi_channel_mask = buffer[0] + buffer[1] * 256;
-        const uint8_t            wifi_type_mask    = buffer[2];
-        const uint8_t            wifi_nbr_retrials = buffer[3];
-        const uint8_t            wifi_max_results  = buffer[4];
-        const uint16_t           wifi_timeout_ms   = buffer[5] + ( buffer[6] * 256 );
-        const lr1110_wifi_mode_t wifi_mode         = ( lr1110_wifi_mode_t ) buffer[7];
+        const uint16_t         wifi_channel_mask = buffer[0] + buffer[1] * 256;
+        const uint8_t          wifi_type_mask    = buffer[2];
+        const uint8_t          wifi_nbr_retrials = buffer[3];
+        const uint8_t          wifi_max_results  = buffer[4];
+        const uint16_t         wifi_timeout_ms   = buffer[5] + ( buffer[6] * 256 );
+        const demo_wifi_mode_t wifi_mode         = CommandStartDemo::wifi_mode_from_value( buffer[7] );
 
-        this->demo_settings.wifi_settings.channels     = ( lr1110_wifi_channel_mask_t ) wifi_channel_mask;
-        this->demo_settings.wifi_settings.types        = ( lr1110_wifi_signal_type_scan_t ) wifi_type_mask;
+        this->demo_settings.wifi_settings.channels = ( demo_wifi_channel_mask_t ) wifi_channel_mask;
+        this->demo_settings.wifi_settings.types    = CommandStartDemo::wifi_signal_type_scan_from_val( wifi_type_mask );
         this->demo_settings.wifi_settings.scan_mode    = wifi_mode;
         this->demo_settings.wifi_settings.nbr_retrials = wifi_nbr_retrials;
         this->demo_settings.wifi_settings.max_results  = wifi_max_results;
@@ -188,10 +188,10 @@ bool CommandStartDemo::ConfigureGnss( demo_gnss_settings_t* gnss_setting, const 
         // Check option value
         switch( gnss_option )
         {
-        case LR1110_GNSS_OPTION_DEFAULT:
-        case LR1110_GNSS_OPTION_BEST_EFFORT:
+        case DEMO_GNSS_OPTION_DEFAULT:
+        case DEMO_GNSS_OPTION_BEST_EFFORT:
         {
-            gnss_setting->option = ( lr1110_gnss_search_mode_t ) gnss_option;
+            gnss_setting->option = ( demo_gnss_search_mode_t ) gnss_option;
             break;
         }
         default:
@@ -201,10 +201,10 @@ bool CommandStartDemo::ConfigureGnss( demo_gnss_settings_t* gnss_setting, const 
         // Check capture mode value
         switch( gnss_capture_mode )
         {
-        case LR1110_GNSS_SINGLE_SCAN_MODE:
-        case LR1110_GNSS_DOUBLE_SCAN_MODE:
+        case DEMO_GNSS_SINGLE_SCAN_MODE:
+        case DEMO_GNSS_DOUBLE_SCAN_MODE:
         {
-            gnss_setting->capture_mode = ( lr1110_gnss_scan_mode_t ) gnss_capture_mode;
+            gnss_setting->capture_mode = ( demo_gnss_scan_mode_t ) gnss_capture_mode;
             break;
         }
         default:
@@ -222,34 +222,90 @@ bool CommandStartDemo::ConfigureGnss( demo_gnss_settings_t* gnss_setting, const 
     return success;
 }
 
+demo_wifi_mode_t CommandStartDemo::wifi_mode_from_value( const uint8_t& value )
+{
+    demo_wifi_mode_t wifi_mode = DEMO_WIFI_SCAN_MODE_BEACON;
+    switch( value )
+    {
+    case 1:
+    {
+        wifi_mode = DEMO_WIFI_SCAN_MODE_BEACON;
+        break;
+    }
+
+    case 2:
+    {
+        wifi_mode = DEMO_WIFI_SCAN_MODE_BEACON_AND_PACKET;
+        break;
+    }
+    }
+    return wifi_mode;
+}
+
+demo_wifi_signal_type_scan_t CommandStartDemo::wifi_signal_type_scan_from_val( const uint8_t& val )
+{
+    demo_wifi_signal_type_scan_t wifi_type = DEMO_WIFI_SETTING_TYPE_B;
+    switch( val )
+    {
+    case 1:
+    {
+        wifi_type = DEMO_WIFI_SETTING_TYPE_B;
+        break;
+    }
+    case 2:
+    {
+        wifi_type = DEMO_WIFI_SETTING_TYPE_G;
+        break;
+    }
+    case 3:
+    {
+        wifi_type = DEMO_WIFI_SETTING_TYPE_B_G_N;
+        break;
+    }
+    }
+    return wifi_type;
+}
+
 bool CommandStartDemo::Job( )
 {
+    bool success = false;
     switch( this->demo_id_to_start )
     {
     case COMMAND_BASE_DEMO_WIFI_SCAN:
     {
         this->demo_holder.UpdateConfigWifiScan( &this->demo_settings.wifi_settings );
+        success = true;
         break;
     }
 
     case COMMAND_BASE_DEMO_WIFI_COUNTRY_CODE:
     {
         this->demo_holder.UpdateConfigWifiCountryCode( &this->demo_settings.wifi_country_code_settings );
+        success = true;
         break;
     }
 
     case COMMAND_BASE_DEMO_GNSS_AUTONOMOUS:
     {
         this->demo_holder.UpdateConfigAutonomousGnss( &this->demo_settings.gnss_autonomous_settings );
+        success = true;
         break;
     }
 
     case COMMAND_BASE_DEMO_GNSS_ASSISTED:
     {
         this->demo_holder.UpdateConfigAssistedGnss( &this->demo_settings.gnss_assisted_settings );
+        success = true;
+        break;
+    }
+    default:
+    {
+        // The demo id to start is unknown. Reset it to NO_DEMO and indicate failure of the job
+        this->demo_id_to_start = COMMAND_BASE_NO_DEMO;
+        success                = false;
         break;
     }
     }
     this->SetEventStartDemo( this->demo_id_to_start );
-    return true;
+    return success;
 }

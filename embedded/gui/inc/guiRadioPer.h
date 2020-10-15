@@ -40,8 +40,6 @@ class GuiRadioPer : public GuiCommon
     GuiRadioPer( const GuiRadioSetting_t* settings, const GuiRadioPerResult_t* results );
     virtual ~GuiRadioPer( );
 
-    virtual void init( );
-    virtual void draw( );
     virtual void refresh( );
     virtual void start( );
     virtual void stop( );

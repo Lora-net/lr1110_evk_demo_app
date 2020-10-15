@@ -86,6 +86,11 @@ class LocalizationResult:
     def geo_coding(self):
         return self._geo_coding
 
+    def __str__(self):
+        return "- Coordinate: {}\n- Reverse geo-coding: {}".format(
+            self._coordinate, self._geo_coding
+        )
+
 
 class VcpReader:
 
@@ -138,13 +143,7 @@ class VcpReader:
         if self.__configuration.dry_run:
             self.print_if_verbose("Dry run: not contacting server")
             return None
-        try:
-            response = self.request_sender.send_request_get_response(request)
-        except SolverContactException as solver_exception:
-            print(
-                "Exception when trying to contact solver: '{}'".format(solver_exception)
-            )
-            return None
+        response = self.request_sender.send_request_get_response(request)
         self.print_if_verbose(
             "Response from server: '{}'".format(response.raw_response)
         )
@@ -173,7 +172,7 @@ class VcpReader:
         reverse_geo_loc_response = reverse_geo_coding_client.call_service_and_get_response(
             geo_loc_response.estimated_coordinates
         ).reverse_geo_loc
-        self.print_if_verbose(f"{reverse_geo_loc_response}")
+        self.print_if_verbose("{}".format(reverse_geo_loc_response))
         result = LocalizationResult.from_response_and_geocoding(
             geo_loc_response, reverse_geo_loc_response
         )
@@ -213,6 +212,7 @@ class VcpReader:
 
     def SendDataCommandHandler(self):
         self.print_if_verbose("Send data to server...")
+        start_time = time.perf_counter()
         # Erase self.result if it exists
         self.result = None
         try:
@@ -223,6 +223,12 @@ class VcpReader:
             data = [
                 data for data in self.storage if isinstance(data, ScannedMacAddress)
             ]
+            self.result = self.ProduceResultFromResponseAndConfiguration(response)
+        except SolverContactException as solver_exception:
+            print(
+                "Exception when trying to contact solver: '{}'".format(solver_exception)
+            )
+            self.result = None
         else:
             kml_scan_type = kmlOutput.SCAN_TYPE_GNSS
             data = [data for data in self.storage if isinstance(data, ScannedGnss)]
@@ -233,15 +239,19 @@ class VcpReader:
                 self.print_if_verbose("Too many GNSS data")
                 return
             data = data[0]
+            self.result = self.ProduceResultFromResponseAndConfiguration(response)
 
-        result = self.ProduceResultFromResponseAndConfiguration(response)
+        if self.result:
+            print("Result from server:")
+            print(self.result)
+        else:
+            print("No result available from server")
 
-        self.result = result
-        if result:
+        if self.result:
             kml = kmlOutput("LR1110", "test.kml")
             date = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
-            kml.add_point(date, kml_scan_type, result.coordinate, data)
+            kml.add_point(date, kml_scan_type, self.result.coordinate, data)
 
             if self.__configuration.actual_coordinate:
                 kml.add_point(
@@ -251,6 +261,10 @@ class VcpReader:
                     self.storage,
                 )
             kml.save()
+        end_time = time.perf_counter()
+        self.print_if_verbose(
+            "Elapsed time for sending data: {} seconds".format(end_time - start_time)
+        )
 
     def DateCommandHandler(self):
         self.print_if_verbose("Date handler")
@@ -298,9 +312,9 @@ class VcpReader:
         except ResponseNoCoordinateException as no_coordinate_except:
             status_from_server = no_coordinate_except.status_str
             self.result = None
-            print(f"Error from solver: {status_from_server}")
+            print("Error from solver: {}".format(status_from_server))
         except GeoLocServiceBadResponseStatus as bad_response_service:
-            print(f"Error contacting solver: {bad_response_service}")
+            print("Error contacting solver: {}".format(bad_response_service))
             self.result = None
         except SolverContactException as solver_exception:
             print(

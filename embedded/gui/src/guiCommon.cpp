@@ -44,20 +44,24 @@
 #define GUI_COMMON_INFOFRAME_HEIGHT 150
 #define GUI_COMMON_INFOFRAME_WIDTH 230
 
-bool       GuiCommon::_is_host_connected       = false;
-bool       GuiCommon::_is_gui_environment_init = false;
-guiEvent_t GuiCommon::_event                   = GUI_EVENT_NONE;
-lv_style_t GuiCommon::screen_style;
-lv_style_t GuiCommon::note_style;
-lv_style_t GuiCommon::title_style;
-lv_style_t GuiCommon::info_frame_style_init;
-lv_style_t GuiCommon::info_frame_style_ok;
-lv_style_t GuiCommon::info_frame_style_ongoing;
-lv_style_t GuiCommon::info_frame_style_error;
-lv_style_t GuiCommon::sw_knob;
-lv_style_t GuiCommon::sw_indic;
-lv_style_t GuiCommon::table_cell1;
-lv_style_t GuiCommon::tab;
+bool                           GuiCommon::_is_host_connected           = false;
+bool                           GuiCommon::_is_gui_environment_init     = false;
+bool                           GuiCommon::_has_connectivity            = false;
+GuiNetworkConnectivityStatus_t GuiCommon::_network_connectivity_status = { .connectivity_state =
+                                                                               GUI_CONNECTIVITY_STATUS_NOT_CONNECTED,
+                                                                           .is_time_sync = false };
+guiEvent_t                     GuiCommon::_event                       = GUI_EVENT_NONE;
+lv_style_t                     GuiCommon::screen_style;
+lv_style_t                     GuiCommon::note_style;
+lv_style_t                     GuiCommon::title_style;
+lv_style_t                     GuiCommon::info_frame_style_init;
+lv_style_t                     GuiCommon::info_frame_style_ok;
+lv_style_t                     GuiCommon::info_frame_style_ongoing;
+lv_style_t                     GuiCommon::info_frame_style_error;
+lv_style_t                     GuiCommon::sw_knob;
+lv_style_t                     GuiCommon::sw_indic;
+lv_style_t                     GuiCommon::table_cell1;
+lv_style_t                     GuiCommon::tab;
 
 GuiCommon::GuiCommon( guiPageType_t pageType ) : _pageType( pageType )
 {
@@ -190,7 +194,7 @@ void GuiCommon::createInfoFrame( lv_obj_t** info_frame, lv_obj_t** lbl_info_fram
     lv_obj_set_width( *info_frame, GUI_COMMON_INFOFRAME_WIDTH );
     lv_cont_set_fit( *info_frame, LV_FIT_NONE );
     lv_cont_set_layout( *info_frame, LV_LAYOUT_CENTER );
-    lv_cont_set_style( *info_frame, LV_CONT_STYLE_MAIN, &( GuiCommon::info_frame_style_ongoing ) );
+    lv_cont_set_style( *info_frame, LV_CONT_STYLE_MAIN, &( GuiCommon::info_frame_style_init ) );
 
     *lbl_info_frame_1 = lv_label_create( *info_frame, NULL );
     lv_label_set_align( *lbl_info_frame_1, LV_LABEL_ALIGN_CENTER );
@@ -268,17 +272,55 @@ void GuiCommon::createChoiceSwitch( lv_obj_t** sw, lv_obj_t* screen, const char*
     }
 }
 
+void GuiCommon::createNetworkConnectivityIcon( lv_obj_t** icon )
+{
+    *icon = lv_label_create( this->screen, NULL );
+    lv_label_set_text( *icon, LV_SYMBOL_WIFI );
+    lv_obj_align( *icon, NULL, LV_ALIGN_IN_TOP_RIGHT, -10, 10 );
+    lv_obj_set_hidden( *icon, ( GuiCommon::_has_connectivity == true ) ? false : true );
+
+    this->updateNetworkConnectivityIcon( *icon );
+}
+
+void GuiCommon::updateNetworkConnectivityIcon( lv_obj_t* icon )
+{
+    switch( GuiCommon::_network_connectivity_status.connectivity_state )
+    {
+    case GUI_CONNECTIVITY_STATUS_NOT_CONNECTED:
+    {
+        lv_obj_set_style( icon, &( GuiCommon::info_frame_style_error ) );
+        break;
+    }
+    case GUI_CONNECTIVITY_STATUS_JOINING:
+    {
+        lv_obj_set_style( icon, &( GuiCommon::info_frame_style_ongoing ) );
+        break;
+    }
+    case GUI_CONNECTIVITY_STATUS_CONNECTED:
+    {
+        lv_obj_set_style( icon, &( GuiCommon::info_frame_style_ok ) );
+        break;
+    }
+    default:
+    {
+        break;
+    }
+    }
+}
+
+void GuiCommon::updateNetworkConnectivityState( const GuiNetworkConnectivityStatus_t* new_connectivity_status )
+{
+    GuiCommon::_network_connectivity_status.connectivity_state = new_connectivity_status->connectivity_state;
+    GuiCommon::_network_connectivity_status.is_time_sync       = new_connectivity_status->is_time_sync;
+
+    this->updateNetworkConnectivityIcon( this->_label_connectivity_icon );
+    this->updateNetworkConnectivityState( );
+}
+
 void GuiCommon::updateHostConnectivityState( const bool is_connected )
 {
     GuiCommon::_is_host_connected = is_connected;
     this->updateHostConnectivityState( );
-}
-
-guiEvent_t GuiCommon::touchEvent( uint16_t x, uint16_t y )
-{
-    guiEvent_t event = GUI_EVENT_NONE;
-
-    return event;
 }
 
 float GuiCommon::convertConsoToUah( const uint32_t conso_uas ) { return conso_uas / GUI_COMMON_DIVIDER_CONSO; }

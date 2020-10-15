@@ -32,10 +32,14 @@
 #include "guiConfigGnss.h"
 
 GuiConfigGnss::GuiConfigGnss( guiPageType_t pageType, GuiGnssDemoSetting_t* settings_current,
-                              const GuiGnssDemoSetting_t* settings_default )
+                              const GuiGnssDemoSetting_t* settings_default, version_handler_t* version_handler )
     : GuiCommon( pageType ), settings_current( settings_current ), settings_default( settings_default )
 {
-    this->createHeader( "GNSS - CONFIGURATION" );
+    this->settings_temp = *( this->settings_current );
+
+    this->createHeader( "GNSS CONFIGURATION" );
+
+    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
 
     this->createSection( "CONSTELLATIONS", -100 );
 
@@ -47,10 +51,16 @@ GuiConfigGnss::GuiConfigGnss( guiPageType_t pageType, GuiGnssDemoSetting_t* sett
     lv_obj_set_event_cb( this->btnm_constellations, GuiConfigGnss::callbackSettings );
     lv_obj_set_user_data( this->btnm_constellations, this );
 
-    this->createSection( "SCAN PARAMETERS", -10 );
+    if( ( _pageType == GUI_PAGE_GNSS_ASSISTED_CONFIG ) ||
+        ( ( _pageType == GUI_PAGE_GNSS_AUTONOMOUS_CONFIG ) &&
+          ( ( version_handler->device_type == VERSION_DEVICE_TRANSCEIVER ) ) ) )
+    {
+        this->createSection( "SCAN PARAMETERS", -10 );
+    }
 
     this->createChoiceSwitch( &( this->sw_scan_mode ), this->screen, "Single", "Double",
-                              GuiConfigGnss::callbackSettings, 30, true );
+                              GuiConfigGnss::callbackSettings, 30,
+                              ( version_handler->device_type == VERSION_DEVICE_MODEM ) ? false : true );
 
     this->createChoiceSwitch( &( this->sw_scan_option ), this->screen, "Low power", "Best effort",
                               GuiConfigGnss::callbackSettings, 70,
@@ -59,24 +69,20 @@ GuiConfigGnss::GuiConfigGnss( guiPageType_t pageType, GuiGnssDemoSetting_t* sett
     this->createActionButton( &( this->btn_cancel ), "CANCEL", GuiConfigGnss::callback, GUI_BUTTON_POS_LEFT, -5, true );
 
     this->createActionButton( &( this->btn_default ), "DEFAULT", GuiConfigGnss::callback, GUI_BUTTON_POS_CENTER, -5,
-                              true );
+                              ( this->IsConfigTempEqualTo( this->settings_default ) == true ) ? false : true );
 
-    this->createActionButton( &( this->btn_save ), "SAVE", GuiConfigGnss::callback, GUI_BUTTON_POS_RIGHT, -5, false );
-}
+    this->createActionButton( &( this->btn_save ), "SAVE", GuiConfigGnss::callback, GUI_BUTTON_POS_RIGHT, -5,
+                              ( this->IsConfigTempEqualTo( this->settings_current ) == true ) ||
+                                      ( this->IsAtLeastOneConstellationSelected( ) == false )
+                                  ? false
+                                  : true );
 
-GuiConfigGnss::~GuiConfigGnss( ) {}
-
-void GuiConfigGnss::init( ) {}
-
-void GuiConfigGnss::draw( )
-{
-    this->settings_temp = *( this->settings_current );
-
-    this->ConfigActionButton( );
     this->ConfigSettingsButton( );
 
     lv_scr_load( this->screen );
 }
+
+GuiConfigGnss::~GuiConfigGnss( ) {}
 
 void GuiConfigGnss::ConfigSettingsButton( )
 {

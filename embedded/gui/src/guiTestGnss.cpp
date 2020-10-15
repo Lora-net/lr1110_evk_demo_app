@@ -34,7 +34,7 @@
 #define TMP_BUFFERS_REFRESH_LENGTH ( 30 )
 #define TMP_BUFFER_REVERSE_GEO_LOC_REFRESH_LENGTH ( 80 )
 
-GuiTestGnss::GuiTestGnss( const GuiGnssResult_t* results, guiPageType_t pageType )
+GuiTestGnss::GuiTestGnss( const GuiGnssResult_t* results, guiPageType_t pageType, bool at_least_one_scan_done )
     : GuiCommon( pageType ), _results( results )
 {
     switch( pageType )
@@ -49,6 +49,8 @@ GuiTestGnss::GuiTestGnss( const GuiGnssResult_t* results, guiPageType_t pageType
         break;
     }
 
+    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
+
     this->createActionButton( &( this->btn_start_stop ), "START", GuiTestGnss::callback, GUI_BUTTON_POS_CENTER, -60,
                               true );
 
@@ -61,23 +63,24 @@ GuiTestGnss::GuiTestGnss( const GuiGnssResult_t* results, guiPageType_t pageType
 
     this->createActionButton( &( this->btn_config ), "CONFIG", GuiTestGnss::callback, GUI_BUTTON_POS_RIGHT, -5, true );
 
-    this->createInfoFrame( &( this->info_frame ), &( this->lbl_info_frame_1 ), "SCAN IN PROGRESS...",
+    if( pageType == GUI_PAGE_GNSS_ASSISTED_TEST )
+    {
+        this->createActionButton( &( this->btn_assist ), "ASSIST", GuiTestGnss::callback, GUI_BUTTON_POS_LEFT, -5,
+                                  true );
+    }
+
+    this->createInfoFrame( &( this->info_frame ), &( this->lbl_info_frame_1 ), "PRESS START TO BEGIN",
                            &( this->lbl_info_frame_2 ), "", &( this->lbl_info_frame_3 ), "" );
+
+    if( at_least_one_scan_done == true )
+    {
+        this->refresh( );
+    }
+
+    lv_scr_load( this->screen );
 }
 
 GuiTestGnss::~GuiTestGnss( ) {}
-
-void GuiTestGnss::init( )
-{
-    lv_cont_set_style( this->info_frame, LV_CONT_STYLE_MAIN, &( GuiCommon::info_frame_style_init ) );
-
-    lv_label_set_text( this->lbl_info_frame_1, "PRESS START TO BEGIN" );
-    lv_label_set_text( this->lbl_info_frame_2, "" );
-    lv_label_set_text( this->lbl_info_frame_3, "" );
-
-    lv_btn_set_state( this->btn_send, LV_BTN_STATE_INA );
-    lv_btn_set_state( this->btn_results, LV_BTN_STATE_INA );
-}
 
 void GuiTestGnss::start( )
 {
@@ -155,7 +158,7 @@ void GuiTestGnss::refresh( )
         {
             if( strlen( _results->reverse_geo_loc.country ) != 0 )
             {
-                snprintf( buffer_3, TMP_BUFFER_REVERSE_GEO_LOC_REFRESH_LENGTH, "%s, %s\n%s - %s\n%s",
+                snprintf( buffer_3, TMP_BUFFER_REVERSE_GEO_LOC_REFRESH_LENGTH, "%s %s\n%s - %s\n%s",
                           _results->reverse_geo_loc.latitude, _results->reverse_geo_loc.longitude,
                           _results->reverse_geo_loc.country, _results->reverse_geo_loc.city,
                           _results->reverse_geo_loc.street );
@@ -171,21 +174,13 @@ void GuiTestGnss::refresh( )
     lv_label_set_text( this->lbl_info_frame_1, buffer_1 );
     lv_label_set_text( this->lbl_info_frame_2, buffer_2 );
     lv_label_set_text( this->lbl_info_frame_3, buffer_3 );
+
+    this->updateButtons( );
 }
 
-void GuiTestGnss::draw( ) { lv_scr_load( this->screen ); }
+void GuiTestGnss::updateHostConnectivityState( void ) { this->updateButtons( ); }
 
-void GuiTestGnss::updateHostConnectivityState( void )
-{
-    if( ( GuiCommon::_is_host_connected == true ) && ( _results->nb_satellites > 0 ) )
-    {
-        lv_btn_set_state( this->btn_send, LV_BTN_STATE_REL );
-    }
-    else
-    {
-        lv_btn_set_state( this->btn_send, LV_BTN_STATE_INA );
-    }
-}
+void GuiTestGnss::updateNetworkConnectivityState( ) { this->updateButtons( ); }
 
 void GuiTestGnss::callback( lv_obj_t* obj, lv_event_t event )
 {
@@ -223,5 +218,23 @@ void GuiTestGnss::callback( lv_obj_t* obj, lv_event_t event )
         {
             GuiCommon::_event = GUI_EVENT_CONFIG;
         }
+        else if( obj == self->btn_assist )
+        {
+            GuiCommon::_event = GUI_EVENT_ASSISTANCE_POSITION;
+        }
+    }
+}
+
+void GuiTestGnss::updateButtons( )
+{
+    if( ( ( GuiCommon::_network_connectivity_status.connectivity_state == GUI_CONNECTIVITY_STATUS_CONNECTED ) ||
+          ( GuiCommon::_is_host_connected == true ) ) &&
+        ( _results->nb_satellites > 0 ) )
+    {
+        lv_btn_set_state( this->btn_send, LV_BTN_STATE_REL );
+    }
+    else
+    {
+        lv_btn_set_state( this->btn_send, LV_BTN_STATE_INA );
     }
 }

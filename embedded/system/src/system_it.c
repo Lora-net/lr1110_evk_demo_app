@@ -146,8 +146,6 @@ void SysTick_Handler( void )
  * @param  None
  * @retval None
  */
-extern void DemoBaseInterruptHandler( void );
-
 void EXTI4_IRQHandler( void )
 {
     LL_EXTI_ClearFlag_0_31( LL_EXTI_LINE_4 );

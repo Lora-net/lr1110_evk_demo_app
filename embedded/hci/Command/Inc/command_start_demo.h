@@ -34,12 +34,12 @@
 
 #include "command_base.h"
 #include "hci.h"
-#include "demo.h"
+#include "demo_manager_interface.h"
 
 class CommandStartDemo : public CommandBase
 {
    public:
-    explicit CommandStartDemo( DeviceBase* device, Hci& hci, Demo& demo_holder );
+    explicit CommandStartDemo( DeviceInterface* device, Hci& hci, DemoManagerInterface& demo_holder );
     virtual ~CommandStartDemo( );
 
     virtual uint16_t GetComCode( );
@@ -53,10 +53,13 @@ class CommandStartDemo : public CommandBase
     bool ConfigureGnssAssisted( const uint8_t* buffer, const uint16_t buffer_size );
     bool ConfigureGnss( demo_gnss_settings_t* gnss_setting, const uint8_t* buffer, const uint16_t buffer_size );
 
+    static demo_wifi_mode_t             wifi_mode_from_value( const uint8_t& value );
+    static demo_wifi_signal_type_scan_t wifi_signal_type_scan_from_val( const uint8_t& val );
+
    private:
-    CommandBaseDemoId_t demo_id_to_start;
-    demo_all_settings_t demo_settings;
-    Demo&               demo_holder;
+    CommandBaseDemoId_t   demo_id_to_start;
+    demo_all_settings_t   demo_settings;
+    DemoManagerInterface& demo_holder;
 };
 
 #endif  // __COMMAND_START_DEMO_H__

@@ -38,7 +38,7 @@
 class CommandReset : public CommandBase
 {
    public:
-    explicit CommandReset( DeviceBase* device, Hci& hci );
+    explicit CommandReset( DeviceInterface* device, Hci& hci );
     virtual ~CommandReset( );
 
     virtual uint16_t GetComCode( );

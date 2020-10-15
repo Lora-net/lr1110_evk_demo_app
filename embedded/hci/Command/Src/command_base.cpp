@@ -31,7 +31,9 @@
 
 #include "command_base.h"
 
-CommandBase::CommandBase( DeviceBase* device, Hci& hci ) : device( device ), hci( &hci ), event( COMMAND_NO_EVENT ) {}
+CommandBase::CommandBase( DeviceInterface* device, Hci& hci ) : device( device ), hci( &hci ), event( COMMAND_NO_EVENT )
+{
+}
 
 CommandBase::~CommandBase( ) {}
 

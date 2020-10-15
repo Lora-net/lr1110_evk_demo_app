@@ -32,7 +32,7 @@
 #include "command_update_almanac.h"
 #include "com_code.h"
 
-CommandUpdateAlmanac::CommandUpdateAlmanac( DeviceBase* device, Hci& hci ) : CommandBase( device, hci )
+CommandUpdateAlmanac::CommandUpdateAlmanac( DeviceInterface* device, Hci& hci ) : CommandBase( device, hci )
 {
     for( uint16_t index_buffer = 0; index_buffer < COMMAND_UPDATE_ALMANAC_BUFFER_SIZE; index_buffer++ )
     {

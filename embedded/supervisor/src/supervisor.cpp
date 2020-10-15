@@ -30,6 +30,7 @@
  */
 
 #include "supervisor.h"
+#include "connectivity_conversions.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,22 +44,25 @@ extern void SupervisorInterruptHandlerDemo( void ) { Supervisor::InterruptHandle
 }
 #endif
 
-bool Supervisor::is_interrupt_raised = false;
+volatile bool Supervisor::is_demo_interrupt_raised = false;
+volatile bool Supervisor::is_gui_interrupt_raised  = false;
+bool          Supervisor::is_down_gui_interrupt    = false;
 
-Supervisor::Supervisor( Gui* gui, DeviceBase* device, Demo* demo, EnvironmentInterface* environment,
-                        CommunicationManager* communication_manager )
+Supervisor::Supervisor( Gui* gui, DeviceInterface* device, DemoManagerInterface* demo_manager,
+                        EnvironmentInterface* environment, CommunicationManager* communication_manager,
+                        ConnectivityManagerInterface* connectivity_manager )
     : run_demo( false ),
-      demo( demo ),
+      demo_manager( demo_manager ),
       gui( gui ),
       environment( environment ),
       device( device ),
-      communication_manager( communication_manager )
+      communication_manager( communication_manager ),
+      connectivity_manager( connectivity_manager ),
+      has_connectivity( connectivity_manager->IsConnectable( ) )
 {
-    version_handler.almanac_crc       = 0;
-    version_handler.almanac_date      = 0;
-    version_handler.version_chip_fw   = 0;
-    version_handler.version_chip_hw   = 0;
-    version_handler.version_chip_type = 0;
+    version_handler.almanac_crc  = 0;
+    version_handler.almanac_date = 0;
+    version_handler.modem        = { 0 };
     strcpy( version_handler.version_driver, "TBD" );
     strcpy( version_handler.version_sw, "TBD" );
 }
@@ -67,24 +71,39 @@ Supervisor::~Supervisor( ) {}
 
 void Supervisor::Init( )
 {
-    demo_all_settings_t demo_all_settings;
-    demo_all_settings_t demo_all_settings_default;
-    GuiDemoSettings_t   gui_demo_settings;
-    GuiDemoSettings_t   gui_demo_settings_default;
+    demo_all_settings_t             demo_all_settings;
+    demo_all_settings_t             demo_all_settings_default;
+    GuiDemoSettings_t               gui_demo_settings;
+    GuiDemoSettings_t               gui_demo_settings_default;
+    GuiGnssDemoAssistancePosition_t gui_gnss_demo_assistance_position;
+    GuiGnssDemoAssistancePosition_t gui_gnss_demo_assistance_position_default;
 
-    this->demo->Init( );
+    this->demo_manager->Init( );
 
-    this->demo->GetConfigDefault( &demo_all_settings_default );
-    this->demo->GetConfig( &demo_all_settings );
+    this->demo_manager->GetConfigDefault( &demo_all_settings_default );
+    this->demo_manager->GetConfig( &demo_all_settings );
 
     this->ConvertSettingsFromDemoToGui( &demo_all_settings_default, &gui_demo_settings_default );
     this->ConvertSettingsFromDemoToGui( &demo_all_settings, &gui_demo_settings );
 
     this->GetAndPropagateVersion( );
 
-    this->gui->Init( &gui_demo_settings, &gui_demo_settings_default, &version_handler );
+    gui_gnss_demo_assistance_position.latitude          = 45.976574;
+    gui_gnss_demo_assistance_position.longitude         = 7.658452;
+    gui_gnss_demo_assistance_position_default.latitude  = 45.976574;
+    gui_gnss_demo_assistance_position_default.longitude = 7.658452;
 
-    lr1110_system_read_uid( this->device->GetRadio( ), version_handler.chip_uid );
+    this->gui->Init( &gui_demo_settings, &gui_demo_settings_default, &gui_gnss_demo_assistance_position,
+                     &gui_gnss_demo_assistance_position_default, &version_handler );
+
+    if( this->has_connectivity == true )
+    {
+        this->gui->EnableConnectivity( );
+    }
+    else
+    {
+        this->gui->DisableConnectivity( );
+    }
 }
 
 void Supervisor::ConvertSettingsFromDemoToGui( const demo_all_settings_t* demo_settings,
@@ -94,43 +113,42 @@ void Supervisor::ConvertSettingsFromDemoToGui( const demo_all_settings_t* demo_s
     gui_demo_settings->wifi_settings.channel_mask = demo_settings->wifi_settings.channels;
 
     gui_demo_settings->wifi_settings.is_type_b =
-        ( demo_settings->wifi_settings.types == LR1110_WIFI_TYPE_SCAN_B ) ? true : false;
+        ( demo_settings->wifi_settings.types == DEMO_WIFI_SETTING_TYPE_B ) ? true : false;
 
     gui_demo_settings->wifi_settings.is_type_g =
-        ( demo_settings->wifi_settings.types == LR1110_WIFI_TYPE_SCAN_G ) ? true : false;
+        ( demo_settings->wifi_settings.types == DEMO_WIFI_SETTING_TYPE_G ) ? true : false;
 
     gui_demo_settings->wifi_settings.is_type_n =
-        ( demo_settings->wifi_settings.types == LR1110_WIFI_TYPE_SCAN_N ) ? true : false;
+        ( demo_settings->wifi_settings.types == DEMO_WIFI_SETTING_TYPE_N ) ? true : false;
 
     gui_demo_settings->wifi_settings.is_type_all =
-        ( demo_settings->wifi_settings.types == LR1110_WIFI_TYPE_SCAN_B_G_N ) ? true : false;
+        ( demo_settings->wifi_settings.types == DEMO_WIFI_SETTING_TYPE_B_G_N ) ? true : false;
 
     // GNSS autonomous
     gui_demo_settings->gnss_autonomous_settings.is_beidou_enabled =
-        ( ( demo_settings->gnss_autonomous_settings.constellation_mask & LR1110_GNSS_BEIDOU_MASK ) != 0 ) ? true
-                                                                                                          : false;
+        ( ( demo_settings->gnss_autonomous_settings.constellation_mask & DEMO_GNSS_BEIDOU_MASK ) != 0 ) ? true : false;
 
     gui_demo_settings->gnss_autonomous_settings.is_gps_enabled =
-        ( ( demo_settings->gnss_autonomous_settings.constellation_mask & LR1110_GNSS_GPS_MASK ) != 0 ) ? true : false;
+        ( ( demo_settings->gnss_autonomous_settings.constellation_mask & DEMO_GNSS_GPS_MASK ) != 0 ) ? true : false;
 
     gui_demo_settings->gnss_autonomous_settings.is_dual_scan_activated =
-        ( demo_settings->gnss_autonomous_settings.capture_mode == LR1110_GNSS_DOUBLE_SCAN_MODE ) ? true : false;
+        ( demo_settings->gnss_autonomous_settings.capture_mode == DEMO_GNSS_DOUBLE_SCAN_MODE ) ? true : false;
 
     gui_demo_settings->gnss_autonomous_settings.is_best_effort_activated =
-        ( demo_settings->gnss_autonomous_settings.option == LR1110_GNSS_OPTION_BEST_EFFORT ) ? true : false;
+        ( demo_settings->gnss_autonomous_settings.option == DEMO_GNSS_OPTION_BEST_EFFORT ) ? true : false;
 
     // GNSS assisted
     gui_demo_settings->gnss_assisted_settings.is_beidou_enabled =
-        ( ( demo_settings->gnss_assisted_settings.constellation_mask & LR1110_GNSS_BEIDOU_MASK ) != 0 ) ? true : false;
+        ( ( demo_settings->gnss_assisted_settings.constellation_mask & DEMO_GNSS_BEIDOU_MASK ) != 0 ) ? true : false;
 
     gui_demo_settings->gnss_assisted_settings.is_gps_enabled =
-        ( ( demo_settings->gnss_assisted_settings.constellation_mask & LR1110_GNSS_GPS_MASK ) != 0 ) ? true : false;
+        ( ( demo_settings->gnss_assisted_settings.constellation_mask & DEMO_GNSS_GPS_MASK ) != 0 ) ? true : false;
 
     gui_demo_settings->gnss_assisted_settings.is_dual_scan_activated =
-        ( demo_settings->gnss_assisted_settings.capture_mode == LR1110_GNSS_DOUBLE_SCAN_MODE ) ? true : false;
+        ( demo_settings->gnss_assisted_settings.capture_mode == DEMO_GNSS_DOUBLE_SCAN_MODE ) ? true : false;
 
     gui_demo_settings->gnss_assisted_settings.is_best_effort_activated =
-        ( demo_settings->gnss_assisted_settings.option == LR1110_GNSS_OPTION_BEST_EFFORT ) ? true : false;
+        ( demo_settings->gnss_assisted_settings.option == DEMO_GNSS_OPTION_BEST_EFFORT ) ? true : false;
 
     // Radio
     gui_demo_settings->radio_settings.rf_freq_in_hz = demo_settings->radio_settings.rf_frequency;
@@ -275,7 +293,7 @@ void Supervisor::ConvertSettingsFromGuiToDemo( const GuiRadioSetting_t* gui_sett
         demo_settings->tx_power                       = 14;
         demo_settings->pa_configuration.pa_duty_cycle = 0;
         demo_settings->pa_configuration.pa_hp_sel     = 0;
-        demo_settings->pa_configuration.pa_reg_supply = LR1110_RADIO_PA_REG_SUPPLY_DCDC;
+        demo_settings->pa_configuration.pa_reg_supply = LR1110_RADIO_PA_REG_SUPPLY_VREG;
         break;
     case 14:
         if( demo_settings->pa_configuration.pa_sel == LR1110_RADIO_PA_SEL_LP )
@@ -283,7 +301,7 @@ void Supervisor::ConvertSettingsFromGuiToDemo( const GuiRadioSetting_t* gui_sett
             demo_settings->tx_power                       = 14;
             demo_settings->pa_configuration.pa_duty_cycle = 4;
             demo_settings->pa_configuration.pa_hp_sel     = 0;
-            demo_settings->pa_configuration.pa_reg_supply = LR1110_RADIO_PA_REG_SUPPLY_DCDC;
+            demo_settings->pa_configuration.pa_reg_supply = LR1110_RADIO_PA_REG_SUPPLY_VREG;
         }
         else
         {
@@ -297,7 +315,7 @@ void Supervisor::ConvertSettingsFromGuiToDemo( const GuiRadioSetting_t* gui_sett
         demo_settings->tx_power                       = 14;
         demo_settings->pa_configuration.pa_duty_cycle = 7;
         demo_settings->pa_configuration.pa_hp_sel     = 0;
-        demo_settings->pa_configuration.pa_reg_supply = LR1110_RADIO_PA_REG_SUPPLY_DCDC;
+        demo_settings->pa_configuration.pa_reg_supply = LR1110_RADIO_PA_REG_SUPPLY_VREG;
         break;
     case 17:
         demo_settings->tx_power                       = 22;
@@ -399,19 +417,19 @@ void Supervisor::ConvertSettingsFromGuiToDemo( const GuiWifiDemoSetting_t* gui_s
 
     if( gui_settings->is_type_b == true )
     {
-        demo_settings->types = LR1110_WIFI_TYPE_SCAN_B;
+        demo_settings->types = DEMO_WIFI_SETTING_TYPE_B;
     }
     else if( gui_settings->is_type_g == true )
     {
-        demo_settings->types = LR1110_WIFI_TYPE_SCAN_G;
+        demo_settings->types = DEMO_WIFI_SETTING_TYPE_G;
     }
     else if( gui_settings->is_type_n == true )
     {
-        demo_settings->types = LR1110_WIFI_TYPE_SCAN_N;
+        demo_settings->types = DEMO_WIFI_SETTING_TYPE_N;
     }
     else if( gui_settings->is_type_all == true )
     {
-        demo_settings->types = LR1110_WIFI_TYPE_SCAN_B_G_N;
+        demo_settings->types = DEMO_WIFI_SETTING_TYPE_B_G_N;
     }
     demo_settings->result_type = DEMO_WIFI_RESULT_TYPE_BASIC_COMPLETE;
 }
@@ -423,30 +441,30 @@ void Supervisor::ConvertSettingsFromGuiToDemo( const GuiGnssDemoSetting_t* gui_s
 
     if( gui_settings->is_beidou_enabled == true )
     {
-        demo_settings->constellation_mask |= LR1110_GNSS_BEIDOU_MASK;
+        demo_settings->constellation_mask |= DEMO_GNSS_BEIDOU_MASK;
     }
 
     if( gui_settings->is_gps_enabled == true )
     {
-        demo_settings->constellation_mask |= LR1110_GNSS_GPS_MASK;
+        demo_settings->constellation_mask |= DEMO_GNSS_GPS_MASK;
     }
 
     if( gui_settings->is_dual_scan_activated == true )
     {
-        demo_settings->capture_mode = LR1110_GNSS_DOUBLE_SCAN_MODE;
+        demo_settings->capture_mode = DEMO_GNSS_DOUBLE_SCAN_MODE;
     }
     else
     {
-        demo_settings->capture_mode = LR1110_GNSS_SINGLE_SCAN_MODE;
+        demo_settings->capture_mode = DEMO_GNSS_SINGLE_SCAN_MODE;
     }
 
     if( gui_settings->is_best_effort_activated == true )
     {
-        demo_settings->option = LR1110_GNSS_OPTION_BEST_EFFORT;
+        demo_settings->option = DEMO_GNSS_OPTION_BEST_EFFORT;
     }
     else
     {
-        demo_settings->option = LR1110_GNSS_OPTION_DEFAULT;
+        demo_settings->option = DEMO_GNSS_OPTION_DEFAULT;
     }
 }
 
@@ -454,6 +472,8 @@ void Supervisor::GetAndPropagateVersion( ) { this->device->FetchVersion( this->v
 
 void Supervisor::Runtime( )
 {
+    this->InterruptionRuntime( );
+    this->NetworkConnectivityRuntimeAndProcess( );
     this->GuiRuntimeAndProcess( );
     this->CommunicationManagerRuntime( );
 
@@ -469,10 +489,6 @@ void Supervisor::GuiRuntimeAndProcess( )
 
     this->gui->Runtime( );
 
-    if( Supervisor::is_interrupt_raised )
-    {
-        Supervisor::is_interrupt_raised = false;
-    }
     last_gui_event = this->gui->GetLastEvent( );
 
     switch( last_gui_event )
@@ -481,51 +497,120 @@ void Supervisor::GuiRuntimeAndProcess( )
     {
         break;
     }
+    case GUI_LAST_EVENT_JOIN:
+    {
+        GuiNetworkConnectivitySettings_t gui_network_connectivity_settings;
+        network_connectivity_settings_t  network_connectivity_settings;
+
+        this->gui->GetNetworkConnectivitySettings( &gui_network_connectivity_settings );
+
+        if( gui_network_connectivity_settings.region == GUI_NETWORK_CONNECTIVITY_REGION_EU868 )
+        {
+            network_connectivity_settings.region = NETWORK_CONNECTIVITY_REGION_EU868;
+        }
+        else if( gui_network_connectivity_settings.region == GUI_NETWORK_CONNECTIVITY_REGION_US915 )
+        {
+            network_connectivity_settings.region = NETWORK_CONNECTIVITY_REGION_US915;
+        }
+
+        if( gui_network_connectivity_settings.adr_profile == GUI_NETWORK_CONNECTIVITY_ADR_NETWORK_SERVER_CONTROLLED )
+        {
+            network_connectivity_settings.adr_profile = NETWORK_CONNECTIVITY_ADR_NETWORK_SERVER_CONTROLLED;
+        }
+        else if( gui_network_connectivity_settings.adr_profile == GUI_NETWORK_CONNECTIVITY_ADR_MOBILE_LONG_RANGE )
+        {
+            network_connectivity_settings.adr_profile = NETWORK_CONNECTIVITY_ADR_MOBILE_LONG_RANGE;
+        }
+        else if( gui_network_connectivity_settings.adr_profile == GUI_NETWORK_CONNECTIVITY_ADR_MOBILE_LOW_POWER )
+        {
+            network_connectivity_settings.adr_profile = NETWORK_CONNECTIVITY_ADR_MOBILE_LOW_POWER;
+        }
+
+        this->connectivity_manager->Join( &network_connectivity_settings );
+        break;
+    }
+    case GUI_LAST_EVENT_LEAVE:
+    {
+        this->connectivity_manager->Leave( );
+        break;
+    }
+    case GUI_LAST_EVENT_RESET_SEMTECH_DEFAULT_COMMISSIONING:
+    {
+        this->connectivity_manager->ResetCommissioningToSemtechJoinServer( );
+        this->GetAndPropagateVersion( );
+        break;
+    }
+    case GUI_LAST_EVENT_PRINT_EUI:
+    {
+        const version_handler_t* version_handler = GetVersionHandler( );
+        this->communication_manager->Log( "CHIP EUI - %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X\n",
+                                          version_handler->chip_uid[0], version_handler->chip_uid[1],
+                                          version_handler->chip_uid[2], version_handler->chip_uid[3],
+                                          version_handler->chip_uid[4], version_handler->chip_uid[5],
+                                          version_handler->chip_uid[6], version_handler->chip_uid[7] );
+
+        this->communication_manager->Log( "DEV EUI - %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X\n",
+                                          version_handler->dev_eui[0], version_handler->dev_eui[1],
+                                          version_handler->dev_eui[2], version_handler->dev_eui[3],
+                                          version_handler->dev_eui[4], version_handler->dev_eui[5],
+                                          version_handler->dev_eui[6], version_handler->dev_eui[7] );
+
+        this->communication_manager->Log( "JOIN EUI - %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X\n",
+                                          version_handler->join_eui[0], version_handler->join_eui[1],
+                                          version_handler->join_eui[2], version_handler->join_eui[3],
+                                          version_handler->join_eui[4], version_handler->join_eui[5],
+                                          version_handler->join_eui[6], version_handler->join_eui[7] );
+
+        this->communication_manager->Log( "PIN - %02X-%02X-%02X-%02X\n", version_handler->pin[0],
+                                          version_handler->pin[1], version_handler->pin[2], version_handler->pin[3] );
+
+        break;
+    }
     case GUI_LAST_EVENT_START_DEMO_WIFI:
     {
-        demo->Start( DEMO_TYPE_WIFI );
+        demo_manager->Start( DEMO_TYPE_WIFI );
         this->run_demo = true;
         break;
     }
     case GUI_LAST_EVENT_START_DEMO_GNSS_AUTONOMOUS:
     {
-        demo->Start( DEMO_TYPE_GNSS_AUTONOMOUS );
+        demo_manager->Start( DEMO_TYPE_GNSS_AUTONOMOUS );
         this->run_demo = true;
         break;
     }
     case GUI_LAST_EVENT_START_DEMO_GNSS_ASSISTED:
     {
-        demo->Start( DEMO_TYPE_GNSS_ASSISTED );
+        demo_manager->Start( DEMO_TYPE_GNSS_ASSISTED );
         this->run_demo = true;
         break;
     }
     case GUI_LAST_EVENT_START_DEMO_TX_CW:
     {
-        demo->Start( DEMO_TYPE_TX_CW );
+        demo_manager->Start( DEMO_TYPE_TX_CW );
         this->run_demo = true;
         break;
     }
     case GUI_LAST_EVENT_START_DEMO_PER_TX:
     {
-        demo->Start( DEMO_TYPE_RADIO_PER_TX );
+        demo_manager->Start( DEMO_TYPE_RADIO_PER_TX );
         this->run_demo = true;
         break;
     }
     case GUI_LAST_EVENT_START_DEMO_PER_RX:
     {
-        demo->Start( DEMO_TYPE_RADIO_PER_RX );
+        demo_manager->Start( DEMO_TYPE_RADIO_PER_RX );
         this->run_demo = true;
         break;
     }
     case GUI_LAST_EVENT_START_DEMO_PING_PONG:
     {
-        demo->Start( DEMO_TYPE_RADIO_PING_PONG );
+        demo_manager->Start( DEMO_TYPE_RADIO_PING_PONG );
         this->run_demo = true;
         break;
     }
     case GUI_LAST_EVENT_STOP_DEMO:
     {
-        demo->Stop( );
+        demo_manager->Stop( );
         this->run_demo = false;
         break;
     }
@@ -534,19 +619,27 @@ void Supervisor::GuiRuntimeAndProcess( )
         this->communication_manager->EraseDataStored( );
         this->communication_manager->Store( this->version_handler );
 
-        demo_type_t demo_type = demo->GetType( );
+        demo_type_t demo_type = demo_manager->GetType( );
 
         switch( demo_type )
         {
         case DEMO_TYPE_WIFI:
         case DEMO_TYPE_WIFI_COUNTRY_CODE:
-            TransferResultToSerial( ( ( demo_wifi_scan_all_results_t* ) demo->GetResults( ) ) );
+        {
+            const demo_wifi_scan_all_results_t* results = ( demo_wifi_scan_all_results_t* ) demo_manager->GetResults( );
+            this->TransferResultToSerial( results );
+            this->TransferResultToConnectivity( results );
             break;
+        }
 
         case DEMO_TYPE_GNSS_AUTONOMOUS:
         case DEMO_TYPE_GNSS_ASSISTED:
-            TransferResultToSerial( ( ( demo_gnss_all_results_t* ) demo->GetResults( ) ) );
+        {
+            const demo_gnss_all_results_t* results = ( demo_gnss_all_results_t* ) demo_manager->GetResults( );
+            this->TransferResultToSerial( results );
+            this->TransferResultToConnectivity( results );
             break;
+        }
         default:
             break;
         }
@@ -559,8 +652,6 @@ void Supervisor::GuiRuntimeAndProcess( )
         float         accuracy              = 0;
         char          geo_coding[64]        = { 0 };
         const uint8_t geo_coding_max_length = 64;
-        uint8_t       count_attempt         = 0;
-        const uint8_t max_count_attempt     = 1;
 
         const bool success = this->communication_manager->GetResults( latitude, longitude, altitude, accuracy,
                                                                       geo_coding, geo_coding_max_length );
@@ -575,11 +666,28 @@ void Supervisor::GuiRuntimeAndProcess( )
         }
         else
         {
-            GuiResultGeoLoc_t new_reverse_geo_loc;
-            sscanf( geo_coding, "Failure" );
-            snprintf( new_reverse_geo_loc.latitude, GUI_RESULT_GEO_LOC_LATITUDE_LENGTH, "XXX" );
-            snprintf( new_reverse_geo_loc.longitude, GUI_RESULT_GEO_LOC_LATITUDE_LENGTH, "XXX" );
-            this->gui->UpdateReverseGeoCoding( new_reverse_geo_loc );
+            if( this->connectivity_manager->IsConnectable( ) == true )
+            {
+                // It is ok to fail here if there is a LoRaWan connectivity, as the message has been sent through
+                // LoRaWan and not through the communication manager
+                GuiResultGeoLoc_t new_reverse_geo_loc;
+                // strncpy( new_reverse_geo_loc.country, "", GUI_RESULT_GEO_LOC_COUNTRY_LENGTH );
+                snprintf( new_reverse_geo_loc.country, GUI_RESULT_GEO_LOC_COUNTRY_LENGTH, " " );
+                snprintf( new_reverse_geo_loc.city, GUI_RESULT_GEO_LOC_CITY_LENGTH, "" );
+                snprintf( new_reverse_geo_loc.street, GUI_RESULT_GEO_LOC_STREET_LENGTH, "See application server" );
+                snprintf( new_reverse_geo_loc.latitude, GUI_RESULT_GEO_LOC_LATITUDE_LENGTH, "Added to stream" );
+                snprintf( new_reverse_geo_loc.longitude, GUI_RESULT_GEO_LOC_LATITUDE_LENGTH, " " );
+                this->gui->UpdateReverseGeoCoding( new_reverse_geo_loc );
+            }
+            else
+            {
+                // It is not ok to fail on the get result if on top of that there is no lorawan connectivity
+                GuiResultGeoLoc_t new_reverse_geo_loc;
+                strncpy( new_reverse_geo_loc.country, "Failure", GUI_RESULT_GEO_LOC_COUNTRY_LENGTH );
+                snprintf( new_reverse_geo_loc.latitude, GUI_RESULT_GEO_LOC_LATITUDE_LENGTH, "XXX" );
+                snprintf( new_reverse_geo_loc.longitude, GUI_RESULT_GEO_LOC_LATITUDE_LENGTH, "XXX" );
+                this->gui->UpdateReverseGeoCoding( new_reverse_geo_loc );
+            }
         }
         break;
     }
@@ -587,40 +695,54 @@ void Supervisor::GuiRuntimeAndProcess( )
     {
         demo_radio_settings_t demo_settings;
         GuiRadioSetting_t     gui_settings;
-        this->demo->GetConfigRadio( &demo_settings );
+        this->demo_manager->GetConfigRadio( &demo_settings );
         this->gui->GetRadioSettings( &gui_settings );
         this->ConvertSettingsFromGuiToDemo( &gui_settings, &demo_settings );
-        this->demo->UpdateConfigRadio( &demo_settings );
+        this->demo_manager->UpdateConfigRadio( &demo_settings );
         break;
     }
     case GUI_LAST_EVENT_UPDATE_DEMO_WIFI:
     {
         demo_wifi_settings_t demo_settings;
         GuiWifiDemoSetting_t gui_settings;
-        this->demo->GetConfigWifi( &demo_settings );
+        this->demo_manager->GetConfigWifi( &demo_settings );
         this->gui->GetWifiSettings( &gui_settings );
         this->ConvertSettingsFromGuiToDemo( &gui_settings, &demo_settings );
-        this->demo->UpdateConfigWifiScan( &demo_settings );
+        this->demo_manager->UpdateConfigWifiScan( &demo_settings );
         break;
     }
     case GUI_LAST_EVENT_UPDATE_DEMO_GNSS_AUTONOMOUS:
     {
         demo_gnss_settings_t demo_settings;
         GuiGnssDemoSetting_t gui_settings;
-        this->demo->GetConfigAutonomousGnss( &demo_settings );
+        this->demo_manager->GetConfigAutonomousGnss( &demo_settings );
         this->gui->GetGnssAutonomousSettings( &gui_settings );
         this->ConvertSettingsFromGuiToDemo( &gui_settings, &demo_settings );
-        this->demo->UpdateConfigAutonomousGnss( &demo_settings );
+        this->demo_manager->UpdateConfigAutonomousGnss( &demo_settings );
         break;
     }
     case GUI_LAST_EVENT_UPDATE_DEMO_GNSS_ASSISTED:
     {
         demo_gnss_settings_t demo_settings;
         GuiGnssDemoSetting_t gui_settings;
-        this->demo->GetConfigAssistedGnss( &demo_settings );
+        this->demo_manager->GetConfigAssistedGnss( &demo_settings );
         this->gui->GetGnssAssistedSettings( &gui_settings );
         this->ConvertSettingsFromGuiToDemo( &gui_settings, &demo_settings );
-        this->demo->UpdateConfigAssistedGnss( &demo_settings );
+        this->demo_manager->UpdateConfigAssistedGnss( &demo_settings );
+        break;
+    }
+    case GUI_LAST_EVENT_UPDATE_DEMO_GNSS_ASSISTANCE_POSITION:
+    {
+        environment_location_t          environment_location;
+        GuiGnssDemoAssistancePosition_t assistance_position;
+
+        this->gui->GetGnssAssistancePosition( &assistance_position );
+
+        environment_location.latitude  = assistance_position.latitude;
+        environment_location.longitude = assistance_position.longitude;
+        environment_location.altitude  = 0;
+
+        environment->SetLocation( environment_location );
         break;
     }
     default:
@@ -630,11 +752,11 @@ void Supervisor::GuiRuntimeAndProcess( )
 
 void Supervisor::DemoRuntimeAndProcess( )
 {
-    switch( demo->Runtime( ) )
+    switch( demo_manager->Runtime( ) )
     {
     case DEMO_STATUS_RUNNING:
     {
-        if( this->demo->HasIntermediateResults( ) )
+        if( this->demo_manager->HasIntermediateResults( ) )
         {
             this->TransfertDemoResultsToGui( );
         }
@@ -642,14 +764,16 @@ void Supervisor::DemoRuntimeAndProcess( )
     }
     case DEMO_STATUS_TERMINATED:
     {
-        demo->Stop( );
+        demo_manager->Stop( );
         this->run_demo = false;
         this->TransfertDemoResultsToGui( );
         this->communication_manager->EventNotify( );
         break;
     }
     default:
-        printf( "Forgot break??\n" );
+    {
+        break;
+    }
     }
 }
 
@@ -694,65 +818,126 @@ void Supervisor::CommunicationManagerRuntime( )
         }
         case COMMAND_START_WIFI_SCAN_DEMO_EVENT:
         {
-            demo->Start( DEMO_TYPE_WIFI );
+            demo_manager->Start( DEMO_TYPE_WIFI );
             this->run_demo = true;
             break;
         }
         case COMMAND_START_WIFI_COUNTRY_CODE_DEMO_EVENT:
         {
-            demo->Start( DEMO_TYPE_WIFI_COUNTRY_CODE );
+            demo_manager->Start( DEMO_TYPE_WIFI_COUNTRY_CODE );
             this->run_demo = true;
             break;
         }
         case COMMAND_START_GNSS_AUTONOMOUS_DEMO_EVENT:
         {
-            demo->Start( DEMO_TYPE_GNSS_AUTONOMOUS );
+            demo_manager->Start( DEMO_TYPE_GNSS_AUTONOMOUS );
             this->run_demo = true;
             break;
         }
         case COMMAND_START_GNSS_ASSISTED_DEMO_EVENT:
         {
-            demo->Start( DEMO_TYPE_GNSS_ASSISTED );
+            demo_manager->Start( DEMO_TYPE_GNSS_ASSISTED );
             this->run_demo = true;
             break;
         }
         case COMMAND_STOP_DEMO_EVENT:
         {
-            this->demo->Stop( );
+            this->demo_manager->Stop( );
             this->run_demo = false;
             break;
         }
         case COMMAND_RESET_DEMO_EVENT:
         {
-            this->demo->Stop( );
+            this->demo_manager->Stop( );
             this->run_demo = false;
-            this->device->ResetAndInit( );
-            this->demo->Reset( );
+            this->device->Init( );
+            this->demo_manager->Reset( );
         }
         }
     }
 }
 
-void Supervisor::InterruptHandlerGui( bool is_down )
+void Supervisor::NetworkConnectivityRuntimeAndProcess( )
 {
-    Supervisor::is_interrupt_raised = true;
-    Gui::InterruptHandler( is_down );
+    switch( this->connectivity_manager->Runtime( ) )
+    {
+    case NETWORK_CONNECTIVITY_STATUS_JOIN:
+    {
+        this->communication_manager->Log( "Network joined!\r\n" );
+        GuiNetworkConnectivityStatus_t network_connectivity_status;
+        network_connectivity_status.connectivity_state = GUI_CONNECTIVITY_STATUS_CONNECTED;
+        network_connectivity_status.is_time_sync       = this->connectivity_manager->getTimeSyncState( );
+        this->gui->NetworkConnectivityChange( &network_connectivity_status );
+        break;
+    }
+
+    case NETWORK_CONNECTIVITY_STATUS_GOT_ALC_SYNC:
+    {
+        this->communication_manager->Log( "Got ALC sync!\r\n" );
+        GuiNetworkConnectivityStatus_t network_connectivity_status;
+        network_connectivity_status.connectivity_state = GUI_CONNECTIVITY_STATUS_CONNECTED;
+        network_connectivity_status.is_time_sync       = this->connectivity_manager->getTimeSyncState( );
+        this->gui->NetworkConnectivityChange( &network_connectivity_status );
+        break;
+    }
+    case NETWORK_CONNECTIVITY_STATUS_LOST_ALC_SYNC:
+    {
+        this->communication_manager->Log( "Lost ALC sync!\r\n" );
+        GuiNetworkConnectivityStatus_t network_connectivity_status;
+        network_connectivity_status.connectivity_state = GUI_CONNECTIVITY_STATUS_CONNECTED;
+        network_connectivity_status.is_time_sync       = this->connectivity_manager->getTimeSyncState( );
+        this->gui->NetworkConnectivityChange( &network_connectivity_status );
+        break;
+    }
+    default:
+        break;
+    }
 }
 
-void Supervisor::InterruptHandlerDemo( )
+void Supervisor::InterruptHandlerGui( bool is_down )
 {
-    Supervisor::is_interrupt_raised = true;
-    DemoBase::InterruptHandler( );
+    Supervisor::is_gui_interrupt_raised = true;
+    Supervisor::is_down_gui_interrupt   = is_down;
+}
+
+void Supervisor::InterruptHandlerDemo( ) { Supervisor::is_demo_interrupt_raised = true; }
+
+void Supervisor::InterruptionRuntime( )
+{
+    if( Supervisor::is_demo_interrupt_raised == true )
+    {
+        Supervisor::is_demo_interrupt_raised = false;
+        InterruptionInterface* interruption  = 0;
+        while( this->device->FetchInterrupt( &interruption ) )
+        {
+            const bool interrupt_to_propagate_to_connectivity =
+                interruption->is_radio_interruption( ) && this->has_connectivity;
+            if( interrupt_to_propagate_to_connectivity == true )
+            {
+                this->connectivity_manager->InterruptHandler( interruption );
+            }
+            else
+            {
+                this->demo_manager->InterruptHandler( interruption );
+            }
+        }
+    }
+
+    if( Supervisor::is_gui_interrupt_raised == true )
+    {
+        Supervisor::is_gui_interrupt_raised = false;
+        Gui::InterruptHandler( Supervisor::is_down_gui_interrupt );
+    }
 }
 
 bool Supervisor::CanEnterLowPower( ) const
 {
     bool can_enter_low_power = true;
-    // DemoBase*                   running_demo        = NULL;
+    // DemoInterface*                   running_demo        = NULL;
     // DemoContainerSelectedType_t type                = DEMO_TYPE_NONE;
     // type = this->demo_container.GetSelectedDemoAndType( running_demo );
 
-    // can_enter_low_power &= !Supervisor::is_interrupt_raised;
+    // can_enter_low_power &= !Supervisor::is_demo_interrupt_raised;
     // can_enter_low_power &= !this->gui->HasRefreshPending( );
 
     // if( type != DEMO_TYPE_NONE )
@@ -768,37 +953,37 @@ bool Supervisor::CanEnterLowPower( ) const
 
 void Supervisor::EnterWaitForInterrupt( ) const
 {
-    while( !Supervisor::is_interrupt_raised )
+    while( !Supervisor::is_demo_interrupt_raised )
     {
     }
 }
 
 void Supervisor::TransfertDemoResultsToGui( )
 {
-    demo_type_t demo_type = demo->GetType( );
+    demo_type_t demo_type = demo_manager->GetType( );
 
     switch( demo_type )
     {
     case DEMO_TYPE_WIFI:
     case DEMO_TYPE_WIFI_COUNTRY_CODE:
-        this->TransferResultToGui( ( ( demo_wifi_scan_all_results_t* ) demo->GetResults( ) ) );
+        this->TransferResultToGui( ( ( demo_wifi_scan_all_results_t* ) demo_manager->GetResults( ) ) );
         break;
 
     case DEMO_TYPE_GNSS_AUTONOMOUS:
-        this->TransferResultToGui( ( ( demo_gnss_all_results_t* ) demo->GetResults( ) ) );
+        this->TransferResultToGui( ( ( demo_gnss_all_results_t* ) demo_manager->GetResults( ) ) );
         break;
 
     case DEMO_TYPE_GNSS_ASSISTED:
-        this->TransferResultToGui( ( ( demo_gnss_all_results_t* ) demo->GetResults( ) ) );
+        this->TransferResultToGui( ( ( demo_gnss_all_results_t* ) demo_manager->GetResults( ) ) );
         break;
 
     case DEMO_TYPE_RADIO_PING_PONG:
-        this->TransferResultToGui( ( demo_ping_pong_results_t* ) demo->GetResults( ) );
+        this->TransferResultToGui( ( demo_ping_pong_results_t* ) demo_manager->GetResults( ) );
         break;
 
     case DEMO_TYPE_RADIO_PER_TX:
     case DEMO_TYPE_RADIO_PER_RX:
-        this->TransferResultToGui( ( demo_radio_per_results_t* ) demo->GetResults( ) );
+        this->TransferResultToGui( ( demo_radio_per_results_t* ) demo_manager->GetResults( ) );
         break;
 
     default:
@@ -826,9 +1011,9 @@ void Supervisor::TransferResultToGui( const demo_wifi_scan_all_results_t* result
 
     for( uint8_t index = 0; index < result->nbrResults; index++ )
     {
-        const lr1110_wifi_mac_address_t* mac = &result->results[index].mac_address;
-        GuiWifiMacAddress_t              strMac;
-        GuiWifiResultChannel_t*          chan;
+        const demo_wifi_mac_address_t* mac = &result->results[index].mac_address;
+        GuiWifiMacAddress_t            strMac;
+        GuiWifiResultChannel_t*        chan;
 
         const demo_wifi_channel_t     wifi_chan = result->results[index].channel;
         const demo_wifi_signal_type_t wifi_type = result->results[index].type;
@@ -836,7 +1021,7 @@ void Supervisor::TransferResultToGui( const demo_wifi_scan_all_results_t* result
         snprintf( strMac, GUI_WIFI_STRING_LENGTH, "%02x:%02x:%02x:%02x:%02x:%02x", ( *mac )[0], ( *mac )[1],
                   ( *mac )[2], ( *mac )[3], ( *mac )[4], ( *mac )[5] );
 
-        if( wifi_type == LR1110_WIFI_TYPE_RESULT_B )
+        if( wifi_type == DEMO_WIFI_TYPE_B )
         {
             chan = &guiWifiResults.typeB.channel[wifi_chan - 1];
         }
@@ -913,6 +1098,38 @@ void Supervisor::TransferResultToGui( const demo_radio_per_results_t* result )
     this->gui->UpdateRadioPerResult( guiResult );
 }
 
+void Supervisor::TransferResultToConnectivity( const demo_wifi_scan_all_results_t* result )
+{
+    uint8_t  buffer[255] = { 0 };
+    uint16_t buffer_size = 0;
+    ConnectivityConversions::copy_demo_result_to_tlv_payload_buffer( *result, buffer, &buffer_size, 255 );
+
+    this->communication_manager->Log( "Sending buffer (%u bytes): ", buffer_size );
+    const network_connectivity_cmd_status_t send_status = this->connectivity_manager->Send( buffer, buffer_size );
+    for( uint16_t index_buffer = 0; index_buffer < buffer_size; index_buffer++ )
+    {
+        this->communication_manager->Log( "0x%02x ", buffer[index_buffer] );
+    }
+    this->communication_manager->Log( "\r\n" );
+    this->communication_manager->Log( "Send status code: 0x%x\r\n", send_status );
+}
+
+void Supervisor::TransferResultToConnectivity( const demo_gnss_all_results_t* result )
+{
+    uint8_t  buffer[255] = { 0 };
+    uint16_t buffer_size = 0;
+    ConnectivityConversions::copy_demo_result_to_tlv_payload_buffer( *result, buffer, &buffer_size, 255 );
+
+    this->communication_manager->Log( "Sending buffer (%u bytes): ", buffer_size );
+    const network_connectivity_cmd_status_t send_status = this->connectivity_manager->Send( buffer, buffer_size );
+    for( uint16_t index_buffer = 0; index_buffer < buffer_size; index_buffer++ )
+    {
+        this->communication_manager->Log( "0x%02x ", buffer[index_buffer] );
+    }
+    this->communication_manager->Log( "\r\n" );
+    this->communication_manager->Log( "Send status code: 0x%x\r\n", send_status );
+}
+
 GuiDemoStatus_t Supervisor::DemoGnssErrorCodeToGuiStatus( const demo_gnss_error_t error_code )
 {
     GuiDemoStatus_t gui_status = GUI_DEMO_STATUS_KO_UNKNOWN;
@@ -956,39 +1173,16 @@ GuiDemoStatus_t Supervisor::DemoGnssErrorCodeToGuiStatus( const demo_gnss_error_
 
 void Supervisor::TransferResultToSerial( const demo_wifi_scan_all_results_t* result )
 {
-    this->communication_manager->Store( *( demo_wifi_scan_all_results_t* ) demo->GetResults( ) );
+    this->communication_manager->Store( *result );
 }
 
 void Supervisor::TransferResultToSerial( const demo_gnss_all_results_t* result )
 {
     const uint32_t delay_capture_s = this->environment->GetLocalTimeSeconds( ) - result->local_instant_measurement;
 
-    this->communication_manager->Store( *( demo_gnss_all_results_t* ) demo->GetResults( ), delay_capture_s );
+    this->communication_manager->Store( *result, delay_capture_s );
 }
 
-bool Supervisor::HasPendingInterrupt( ) const { return Supervisor::is_interrupt_raised; }
+bool Supervisor::HasPendingInterrupt( ) const { return Supervisor::is_demo_interrupt_raised; }
 
 const version_handler_t* Supervisor::GetVersionHandler( ) const { return &this->version_handler; }
-
-const char* Supervisor::WifiTypeToStr( const lr1110_wifi_signal_type_result_t type )
-{
-    switch( type )
-    {
-    case LR1110_WIFI_TYPE_RESULT_B:
-    {
-        return ( char* ) "TYPE_B";
-    }
-    case LR1110_WIFI_TYPE_RESULT_G:
-    {
-        return ( char* ) "TYPE_G";
-    }
-    case LR1110_WIFI_TYPE_RESULT_N:
-    {
-        return ( char* ) "TYPE_N";
-    }
-    default:
-    {
-        return ( char* ) "ERR TYPE";
-    }
-    }
-}

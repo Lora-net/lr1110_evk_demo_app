@@ -33,7 +33,7 @@
 #include "version.h"
 #include "semtech_logo.h"
 
-#define GUI_ABOUT_BUFFER_LENGTH ( 30 )
+#define GUI_ABOUT_BUFFER_LENGTH ( 100 )
 
 GuiAbout::GuiAbout( version_handler_t* version_handler )
     : GuiCommon( GUI_PAGE_ABOUT ), version_handler( version_handler )
@@ -42,64 +42,59 @@ GuiAbout::GuiAbout( version_handler_t* version_handler )
 
     this->createHeader( "ABOUT" );
 
-    snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "LR1110 EVK -  %s", DEMO_VERSION );
-    lv_obj_t* lbl_version_evk = lv_label_create( this->screen, NULL );
-    lv_obj_set_style( lbl_version_evk, &( GuiCommon::screen_style ) );
-    lv_label_set_long_mode( lbl_version_evk, LV_LABEL_LONG_BREAK );
-    lv_label_set_align( lbl_version_evk, LV_LABEL_ALIGN_CENTER );
-    lv_label_set_text( lbl_version_evk, buffer );
-    lv_obj_set_width( lbl_version_evk, 240 );
-    lv_obj_align( lbl_version_evk, NULL, LV_ALIGN_CENTER, 0, -100 );
+    snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "EVK DEMO APP -  %s", DEMO_VERSION );
+    this->createSection( buffer, -100 );
 
-    snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "LR1110 TYPE - 0x%02x", this->version_handler->version_chip_type );
-    lv_obj_t* lbl_version_type = lv_label_create( this->screen, NULL );
-    lv_obj_set_style( lbl_version_type, &( GuiCommon::screen_style ) );
-    lv_label_set_long_mode( lbl_version_type, LV_LABEL_LONG_BREAK );
-    lv_label_set_align( lbl_version_type, LV_LABEL_ALIGN_CENTER );
-    lv_label_set_text( lbl_version_type, buffer );
-    lv_obj_set_width( lbl_version_type, 240 );
-    lv_obj_align( lbl_version_type, NULL, LV_ALIGN_CENTER, 0, -80 );
+    switch( this->version_handler->device_type )
+    {
+    case VERSION_DEVICE_TRANSCEIVER:
+    {
+        snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "LR1110 TYPE - 0x%02x",
+                  this->version_handler->transceiver.version_chip_type );
+        this->createSection( buffer, -80 );
 
-    snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "LR1110 HARDWARE - 0x%02x", this->version_handler->version_chip_hw );
-    lv_obj_t* lbl_version_hw = lv_label_create( this->screen, NULL );
-    lv_obj_set_style( lbl_version_hw, &( GuiCommon::screen_style ) );
-    lv_label_set_long_mode( lbl_version_hw, LV_LABEL_LONG_BREAK );
-    lv_label_set_align( lbl_version_hw, LV_LABEL_ALIGN_CENTER );
-    lv_label_set_text( lbl_version_hw, buffer );
-    lv_obj_set_width( lbl_version_hw, 240 );
-    lv_obj_align( lbl_version_hw, NULL, LV_ALIGN_CENTER, 0, -60 );
+        snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "LR1110 HARDWARE - 0x%02x",
+                  this->version_handler->transceiver.version_chip_hw );
+        this->createSection( buffer, -60 );
 
-    snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "LR1110 FIRMWARE - 0x%04x", this->version_handler->version_chip_fw );
-    lv_obj_t* lbl_version_fw = lv_label_create( this->screen, NULL );
-    lv_obj_set_style( lbl_version_fw, &( GuiCommon::screen_style ) );
-    lv_label_set_long_mode( lbl_version_fw, LV_LABEL_LONG_BREAK );
-    lv_label_set_align( lbl_version_fw, LV_LABEL_ALIGN_CENTER );
-    lv_label_set_text( lbl_version_fw, buffer );
-    lv_obj_set_width( lbl_version_fw, 240 );
-    lv_obj_align( lbl_version_fw, NULL, LV_ALIGN_CENTER, 0, -40 );
+        snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "LR1110 FIRMWARE - 0x%04x",
+                  this->version_handler->transceiver.version_chip_fw );
+        this->createSection( buffer, -40 );
+        break;
+    }
 
-    lv_obj_t* lbl_copyrights_lvgl = lv_label_create( this->screen, NULL );
-    lv_obj_set_style( lbl_copyrights_lvgl, &( GuiCommon::screen_style ) );
-    lv_label_set_long_mode( lbl_copyrights_lvgl, LV_LABEL_LONG_BREAK );
-    lv_label_set_align( lbl_copyrights_lvgl, LV_LABEL_ALIGN_CENTER );
-    lv_label_set_text( lbl_copyrights_lvgl, "LVGL\nCopyright (c) 2016\nGabor Kiss-Vamosi" );
-    lv_obj_set_width( lbl_copyrights_lvgl, 240 );
-    lv_obj_align( lbl_copyrights_lvgl, NULL, LV_ALIGN_IN_BOTTOM_MID, 0, -110 );
+    case VERSION_DEVICE_MODEM:
+    {
+        snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "MODEM TYPE - 0x%02x",
+                  this->version_handler->modem.version_chip_type );
+        this->createSection( buffer, -80 );
 
-    lv_obj_t* lbl_copyrights_osm = lv_label_create( this->screen, NULL );
-    lv_obj_set_style( lbl_copyrights_osm, &( GuiCommon::screen_style ) );
-    lv_label_set_long_mode( lbl_copyrights_osm, LV_LABEL_LONG_BREAK );
-    lv_label_set_align( lbl_copyrights_osm, LV_LABEL_ALIGN_CENTER );
-    lv_label_set_text( lbl_copyrights_osm, "Data (c) OpenStreetMap\ncontributors, ODbL 1.0." );
-    lv_obj_set_width( lbl_copyrights_osm, 240 );
-    lv_obj_align( lbl_copyrights_osm, NULL, LV_ALIGN_IN_BOTTOM_MID, 0, -60 );
+        snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "MODEM BLOADER - 0x%08x",
+                  this->version_handler->modem.version_chip_bootloader );
+        this->createSection( buffer, -60 );
+
+        snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "MODEM FIRMWARE - 0x%06x",
+                  this->version_handler->modem.version_chip_fw );
+        this->createSection( buffer, -40 );
+        break;
+    }
+
+    default:
+        break;
+    }
+
+    snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "LVGL\nCopyright (c) 2016\nGabor Kiss-Vamosi" );
+    this->createSection( buffer, 10 );
+
+    snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "Data (c) OpenStreetMap\ncontributors, ODbL 1.0." );
+    this->createSection( buffer, 80 );
 
     this->createActionButton( &( this->btn_back ), "BACK", GuiAbout::callback, GUI_BUTTON_POS_CENTER, -5, true );
+
+    lv_scr_load( this->screen );
 }
 
 GuiAbout::~GuiAbout( ) {}
-
-void GuiAbout::draw( ) { lv_scr_load( this->screen ); }
 
 void GuiAbout::callback( lv_obj_t* obj, lv_event_t event )
 {

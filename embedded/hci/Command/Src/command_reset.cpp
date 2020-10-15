@@ -32,7 +32,7 @@
 #include "command_reset.h"
 #include "com_code.h"
 
-CommandReset::CommandReset( DeviceBase* device, Hci& hci ) : CommandBase( device, hci ) {}
+CommandReset::CommandReset( DeviceInterface* device, Hci& hci ) : CommandBase( device, hci ) {}
 
 CommandReset::~CommandReset( ) {}
 

@@ -34,7 +34,11 @@
 GuiConfigWifi::GuiConfigWifi( GuiWifiDemoSetting_t* settings_current, const GuiWifiDemoSetting_t* settings_default )
     : GuiCommon( GUI_PAGE_WIFI_CONFIG ), settings_current( settings_current ), settings_default( settings_default )
 {
-    this->createHeader( "Wi-Fi - CONFIGURATION" );
+    this->settings_temp = *( this->settings_current );
+
+    this->createHeader( "Wi-Fi CONFIGURATION" );
+
+    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
 
     this->createSection( "TYPES", -100 );
     this->btnm_types = lv_btnm_create( this->screen, NULL );
@@ -59,24 +63,17 @@ GuiConfigWifi::GuiConfigWifi( GuiWifiDemoSetting_t* settings_current, const GuiW
     this->createActionButton( &( this->btn_cancel ), "CANCEL", GuiConfigWifi::callback, GUI_BUTTON_POS_LEFT, -5, true );
 
     this->createActionButton( &( this->btn_default ), "DEFAULT", GuiConfigWifi::callback, GUI_BUTTON_POS_CENTER, -5,
-                              true );
+                              ( this->IsConfigTempEqualTo( this->settings_default ) == true ) ? false : true );
 
-    this->createActionButton( &( this->btn_save ), "SAVE", GuiConfigWifi::callback, GUI_BUTTON_POS_RIGHT, -5, false );
-}
+    this->createActionButton( &( this->btn_save ), "SAVE", GuiConfigWifi::callback, GUI_BUTTON_POS_RIGHT, -5,
+                              ( this->IsConfigTempEqualTo( this->settings_current ) == true ) ? false : true );
 
-GuiConfigWifi::~GuiConfigWifi( ) {}
-
-void GuiConfigWifi::init( ) {}
-
-void GuiConfigWifi::draw( )
-{
-    this->settings_temp = *( this->settings_current );
-
-    this->ConfigActionButton( );
     this->ConfigSettingsButton( );
 
     lv_scr_load( this->screen );
 }
+
+GuiConfigWifi::~GuiConfigWifi( ) {}
 
 void GuiConfigWifi::ConfigSettingsButton( )
 {

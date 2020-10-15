@@ -48,11 +48,7 @@ GuiResultsGnss::GuiResultsGnss( const GuiGnssResult_t* results, guiPageType_t pa
         break;
     }
 
-    this->createActionButton( &( this->btn_back ), "BACK", GuiResultsGnss::callback, GUI_BUTTON_POS_CENTER, -5, true );
-
-    this->createActionButton( &( this->btn_left ), "<", GuiResultsGnss::callback, GUI_BUTTON_POS_LEFT, -5, false );
-
-    this->createActionButton( &( this->btn_right ), ">", GuiResultsGnss::callback, GUI_BUTTON_POS_RIGHT, -5, false );
+    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
 
     this->lbl_info_page = lv_label_create( this->screen, NULL );
     lv_obj_set_style( this->lbl_info_page, &( GuiCommon::screen_style ) );
@@ -70,54 +66,37 @@ GuiResultsGnss::GuiResultsGnss( const GuiGnssResult_t* results, guiPageType_t pa
     lv_table_set_col_width( this->table, 0, 150 );
     lv_table_set_col_width( this->table, 1, 80 );
     lv_obj_align( this->table, NULL, LV_ALIGN_IN_TOP_MID, 0, 80 );
-}
 
-GuiResultsGnss::~GuiResultsGnss( ) {}
-
-void GuiResultsGnss::draw( )
-{
     this->_pageCurrent = 0;
 
     this->_pageTotal = ( _results->nb_satellites % GUI_GNSS_MAX_RESULTS == 0 )
                            ? _results->nb_satellites / GUI_GNSS_MAX_RESULTS
                            : _results->nb_satellites / GUI_GNSS_MAX_RESULTS + 1;
 
-    // Update navigation button states
-    if( _pageTotal > 1 )
-    {
-        lv_btn_set_state( this->btn_left, LV_BTN_STATE_REL );
-        lv_btn_set_state( this->btn_right, LV_BTN_STATE_REL );
-    }
-    else
-    {
-        lv_btn_set_state( this->btn_left, LV_BTN_STATE_INA );
-        lv_btn_set_state( this->btn_right, LV_BTN_STATE_INA );
-    }
+    this->createActionButton( &( this->btn_back ), "BACK", GuiResultsGnss::callback, GUI_BUTTON_POS_CENTER, -5, true );
+
+    this->createActionButton( &( this->btn_left ), "<", GuiResultsGnss::callback, GUI_BUTTON_POS_LEFT, -5,
+                              ( this->_pageTotal > 1 ) ? true : false );
+
+    this->createActionButton( &( this->btn_right ), ">", GuiResultsGnss::callback, GUI_BUTTON_POS_RIGHT, -5,
+                              ( this->_pageTotal > 1 ) ? true : false );
 
     this->setResults( );
 
     lv_scr_load( this->screen );
 }
 
-void GuiResultsGnss::updateResults( guiEvent_t event )
+GuiResultsGnss::~GuiResultsGnss( ) {}
+
+void GuiResultsGnss::findAndDisplayNextPage( bool up )
 {
-    switch( event )
+    if( up == false )
     {
-    case GUI_EVENT_LEFT:
-    {
-        _event       = GUI_EVENT_NONE;
-        _pageCurrent = ( _pageCurrent == 0 ) ? ( _pageTotal - 1 ) : ( _pageCurrent - 1 );
-        break;
+        this->_pageCurrent = ( this->_pageCurrent == 0 ) ? ( this->_pageTotal - 1 ) : ( this->_pageCurrent - 1 );
     }
-
-    case GUI_EVENT_RIGHT:
-        _event       = GUI_EVENT_NONE;
-        _pageCurrent = ( _pageCurrent + 1 ) % _pageTotal;
-
-        break;
-
-    default:
-        break;
+    else
+    {
+        this->_pageCurrent = ( this->_pageCurrent + 1 ) % this->_pageTotal;
     }
 
     this->setResults( );
@@ -175,11 +154,11 @@ void GuiResultsGnss::callback( lv_obj_t* obj, lv_event_t event )
         }
         else if( obj == self->btn_left )
         {
-            GuiCommon::_event = GUI_EVENT_LEFT;
+            self->findAndDisplayNextPage( false );
         }
         else if( obj == self->btn_right )
         {
-            GuiCommon::_event = GUI_EVENT_RIGHT;
+            self->findAndDisplayNextPage( true );
         }
     }
 }

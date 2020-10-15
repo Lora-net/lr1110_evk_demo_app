@@ -38,8 +38,10 @@ GuiRadioPer::GuiRadioPer( const GuiRadioSetting_t* settings, const GuiRadioPerRe
 {
     this->createHeader( "PACKET ERROR RATE" );
 
-    this->createInfoFrame( &( this->info_frame ), &( this->lbl_info_frame_1 ), "", &( this->lbl_info_frame_2 ), "",
-                           &( this->lbl_info_frame_3 ), "" );
+    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
+
+    this->createInfoFrame( &( this->info_frame ), &( this->lbl_info_frame_1 ), "CHOOSE TX OR RX",
+                           &( this->lbl_info_frame_2 ), "", &( this->lbl_info_frame_3 ), "" );
 
     this->createActionButton( &( this->btn_start_tx ), "TX", GuiRadioPer::callback, GUI_BUTTON_POS_LEFT, -60, true );
 
@@ -52,18 +54,11 @@ GuiRadioPer::GuiRadioPer( const GuiRadioSetting_t* settings, const GuiRadioPerRe
     lv_obj_set_hidden( this->btn_start_tx, false );
     lv_obj_set_hidden( this->btn_start_rx, false );
     lv_obj_set_hidden( this->btn_stop, true );
+
+    lv_scr_load( this->screen );
 }
 
 GuiRadioPer::~GuiRadioPer( ) {}
-
-void GuiRadioPer::init( )
-{
-    lv_cont_set_style( this->info_frame, LV_CONT_STYLE_MAIN, &( GuiCommon::info_frame_style_init ) );
-
-    lv_label_set_text( this->lbl_info_frame_1, "CHOOSE TX OR RX" );
-    lv_label_set_text( this->lbl_info_frame_2, "" );
-    lv_label_set_text( this->lbl_info_frame_3, "" );
-}
 
 void GuiRadioPer::start( )
 {
@@ -118,8 +113,6 @@ void GuiRadioPer::refresh( )
         lv_label_set_text( this->lbl_info_frame_2, buffer );
     }
 }
-
-void GuiRadioPer::draw( ) { lv_scr_load( this->screen ); }
 
 void GuiRadioPer::callback( lv_obj_t* obj, lv_event_t event )
 {

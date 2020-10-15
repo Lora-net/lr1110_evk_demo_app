@@ -31,13 +31,13 @@
 
 #include "command_get_almanac_dates.h"
 #include "com_code.h"
-#include "demo.h"
+#include "demo_manager_interface.h"
 #include <stdio.h>
 
 #define N_SATELLITES ( 128 )
 #define ALMANAC_DATES_STRING_MAX_LEN ( 3 * N_SATELLITES )
 
-CommandGetAlmanacDates::CommandGetAlmanacDates( DeviceBase* device, Hci& hci ) : hci( &hci ), device( device ) {}
+CommandGetAlmanacDates::CommandGetAlmanacDates( DeviceInterface* device, Hci& hci ) : hci( &hci ), device( device ) {}
 
 CommandGetAlmanacDates::~CommandGetAlmanacDates( ) {}
 

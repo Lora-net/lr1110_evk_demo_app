@@ -48,7 +48,9 @@ typedef enum
     GUI_PAGE_NONE = 0,
     GUI_PAGE_SPLASHSCREEN,
     GUI_PAGE_ABOUT,
+    GUI_PAGE_EUI,
     GUI_PAGE_MENU,
+    GUI_PAGE_CONNECTIVITY,
     GUI_PAGE_MENU_RADIO_TEST_MODES,
     GUI_PAGE_RADIO_TEST_MODES_CONFIG,
     GUI_PAGE_RADIO_TX_CW,
@@ -64,6 +66,7 @@ typedef enum
     GUI_PAGE_GNSS_ASSISTED_TEST,
     GUI_PAGE_GNSS_ASSISTED_RESULTS,
     GUI_PAGE_GNSS_ASSISTED_CONFIG,
+    GUI_PAGE_GNSS_ASSISTANCE_POSITION_CONFIG,
 } guiPageType_t;
 
 typedef enum
@@ -79,6 +82,8 @@ typedef enum
     GUI_EVENT_SAVE,
     GUI_EVENT_SEND,
     GUI_EVENT_STOP,
+    GUI_EVENT_LAUNCH_CONNECTIVITY,
+    GUI_EVENT_EUI,
     GUI_EVENT_LAUNCH_RADIO_TEST_MODE,
     GUI_EVENT_LAUNCH_DEMO,
     GUI_EVENT_START_TX_CW,
@@ -89,6 +94,11 @@ typedef enum
     GUI_EVENT_START_GNSS_AUTONOMOUS,
     GUI_EVENT_START_GNSS_ASSISTED,
     GUI_EVENT_START_GNSS_ASSISTED_LP,
+    GUI_EVENT_JOIN,
+    GUI_EVENT_ABORT,
+    GUI_EVENT_LEAVE,
+    GUI_EVENT_ASSISTANCE_POSITION,
+    GUI_EVENT_RESTORE_EUI_KEYS,
 } guiEvent_t;
 
 typedef enum
@@ -104,15 +114,13 @@ class GuiCommon
     GuiCommon( guiPageType_t pageType );
     virtual ~GuiCommon( );
 
-    virtual void       init( ){};
-    virtual void       draw( ){};
-    virtual void       refresh( ){};
-    virtual guiEvent_t getAndClearEvent( );
-    virtual void       updateHostConnectivityState( ){};
-    virtual void       start( ){};
-    virtual void       stop( ){};
-    virtual void       updateResults( guiEvent_t event ){};
+    virtual void refresh( ){};
+    virtual void updateHostConnectivityState( ){};
+    virtual void updateNetworkConnectivityState( ){};
+    virtual void start( ){};
+    virtual void stop( ){};
 
+    guiEvent_t    getAndClearEvent( );
     guiPageType_t getType( );
 
     void createSection( const char* text, int16_t y_offfset_from_center );
@@ -123,13 +131,16 @@ class GuiCommon
                              guiButtonPos_t button_pos, int16_t y_pos, bool is_clickable );
     void createChoiceSwitch( lv_obj_t** sw, lv_obj_t* screen, const char* lbl_sw_name_left,
                              const char* lbl_sw_name_right, lv_event_cb_t event_cb, int16_t y_pos, bool is_visible );
+    void createNetworkConnectivityIcon( lv_obj_t** icon );
+    void updateNetworkConnectivityIcon( lv_obj_t* icon );
     void updateHostConnectivityState( const bool is_connected );
+
+    void updateNetworkConnectivityState( const GuiNetworkConnectivityStatus_t* new_connectivity_status );
 
     static float    convertConsoToUah( const uint32_t conso_uas );
     static uint32_t check_value_limits( const uint32_t value, const uint32_t limit_low, const uint32_t limit_high );
 
-    void       createHeader( const char* text );
-    guiEvent_t touchEvent( uint16_t x, uint16_t y );
+    void createHeader( const char* text );
 
     static lv_style_t screen_style;
     static lv_style_t note_style;
@@ -145,11 +156,14 @@ class GuiCommon
 
     static guiEvent_t _event;
     static bool       _is_gui_environment_init;
+    static bool       _has_connectivity;
 
    protected:
-    guiPageType_t _pageType;
-    lv_obj_t*     screen;
-    static bool   _is_host_connected;
+    guiPageType_t                         _pageType;
+    lv_obj_t*                             screen;
+    lv_obj_t*                             _label_connectivity_icon;
+    static bool                           _is_host_connected;
+    static GuiNetworkConnectivityStatus_t _network_connectivity_status;
 };
 
 #endif

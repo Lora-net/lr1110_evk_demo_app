@@ -33,15 +33,14 @@
 #define __GUI_SPLASH_SCREEN_H__
 
 #include "guiCommon.h"
+#include "version.h"
 #include "lvgl.h"
 
 class GuiSplashScreen : public GuiCommon
 {
    public:
-    GuiSplashScreen( );
+    GuiSplashScreen( version_handler_t* version_handler );
     virtual ~GuiSplashScreen( );
-
-    virtual void draw( );
 
     static void callback( lv_obj_t* obj, lv_event_t event );
 

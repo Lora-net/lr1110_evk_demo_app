@@ -97,7 +97,7 @@ class kmlOutput:
     def __add_kml_point(
         self, name, folder, coordinates, style, metadata=None, timestamp=None
     ):
-        placemark = ET.SubElement(folder, "Placemark", id=f"id_{name}")
+        placemark = ET.SubElement(folder, "Placemark", id="id_{}".format(name))
 
         # Add Timestamp information if available
         if timestamp:
@@ -110,29 +110,34 @@ class kmlOutput:
             placemark.append(metadata)
 
         point = ET.SubElement(placemark, "Point")
-        ET.SubElement(
-            point, "coordinates"
-        ).text = (
-            f"{coordinates.longitude},{coordinates.latitude},{coordinates.altitude}"
+        ET.SubElement(point, "coordinates").text = "{},{},{}".format(
+            coordinates.longitude, coordinates.latitude, coordinates.altitude
         )
 
     def add_point(self, name, localization_type, coordinates, metadata=None):
         if localization_type == kmlOutput.SCAN_TYPE_WIFI:
+            extended_data = ET.Element("ExtendedData")
             if metadata:
                 instant_scan = metadata[0].instant_scan
-                extended_data = ET.Element("ExtendedData")
+                # extended_data = ET.Element("ExtendedData")
                 data = ET.SubElement(extended_data, "Data", name="date")
-                ET.SubElement(data, "value").text = f"{instant_scan}"
+                ET.SubElement(data, "value").text = "{}".format(instant_scan)
                 id_result = 0
                 data = ET.SubElement(extended_data, "Data", name="count")
-                ET.SubElement(data, "value").text = f"{len(metadata)}"
+                ET.SubElement(data, "value").text = "{}".format(len(metadata))
                 for result in metadata:
                     data = ET.SubElement(
-                        extended_data, "Data", id=f"wifi_{id_result}", name="data"
+                        extended_data,
+                        "Data",
+                        id="wifi_{}".format(id_result),
+                        name="data",
                     )
-                    ET.SubElement(
-                        data, "value"
-                    ).text = f"{result.mac_address};{result.rssi};{result.wifi_channel};{result.wifi_type}"
+                    ET.SubElement(data, "value").text = "{};{};{};{}".format(
+                        result.mac_address,
+                        result.rssi,
+                        result.wifi_channel,
+                        result.wifi_type,
+                    )
                     id_result += 1
             else:
                 instant_scan = None
@@ -145,41 +150,50 @@ class kmlOutput:
                 timestamp=instant_scan,
             )
         elif localization_type == kmlOutput.SCAN_TYPE_GNSS:
-            gps_sv = beidou_sv = 0
-            date = metadata.instant_scan.strftime("%Y-%m-%d %H:%M:%S")
-            nav_message = metadata.nav_message
-            nav_message = NavMessageParser.parse(nav_message)
-            for constellation in nav_message.constellation_results:
-                modulation = constellation.modulation_type
-                if modulation == GpsModulationType:
-                    gps_sv = len(constellation.satellites)
-                elif modulation == BeidouModulationType:
-                    beidou_sv = len(constellation.satellites)
-                else:
-                    raise NotImplementedError(
-                        f"Constellation modulation '{modulation}' is not implemented"
-                    )
-
             extended_data = ET.Element("ExtendedData")
-            data = ET.SubElement(extended_data, "Data", name="date")
-            ET.SubElement(data, "value").text = f"{date}"
-            data = ET.SubElement(extended_data, "Data", name="gps_sv")
-            ET.SubElement(data, "value").text = f"{gps_sv}"
-            data = ET.SubElement(extended_data, "Data", name="beidou_sv")
-            ET.SubElement(data, "value").text = f"{beidou_sv}"
-            data = ET.SubElement(extended_data, "Data", name="nav")
-            ET.SubElement(data, "value").text = f"{metadata.nav_message}"
+            if metadata:
+                gps_sv = beidou_sv = 0
+                date = metadata.instant_scan.strftime("%Y-%m-%d %H:%M:%S")
+                nav_message = metadata.nav_message
+                nav_message = NavMessageParser.parse(nav_message)
+                for constellation in nav_message.constellation_results:
+                    modulation = constellation.modulation_type
+                    if modulation == GpsModulationType:
+                        gps_sv = len(constellation.satellites)
+                    elif modulation == BeidouModulationType:
+                        beidou_sv = len(constellation.satellites)
+                    else:
+                        raise NotImplementedError(
+                            "Constellation modulation '{}' is not implemented".format(
+                                modulation
+                            )
+                        )
+
+                # extended_data = ET.Element("ExtendedData")
+                data = ET.SubElement(extended_data, "Data", name="date")
+                ET.SubElement(data, "value").text = "{}".format(date)
+                data = ET.SubElement(extended_data, "Data", name="gps_sv")
+                ET.SubElement(data, "value").text = "{}".format(gps_sv)
+                data = ET.SubElement(extended_data, "Data", name="beidou_sv")
+                ET.SubElement(data, "value").text = "{}".format(beidou_sv)
+                data = ET.SubElement(extended_data, "Data", name="nav")
+                ET.SubElement(data, "value").text = "{}".format(metadata.nav_message)
+                timestamp = metadata.instant_scan
+            else:
+                timestamp = None
             self.__add_kml_point(
                 name,
                 self._folder_gnss,
                 coordinates,
                 self._style_green,
                 extended_data,
-                timestamp=metadata.instant_scan,
+                timestamp=timestamp,
             )
         elif localization_type == self.SCAN_TYPE_REFERENCE_COORDINATES:
             extended_data = ET.Element("ExtendedData")
-            ET.SubElement(extended_data, "Data", name="date").text = f"{metadata}"
+            ET.SubElement(extended_data, "Data", name="date").text = "{}".format(
+                metadata
+            )
             self.__add_kml_point(
                 name,
                 self._folder_reference,
@@ -188,7 +202,9 @@ class kmlOutput:
                 extended_data,
             )
         else:
-            raise NotImplementedError(f"Type '{localization_type}' is not supported'")
+            raise NotImplementedError(
+                "Type '{}' is not supported'".format(localization_type)
+            )
 
     def save(self):
         tree = ET.ElementTree(self._kml)

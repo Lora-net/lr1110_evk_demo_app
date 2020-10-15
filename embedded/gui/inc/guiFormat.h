@@ -84,6 +84,13 @@ typedef enum
     GUI_DEMO_STATUS_KO_UNKNOWN,
 } GuiDemoStatus_t;
 
+typedef enum
+{
+    GUI_CONNECTIVITY_STATUS_NOT_CONNECTED,
+    GUI_CONNECTIVITY_STATUS_JOINING,
+    GUI_CONNECTIVITY_STATUS_CONNECTED,
+} GuiConnectivityState_t;
+
 typedef struct
 {
     GuiWifiMacAddress_t  macAddr;
@@ -180,6 +187,12 @@ typedef struct
 
 typedef struct
 {
+    float latitude;
+    float longitude;
+} GuiGnssDemoAssistancePosition_t;
+
+typedef struct
+{
     uint8_t  sf;
     uint16_t bw;
     uint8_t  cr;
@@ -216,5 +229,30 @@ typedef struct
     GuiGnssDemoSetting_t gnss_autonomous_settings;
     GuiGnssDemoSetting_t gnss_assisted_settings;
 } GuiDemoSettings_t;
+
+typedef enum
+{
+    GUI_NETWORK_CONNECTIVITY_REGION_EU868,
+    GUI_NETWORK_CONNECTIVITY_REGION_US915,
+} GuiNetworkConnectivityLorawanRegion_t;
+
+typedef enum
+{
+    GUI_NETWORK_CONNECTIVITY_ADR_NETWORK_SERVER_CONTROLLED,
+    GUI_NETWORK_CONNECTIVITY_ADR_MOBILE_LONG_RANGE,
+    GUI_NETWORK_CONNECTIVITY_ADR_MOBILE_LOW_POWER,
+} GuiNetworkConnectivityAdrProfile_t;
+
+typedef struct
+{
+    GuiNetworkConnectivityLorawanRegion_t region;
+    GuiNetworkConnectivityAdrProfile_t    adr_profile;
+} GuiNetworkConnectivitySettings_t;
+
+typedef struct
+{
+    GuiConnectivityState_t connectivity_state;
+    bool                   is_time_sync;
+} GuiNetworkConnectivityStatus_t;
 
 #endif

@@ -93,7 +93,7 @@ class SolverExceptionResult(SolverResult):
 
     @property
     def information(self):
-        return f"{self.exception}"
+        return "{}".format(self.exception)
 
 
 def post_analyzis_fetch_results():
@@ -219,7 +219,7 @@ def post_analyzis_fetch_results():
     kml_file = args.kml_file
 
     if kml_file:
-        kml = kmlOutput("LR1110", f"{kml_file}")
+        kml = kmlOutput("LR1110", "{}".format(kml_file))
 
     for scan_request in scan_request_iterator:
         request = scan_request[1]
@@ -244,7 +244,7 @@ def post_analyzis_fetch_results():
                 date=init_date,
                 job_counter=job_counter,
                 job_id=job_id,
-                exception=f"Exception during scan: '{scan_info}'",
+                exception="Exception during scan: '{}'".format(scan_info),
             )
         else:
             try:
@@ -332,7 +332,7 @@ def store_result_to_kml(scan_info, date, kml: kmlOutput, result):
                 scan.scan_info.coordinate,
                 date_str,
             )
-            # data[kmlOutput.SCAN_TYPE_REFERENCE_COORDINATES] = f"{scan.scan_info.external_id}: {scan.scan_info.coordinate}"
+            # data[kmlOutput.SCAN_TYPE_REFERENCE_COORDINATES] = "{}: {}".format(scan.scan_info.external_id, scan.scan_info.coordinate)
         elif type(scan.scan_info) == str:
             # This situation occurs on malformed externals
             # In that case we simply don't store kml info for this malformed external

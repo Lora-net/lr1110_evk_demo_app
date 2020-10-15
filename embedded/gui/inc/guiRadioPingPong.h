@@ -40,8 +40,6 @@ class GuiRadioPingPong : public GuiCommon
     GuiRadioPingPong( const GuiRadioSetting_t* settings, const GuiRadioPingPongResult_t* results );
     virtual ~GuiRadioPingPong( );
 
-    virtual void init( );
-    virtual void draw( );
     virtual void refresh( );
     virtual void start( );
     virtual void stop( );

@@ -37,13 +37,15 @@
 #include "gui.h"
 #include "communication_manager.h"
 #include "configuration.h"
-#include "demo.h"
+#include "demo_manager_interface.h"
+#include "connectivity_manager_interface.h"
 
 class Supervisor
 {
    public:
-    Supervisor( Gui* gui, DeviceBase* device, Demo* demo, EnvironmentInterface* environment,
-                CommunicationManager* communication_manager );
+    Supervisor( Gui* gui, DeviceInterface* device, DemoManagerInterface* demo_manager,
+                EnvironmentInterface* environment, CommunicationManager* communication_manager,
+                ConnectivityManagerInterface* connectivity );
     virtual ~Supervisor( );
 
     void Init( );
@@ -64,6 +66,9 @@ class Supervisor
     void TransferResultToGui( const demo_ping_pong_results_t* result );
     void TransferResultToGui( const demo_radio_per_results_t* result );
 
+    void TransferResultToConnectivity( const demo_wifi_scan_all_results_t* result );
+    void TransferResultToConnectivity( const demo_gnss_all_results_t* result );
+
     void TransferResultToSerial( const demo_wifi_scan_all_results_t* result );
     void TransferResultToSerial( const demo_gnss_all_results_t* result );
 
@@ -76,24 +81,28 @@ class Supervisor
     void GuiRuntimeAndProcess( );
     void DemoRuntimeAndProcess( );
     void CommunicationManagerRuntime( );
+    void InterruptionRuntime( );
+    void NetworkConnectivityRuntimeAndProcess( );
 
     void GetAndPropagateVersion( );
 
     void EnterWaitForInterrupt( ) const;
 
-    static const char*     WifiTypeToStr( const lr1110_wifi_signal_type_result_t type );
     static GuiDemoStatus_t DemoGnssErrorCodeToGuiStatus( const demo_gnss_error_t error_code );
 
    private:
-    static bool           is_interrupt_raised;
-    bool                  run_demo;
-    Demo*                 demo;
-    Gui*                  gui;
-    EnvironmentInterface* environment;
-    DeviceBase*           device;
-    version_handler_t     version_handler;
-
-    CommunicationManager* communication_manager;
+    volatile static bool          is_demo_interrupt_raised;
+    volatile static bool          is_gui_interrupt_raised;
+    static bool                   is_down_gui_interrupt;
+    bool                          run_demo;
+    DemoManagerInterface*         demo_manager;
+    Gui*                          gui;
+    EnvironmentInterface*         environment;
+    DeviceInterface*              device;
+    version_handler_t             version_handler;
+    ConnectivityManagerInterface* connectivity_manager;
+    CommunicationManager*         communication_manager;
+    bool                          has_connectivity;
 };
 
 #endif  // __SUPERVISOR_H__
