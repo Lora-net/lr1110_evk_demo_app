@@ -39,14 +39,22 @@
 class DeviceTransceiver : public DeviceInterface
 {
    public:
-    explicit DeviceTransceiver( radio_t* radio );
+    explicit DeviceTransceiver( radio_t* radio, EnvironmentInterface* environment );
     void FetchVersion( version_handler_t& version_handler ) override;
     void Init( ) override;
     void GetAlmanacAgesAndCrcOfAllSatellites( GnssHelperAlmanacDetails_t* almanac_details ) override;
     void GetAlmanacAgesForSatelliteId( uint8_t sv_id, uint16_t* almanac_age ) override;
     void UpdateAlmanac( const uint8_t* almanac_buffer, const uint8_t buffer_size ) override;
     bool FetchInterrupt( InterruptionInterface** interruption ) override;
+    bool IsLorawanPortForDeviceManagement( const uint8_t port ) const override;
+    void HandleLorawanDeviceManagement( const uint8_t port, const uint8_t* payload,
+                                        const uint8_t payload_length ) override;
     bool checkAlmanacUpdate( uint32_t expected_crc ) override;
+    void NotifyEnvironmentChange( ) override;
+    void FetchAssistanceLocation( DeviceAssistedLocation_t* assistance_location ) override;
+
+   protected:
+    bool HasAssistedLocationUpdated( ) override;
 
    private:
     InterruptionIrq last_interrupt;

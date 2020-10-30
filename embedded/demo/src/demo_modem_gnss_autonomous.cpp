@@ -45,7 +45,7 @@ DemoModemGnssAutonomous::~DemoModemGnssAutonomous( ) {}
 lr1110_modem_response_code_t DemoModemGnssAutonomous::CallScan( )
 {
     const lr1110_modem_response_code_t call_response_code = lr1110_modem_gnss_scan_autonomous_md(
-        this->device->GetRadio( ),
+        this->device->GetRadio( ), DemoModemGnssInterface::ModemSearchModeFromDemo( this->GetSettings( ).option ),
         LR1110_MODEM_GNSS_BIT_CHANGE_MASK | LR1110_MODEM_GNSS_DOPPLER_MASK | LR1110_MODEM_GNSS_PSEUDO_RANGE_MASK,
         this->GetSettings( ).nb_satellites );
 

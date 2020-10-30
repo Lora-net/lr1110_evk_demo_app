@@ -38,7 +38,12 @@
 #include "lr1110_modem_gnss.h"
 #include <string.h>
 
-DeviceModem::DeviceModem( radio_t* radio ) : DeviceInterface( radio ) {}
+#define DEVICE_MODEM_PORT_HANDLE_SOLVER_MESSAGE ( 150 )
+
+DeviceModem::DeviceModem( radio_t* radio, EnvironmentInterface* environment )
+    : DeviceInterface( radio, environment ), has_assisted_location_update( false )
+{
+}
 
 void DeviceModem::Init( )
 {
@@ -58,6 +63,9 @@ void DeviceModem::Init( )
     lr1110_modem_system_cfg_lfclk( this->radio, LR1110_MODEM_SYSTEM_LFCLK_XTAL, true );
 
     lr1110_modem_set_rf_output( this->radio, LR1110_MODEM_RADIO_PA_SEL_LP_HP_LF );
+
+    // Set the Assistance location for GNSS assisted
+    this->SetAssistancePositionFromEnvironment( );
 }
 
 void DeviceModem::GetAlmanacAgesAndCrcOfAllSatellites( GnssHelperAlmanacDetails_t* almanac_details )
@@ -76,8 +84,8 @@ void DeviceModem::GetAlmanacAgesAndCrcOfAllSatellites( GnssHelperAlmanacDetails_
 void DeviceModem::GetAlmanacAgesForSatelliteId( uint8_t sv_id, uint16_t* almanac_age )
 {
     uint8_t local_almanac[LR1110_MODEM_GNSS_SINGLE_ALMANAC_READ_SIZE] = { 0 };
-    lr1110_modem_almanac_read_by_index( this->radio, sv_id, 1, local_almanac,
-                                        LR1110_MODEM_GNSS_SINGLE_ALMANAC_READ_SIZE );
+    lr1110_modem_gnss_almanac_read_by_index( this->radio, sv_id, 1, local_almanac,
+                                             LR1110_MODEM_GNSS_SINGLE_ALMANAC_READ_SIZE );
     ( *almanac_age ) = ( ( uint16_t )( local_almanac[1] ) << 0 ) + ( ( uint16_t )( local_almanac[2] ) << 8 );
 }
 
@@ -108,12 +116,37 @@ bool DeviceModem::FetchInterrupt( InterruptionInterface** interruption )
     return has_event;
 }
 
+bool DeviceModem::IsLorawanPortForDeviceManagement( const uint8_t port ) const
+{
+    return port == DEVICE_MODEM_PORT_HANDLE_SOLVER_MESSAGE;
+}
+
+void DeviceModem::HandleLorawanDeviceManagement( const uint8_t port, const uint8_t* payload,
+                                                 const uint8_t payload_length )
+{
+    switch( port )
+    {
+    case DEVICE_MODEM_PORT_HANDLE_SOLVER_MESSAGE:
+    {
+        lr1110_modem_gnss_push_solver_msg( this->radio, payload, payload_length );
+        this->has_assisted_location_update = true;
+        break;
+    }
+    default:
+    {
+        // Does nothing
+    }
+    }
+}
+
 bool DeviceModem::checkAlmanacUpdate( uint32_t expected_crc )
 {
     lr1110_modem_gnss_context_t gnss_context = {};
     lr1110_modem_gnss_get_context( this->radio, &gnss_context );
     return expected_crc == gnss_context.global_almanac_crc;
 }
+
+void DeviceModem::NotifyEnvironmentChange( ) { this->SetAssistancePositionFromEnvironment( ); }
 
 void DeviceModem::FetchVersion( version_handler_t& version_handler )
 {
@@ -143,4 +176,39 @@ void DeviceModem::FetchVersion( version_handler_t& version_handler )
     this->GetAlmanacAgesAndCrcOfAllSatellites( &almanac_ages_crc );
     version_handler.almanac_date = almanac_ages_crc.ages_per_almanacs[0].almanac_age;
     version_handler.almanac_crc  = almanac_ages_crc.crc_almanac;
+}
+
+void DeviceModem::FetchAssistanceLocation( DeviceAssistedLocation_t* assistance_location )
+{
+    lr1110_modem_gnss_solver_assistance_position_t tmp_assistance_position = { 0 };
+    lr1110_modem_gnss_read_assistance_position( this->radio, &tmp_assistance_position );
+    assistance_location->latitude  = tmp_assistance_position.latitude;
+    assistance_location->longitude = tmp_assistance_position.longitude;
+}
+
+void DeviceModem::SetAssistancePositionFromEnvironment( )
+{
+    if( this->environment->HasLocation( ) == true )
+    {
+        lr1110_modem_gnss_solver_assistance_position_t gnss_position = { 0 };
+        DeviceModem::GnssPositionFromEnvironment( this->environment->GetLocation( ), gnss_position );
+        lr1110_modem_gnss_set_assistance_position( this->radio, &gnss_position );
+    }
+}
+
+void DeviceModem::GnssPositionFromEnvironment( const environment_location_t&                   location,
+                                               lr1110_modem_gnss_solver_assistance_position_t& gnss_position )
+{
+    gnss_position.latitude  = location.latitude;
+    gnss_position.longitude = location.longitude;
+}
+
+bool DeviceModem::HasAssistedLocationUpdated( )
+{
+    const bool tmp_has_assisted_location = this->has_assisted_location_update;
+    if( this->has_assisted_location_update == true )
+    {
+        this->has_assisted_location_update = false;
+    }
+    return tmp_has_assisted_location;
 }

@@ -34,9 +34,7 @@ def id_to_class_mapper(class_list):
 
 
 class GetterFromId:
-    ALL_DESTINATIONS = id_to_class_mapper(
-        [HostDestination, GnssSolverDestination]
-    )
+    ALL_DESTINATIONS = id_to_class_mapper([HostDestination, GnssSolverDestination])
     ALL_GNSS_SOLVER_FRAME_TYPES = id_to_class_mapper(
         [GnssSolverFrameTypeNoAssistance, GnssSolverFrameTypeNav]
     )

@@ -65,6 +65,7 @@ class GuiConfigGnssAssistancePosition : public GuiCommon
     lv_obj_t* btn_cancel;
     lv_obj_t* btn_default;
     lv_obj_t* btn_save;
+    lv_obj_t* lbl_set_server;
 };
 
 #endif  // __GUI_CONFIG_GNSS_ASSISTANCE_POSITION_H__

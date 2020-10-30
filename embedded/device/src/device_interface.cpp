@@ -31,6 +31,21 @@
 
 #include "device_interface.h"
 
-DeviceInterface::DeviceInterface( radio_t* radio ) : radio( radio ) {}
+DeviceInterface::DeviceInterface( radio_t* radio, EnvironmentInterface* environment )
+    : radio( radio ), environment( environment )
+{
+}
+
+DeviceEvent_t DeviceInterface::Runtime( )
+{
+    if( this->HasAssistedLocationUpdated( ) )
+    {
+        return DEVICE_EVENT_ASSISTANCE_LOCATION_UPDATED;
+    }
+    else
+    {
+        return DEVICE_EVENT_NONE;
+    }
+}
 
 radio_t* DeviceInterface::GetRadio( ) const { return this->radio; }

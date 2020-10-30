@@ -36,7 +36,16 @@
 #include "demo_configuration.h"
 #include <string.h>
 
-DeviceTransceiver::DeviceTransceiver( radio_t* radio ) : DeviceInterface( radio ) {}
+#define UNUSED( param )     \
+    do                      \
+    {                       \
+        ( void ) ( param ); \
+    } while( 0 )
+
+DeviceTransceiver::DeviceTransceiver( radio_t* radio, EnvironmentInterface* environment )
+    : DeviceInterface( radio, environment )
+{
+}
 
 void DeviceTransceiver::Init( )
 {
@@ -126,6 +135,17 @@ bool DeviceTransceiver::FetchInterrupt( InterruptionInterface** interruption )
     return has_interrupt;
 }
 
+bool DeviceTransceiver::IsLorawanPortForDeviceManagement( const uint8_t port ) const { return false; }
+
+void DeviceTransceiver::HandleLorawanDeviceManagement( const uint8_t port, const uint8_t* payload,
+                                                       const uint8_t payload_length )
+{
+    // Does nothing intentionally
+    UNUSED( port );
+    UNUSED( payload );
+    UNUSED( payload_length );
+}
+
 bool DeviceTransceiver::checkAlmanacUpdate( uint32_t expected_crc )
 {
     bool     update_success = false;
@@ -154,6 +174,11 @@ bool DeviceTransceiver::checkAlmanacUpdate( uint32_t expected_crc )
     return update_success;
 }
 
+void DeviceTransceiver::NotifyEnvironmentChange( )
+{
+    // Intentionally does nothing
+}
+
 void DeviceTransceiver::FetchVersion( version_handler_t& version_handler )
 {
     lr1110_system_version_t lr1110_version = { 0 };
@@ -177,3 +202,13 @@ void DeviceTransceiver::FetchVersion( version_handler_t& version_handler )
     version_handler.almanac_date = almanac_ages_crc.ages_per_almanacs[0].almanac_age;
     version_handler.almanac_crc  = almanac_ages_crc.crc_almanac;
 }
+
+void DeviceTransceiver::FetchAssistanceLocation( DeviceAssistedLocation_t* assistance_location )
+{
+    lr1110_gnss_solver_assistance_position_t tmp_assistance_position = { 0 };
+    lr1110_gnss_read_assistance_position( this->radio, &tmp_assistance_position );
+    assistance_location->latitude  = tmp_assistance_position.latitude;
+    assistance_location->longitude = tmp_assistance_position.longitude;
+}
+
+bool DeviceTransceiver::HasAssistedLocationUpdated( ) { return false; }

@@ -533,6 +533,11 @@ void Gui::GetGnssAssistancePosition( GuiGnssDemoAssistancePosition_t* assistance
     *assistance_position = this->gnss_assistance_position;
 }
 
+void Gui::SetGnssAssistancePosition( GuiGnssDemoAssistancePosition_t* assistance_position )
+{
+    this->gnss_assistance_position = *assistance_position;
+}
+
 void Gui::GetNetworkConnectivitySettings( GuiNetworkConnectivitySettings_t* connectivity_settings )
 {
     *connectivity_settings = this->network_connectivity_settings;

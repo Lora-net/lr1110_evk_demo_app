@@ -83,6 +83,7 @@ class Supervisor
     void CommunicationManagerRuntime( );
     void InterruptionRuntime( );
     void NetworkConnectivityRuntimeAndProcess( );
+    void DeviceRuntime( );
 
     void GetAndPropagateVersion( );
 

@@ -189,6 +189,7 @@ typedef struct
 {
     float latitude;
     float longitude;
+    bool  set_by_network;
 } GuiGnssDemoAssistancePosition_t;
 
 typedef struct

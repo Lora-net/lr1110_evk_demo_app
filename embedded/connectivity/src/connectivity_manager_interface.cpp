@@ -29,14 +29,37 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <string.h>  // memcpy
 #include "connectivity_manager_interface.h"
 
 const uint8_t ConnectivityManagerInterface::SEMTECH_DEFAULT_JOIN_EUI[LR1110_MODEM_DM_MESSAGE_JOIN_EUI_LENGTH] = {
     0x00, 0x16, 0xC0, 0x01, 0xFF, 0xFE, 0x00, 0x01
 };
 
-ConnectivityManagerInterface::ConnectivityManagerInterface( ) : _is_time_sync( false ), _is_joined( false ) {}
+ConnectivityManagerInterface::ConnectivityManagerInterface( )
+    : _is_time_sync( false ), _is_joined( false ), _has_new_downlink( false )
+{
+}
 
 ConnectivityManagerInterface::~ConnectivityManagerInterface( ) {}
 
 bool ConnectivityManagerInterface::getTimeSyncState( ) { return this->_is_time_sync; }
+
+bool ConnectivityManagerInterface::FetchNewDownlink( network_connectivity_downlink_t* new_downlink )
+{
+    bool success = false;
+    if( this->_has_new_downlink == true )
+    {
+        success           = true;
+        ( *new_downlink ) = this->_last_downlink;
+        memcpy( new_downlink->buffer, this->_last_downlink.buffer, this->_last_downlink.buffer_size );
+        this->_has_new_downlink = false;
+    }
+    else
+    {
+        success = false;
+    }
+    return success;
+}
+
+bool ConnectivityManagerInterface::HasNewDownlink( ) const { return this->_has_new_downlink; }

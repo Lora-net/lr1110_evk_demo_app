@@ -98,6 +98,7 @@ class Gui
     void GetGnssAutonomousSettings( GuiGnssDemoSetting_t* settings );
     void GetGnssAssistedSettings( GuiGnssDemoSetting_t* settings );
     void GetGnssAssistancePosition( GuiGnssDemoAssistancePosition_t* assistance_position );
+    void SetGnssAssistancePosition( GuiGnssDemoAssistancePosition_t* assistance_position );
     void GetNetworkConnectivitySettings( GuiNetworkConnectivitySettings_t* connectivity_settings );
 
     void EnableConnectivity( ) const;

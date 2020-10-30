@@ -52,7 +52,7 @@ $ AlmanacUpdate -h
 $ AlmanacUpdate -d <EVK_COM_PORT> <DAS_TOKEN>
 # Update the almanac of an evaluation kit connected on <EVK_COM_PORT> using DAS server
 
-$ AlmancUpdate -g -d <EVK_COM_PORT> <GLS_TOKEN>
+$ AlmanacUpdate -g -d <EVK_COM_PORT> <GLS_TOKEN>
 # Update the almanac of an evaluation kit connected on <EVK_COM_PORT> using GLS server
 ```
 

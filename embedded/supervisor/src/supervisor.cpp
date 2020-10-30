@@ -88,10 +88,13 @@ void Supervisor::Init( )
 
     this->GetAndPropagateVersion( );
 
-    gui_gnss_demo_assistance_position.latitude          = 45.976574;
-    gui_gnss_demo_assistance_position.longitude         = 7.658452;
-    gui_gnss_demo_assistance_position_default.latitude  = 45.976574;
-    gui_gnss_demo_assistance_position_default.longitude = 7.658452;
+    const environment_location_t location                    = this->environment->GetLocation( );
+    gui_gnss_demo_assistance_position.latitude               = location.latitude;
+    gui_gnss_demo_assistance_position.longitude              = location.longitude;
+    gui_gnss_demo_assistance_position.set_by_network         = false;
+    gui_gnss_demo_assistance_position_default.latitude       = location.latitude;
+    gui_gnss_demo_assistance_position_default.longitude      = location.longitude;
+    gui_gnss_demo_assistance_position_default.set_by_network = false;
 
     this->gui->Init( &gui_demo_settings, &gui_demo_settings_default, &gui_gnss_demo_assistance_position,
                      &gui_gnss_demo_assistance_position_default, &version_handler );
@@ -476,6 +479,7 @@ void Supervisor::Runtime( )
     this->NetworkConnectivityRuntimeAndProcess( );
     this->GuiRuntimeAndProcess( );
     this->CommunicationManagerRuntime( );
+    this->DeviceRuntime( );
 
     if( this->run_demo )
     {
@@ -743,6 +747,7 @@ void Supervisor::GuiRuntimeAndProcess( )
         environment_location.altitude  = 0;
 
         environment->SetLocation( environment_location );
+        this->device->NotifyEnvironmentChange( );
         break;
     }
     default:
@@ -889,8 +894,63 @@ void Supervisor::NetworkConnectivityRuntimeAndProcess( )
         this->gui->NetworkConnectivityChange( &network_connectivity_status );
         break;
     }
+    case NETWORK_CONNECTIVITY_STATUS_HAS_DOWNLINK:
+    {
+        this->communication_manager->Log( "Received dnlink?\r\n" );
+        network_connectivity_downlink_t downlink = {};
+        if( this->connectivity_manager->FetchNewDownlink( &downlink ) == true )
+        {
+            this->communication_manager->Log( "Received downlink:\r\n" );
+            this->communication_manager->Log( "  -> RSSI: %i dBm\r\n", downlink.rssi );
+            this->communication_manager->Log( "  -> SNR: %i dB\r\n", downlink.snr );
+            this->communication_manager->Log( "  -> Port: %u\r\n", downlink.port );
+            this->communication_manager->Log( "  -> Payload (%u bytes):\r\n    ", downlink.buffer_size );
+            for( uint8_t index_buffer = 0; index_buffer < downlink.buffer_size; index_buffer++ )
+            {
+                this->communication_manager->Log( "%02x", downlink.buffer[index_buffer] );
+            }
+            this->communication_manager->Log( "\n\r" );
+        }
+        else
+        {
+            this->communication_manager->Log( "Something went wrong\r\n" );
+        }
+
+        // 1. Check if this downlink is to be handled directly by the device based on the port
+        if( this->device->IsLorawanPortForDeviceManagement( downlink.port ) == true )
+        {
+            // 2. If so: ask the device to handle it
+            this->device->HandleLorawanDeviceManagement( downlink.port, downlink.buffer, downlink.buffer_size );
+        }
+
+        break;
+    }
     default:
         break;
+    }
+}
+
+void Supervisor::DeviceRuntime( )
+{
+    switch( this->device->Runtime( ) )
+    {
+    case DEVICE_EVENT_ASSISTANCE_LOCATION_UPDATED:
+    {
+        DeviceAssistedLocation_t        assisted_location       = { 0 };
+        GuiGnssDemoAssistancePosition_t gui_assistance_position = { 0 };
+        this->device->FetchAssistanceLocation( &assisted_location );
+
+        gui_assistance_position.latitude       = assisted_location.latitude;
+        gui_assistance_position.longitude      = assisted_location.longitude;
+        gui_assistance_position.set_by_network = true;
+        this->gui->SetGnssAssistancePosition( &gui_assistance_position );
+        break;
+    }
+    case DEVICE_EVENT_NONE:
+    default:
+    {
+        break;
+    }
     }
 }
 

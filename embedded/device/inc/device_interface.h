@@ -35,6 +35,7 @@
 #include "configuration.h"
 #include "version.h"
 #include "interruption_interface.h"
+#include "environment_interface.h"
 
 #define GNSS_HELPER_NUMBER_SATELLITES_ALMANAC_READ ( 128 )
 
@@ -50,21 +51,43 @@ typedef struct
     uint32_t               crc_almanac;
 } GnssHelperAlmanacDetails_t;
 
+typedef enum
+{
+    DEVICE_EVENT_NONE,
+    DEVICE_EVENT_ASSISTANCE_LOCATION_UPDATED,
+} DeviceEvent_t;
+
+typedef struct
+{
+    float latitude;
+    float longitude;
+} DeviceAssistedLocation_t;
+
 class DeviceInterface
 {
    public:
-    explicit DeviceInterface( radio_t* radio );
-    virtual void Init( )                                                                            = 0;
-    virtual void FetchVersion( version_handler_t& version_handler )                                 = 0;
-    virtual void GetAlmanacAgesAndCrcOfAllSatellites( GnssHelperAlmanacDetails_t* almanac_details ) = 0;
-    virtual void GetAlmanacAgesForSatelliteId( uint8_t sv_id, uint16_t* almanac_age )               = 0;
-    virtual void UpdateAlmanac( const uint8_t* almanac_buffer, const uint8_t buffer_size )          = 0;
-    virtual bool checkAlmanacUpdate( uint32_t expected_crc )                                        = 0;
-    virtual bool FetchInterrupt( InterruptionInterface** interruption )                             = 0;
-    radio_t*     GetRadio( ) const;
+    DeviceInterface( radio_t* radio, EnvironmentInterface* environment );
+    DeviceEvent_t Runtime( );
+
+    virtual void     Init( )                                                                            = 0;
+    virtual void     FetchVersion( version_handler_t& version_handler )                                 = 0;
+    virtual void     GetAlmanacAgesAndCrcOfAllSatellites( GnssHelperAlmanacDetails_t* almanac_details ) = 0;
+    virtual void     GetAlmanacAgesForSatelliteId( uint8_t sv_id, uint16_t* almanac_age )               = 0;
+    virtual void     UpdateAlmanac( const uint8_t* almanac_buffer, const uint8_t buffer_size )          = 0;
+    virtual bool     checkAlmanacUpdate( uint32_t expected_crc )                                        = 0;
+    virtual bool     FetchInterrupt( InterruptionInterface** interruption )                             = 0;
+    virtual bool     IsLorawanPortForDeviceManagement( const uint8_t port ) const                       = 0;
+    virtual void     HandleLorawanDeviceManagement( const uint8_t port, const uint8_t* payload,
+                                                    const uint8_t payload_length )                      = 0;
+    virtual void     NotifyEnvironmentChange( )                                                         = 0;
+    virtual radio_t* GetRadio( ) const;
+    virtual void     FetchAssistanceLocation( DeviceAssistedLocation_t* assistance_location ) = 0;
 
    protected:
-    radio_t* radio;
+    virtual bool HasAssistedLocationUpdated( ) = 0;
+
+    radio_t*              radio;
+    EnvironmentInterface* environment;
 };
 
 #endif  // __DEVICE_INTERFACE_H__

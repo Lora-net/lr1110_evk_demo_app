@@ -37,6 +37,7 @@
 #include "lr1110_modem_lorawan.h"
 
 #define CONNECTIVITY_MANAGER_INTERFACE_STREAM_APP_PORT ( 199 )
+#define CONNECTIVITY_MANAGER_INTERFACE_MAX_DOWNLINK_BUFFER_SIZE ( 255 )
 typedef enum
 {
     NETWORK_CONNECTIVITY_STATUS_NO_CHANGE,
@@ -44,7 +45,18 @@ typedef enum
     NETWORK_CONNECTIVITY_STATUS_STREAM_DONE,
     NETWORK_CONNECTIVITY_STATUS_GOT_ALC_SYNC,
     NETWORK_CONNECTIVITY_STATUS_LOST_ALC_SYNC,
+    NETWORK_CONNECTIVITY_STATUS_HAS_DOWNLINK,
 } network_connectivity_status_t;
+
+typedef struct
+{
+    int8_t  rssi;
+    int8_t  snr;
+    uint8_t flag;
+    uint8_t port;
+    uint8_t buffer_size;
+    uint8_t buffer[CONNECTIVITY_MANAGER_INTERFACE_MAX_DOWNLINK_BUFFER_SIZE];
+} network_connectivity_downlink_t;
 
 typedef enum
 {
@@ -93,11 +105,39 @@ class ConnectivityManagerInterface
 
     bool getTimeSyncState( );
 
+    /**
+     * \brief Check if a new downlink is available and if so, copy it in the provided pointer
+     *
+     * Implements a flush-like behavior so that if a call returns true, a successive call will return false (unless a
+     * new downlink was received)
+     *
+     * \param[in] new_downlink Pointer to a memory allocated where to copy the new downlink if available. If there is no
+     *new downlink available, the memory pointed to is not modified
+     *
+     * \retval true A new downlink is available and has been copied in the memory pointed to
+     *
+     * \retval false No downlink were avaialble and the memory pointed to by new_downlink has not been modified
+     */
+    bool FetchNewDownlink( network_connectivity_downlink_t* new_downlink );
+
+    /**
+     * \brief Cheeck wether a new downlink is available
+     *
+     * \retval true A new downlink is available
+     *
+     * \retval false No new downlink is available
+     *
+     * \see FetchNewDownlink
+     */
+    bool HasNewDownlink( ) const;
+
    protected:
     bool                            _is_time_sync;
     bool                            _is_joined;
     network_connectivity_settings_t _settings;
     static const uint8_t            SEMTECH_DEFAULT_JOIN_EUI[LR1110_MODEM_DM_MESSAGE_JOIN_EUI_LENGTH];
+    network_connectivity_downlink_t _last_downlink;
+    bool                            _has_new_downlink;
 };
 
 #endif  // __CONNECTIVITY_MANAGER_INTERFACE_H__

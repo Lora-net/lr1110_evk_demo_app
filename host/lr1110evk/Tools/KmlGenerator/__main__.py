@@ -24,5 +24,13 @@ def main():
     )
     kml_generator.interpret_file()
 
-    print("Number of line successfully interpreted: {}".format(kml_generator.success_interpret_line_counter))
-    print("Number of line failed to be interpreted: {}".format(kml_generator.failed_interpret_line_counter))
+    print(
+        "Number of line successfully interpreted: {}".format(
+            kml_generator.success_interpret_line_counter
+        )
+    )
+    print(
+        "Number of line failed to be interpreted: {}".format(
+            kml_generator.failed_interpret_line_counter
+        )
+    )

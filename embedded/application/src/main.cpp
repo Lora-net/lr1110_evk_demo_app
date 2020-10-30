@@ -226,7 +226,7 @@ int main( void )
     Signaling            signaling( &environment );
     Gui                  gui;
     Timer                timer;
-    DeviceTransceiver    device_transceiver( &radio );
+    DeviceTransceiver    device_transceiver( &radio, &environment );
     CommandFactory       command_factory;
     Hci                  hci( command_factory, environment );
     CommunicationManager communication_manager( &environment, &hci );
@@ -245,7 +245,7 @@ int main( void )
     {
         lr1110_modem_event_fields_t modem_event;
 
-        device       = new DeviceModem( &radio );
+        device       = new DeviceModem( &radio, &environment );
         demo_manager = new DemoManagerModem( ( DeviceModem* ) device, &environment, &antenna_selector, &signaling,
                                              &timer, &communication_manager );
         connectivity_manager = new ConnectivityManagerModem( ( DeviceModem* ) device );
@@ -264,7 +264,7 @@ int main( void )
     }
     else
     {
-        device       = new DeviceTransceiver( &radio );
+        device       = new DeviceTransceiver( &radio, &environment );
         demo_manager = new DemoManagerTransceiver( ( DeviceTransceiver* ) device, &environment, &antenna_selector,
                                                    &signaling, &timer, &communication_manager );
         connectivity_manager = new ConnectivityManagerTransceiver( );

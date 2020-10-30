@@ -45,8 +45,6 @@ class DemoModemGnssAssisted : public DemoModemGnssInterface
 
    protected:
     lr1110_modem_response_code_t CallScan( ) override;
-    static void                  GnssPositionFromEnvironment( const environment_location_t&                   location,
-                                                              lr1110_modem_gnss_solver_assistance_position_t& gnss_position );
 };
 
 #endif  // __DEMO_MODEM_GNSS_ASSISTED_H__

@@ -45,15 +45,11 @@ DemoModemGnssAssisted::~DemoModemGnssAssisted( ) {}
 
 lr1110_modem_response_code_t DemoModemGnssAssisted::CallScan( )
 {
-    lr1110_modem_gnss_solver_assistance_position_t gnss_position = { 0 };
-    DemoModemGnssAssisted::GnssPositionFromEnvironment( this->GetEnvironment( )->GetLocation( ), gnss_position );
 
     if( !this->CheckAndStoreAlmanacAge( DEMO_GNSS_LIMIT_ALMANAC_AGE_DAYS ) )
     {
         this->communication_interface->Log( "Almanac is too old ! (> %u days)\n", DEMO_GNSS_LIMIT_ALMANAC_AGE_DAYS );
     }
-
-    lr1110_modem_gnss_set_assistance_position( this->device->GetRadio( ), &gnss_position );
 
     const lr1110_modem_response_code_t scan_response_code = lr1110_modem_gnss_scan_assisted_md(
         this->device->GetRadio( ), DemoModemGnssInterface::ModemSearchModeFromDemo( this->GetSettings( ).option ),
@@ -61,11 +57,4 @@ lr1110_modem_response_code_t DemoModemGnssAssisted::CallScan( )
         this->GetSettings( ).nb_satellites );
 
     return scan_response_code;
-}
-
-void DemoModemGnssAssisted::GnssPositionFromEnvironment( const environment_location_t&                   location,
-                                                         lr1110_modem_gnss_solver_assistance_position_t& gnss_position )
-{
-    gnss_position.latitude  = location.latitude;
-    gnss_position.longitude = location.longitude;
 }

@@ -78,6 +78,23 @@ network_connectivity_status_t ConnectivityManagerModem::Runtime( )
                 return NETWORK_CONNECTIVITY_STATUS_LOST_ALC_SYNC;
             }
         }
+        case LR1110_MODEM_LORAWAN_EVENT_DOWN_DATA:
+        {
+            this->_has_new_downlink = true;
+
+            this->_last_downlink.rssi = ( ( int8_t ) this->_last_received_event.buffer[0] ) - 64;
+            this->_last_downlink.snr  = ( this->_last_received_event.buffer[1] << 2 );
+            this->_last_downlink.flag = this->_last_received_event.buffer[2];
+            this->_last_downlink.port = this->_last_received_event.buffer[3];
+            this->_last_downlink.buffer_size =
+                this->_last_received_event.buffer_len - 4;  // remove rssi/snr/flags and port from buffer
+
+            for( uint8_t buffer_index = 0; buffer_index < this->_last_downlink.buffer_size; buffer_index++ )
+            {
+                this->_last_downlink.buffer[buffer_index] = this->_last_received_event.buffer[buffer_index + 4];
+            }
+            return NETWORK_CONNECTIVITY_STATUS_HAS_DOWNLINK;
+        }
         default:
         {
             return NETWORK_CONNECTIVITY_STATUS_NO_CHANGE;

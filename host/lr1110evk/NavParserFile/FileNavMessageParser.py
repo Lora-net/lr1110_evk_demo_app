@@ -27,7 +27,10 @@ Define NAV message library integration class
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-from lr1110evk.NavParserFile import NavMessageConsumerBitsExtractionOutOfBound, NavMessageParser
+from lr1110evk.NavParserFile import (
+    NavMessageConsumerBitsExtractionOutOfBound,
+    NavMessageParser,
+)
 from lr1110evk.FieldTestPost.Core.FileReader import FileReader
 from lr1110evk.BaseTypes import ScannedGnss
 from lr1110evk.Job.Logger import ResultLogger

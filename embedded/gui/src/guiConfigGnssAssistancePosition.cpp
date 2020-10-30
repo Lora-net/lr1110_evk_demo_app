@@ -63,6 +63,16 @@ GuiConfigGnssAssistancePosition::GuiConfigGnssAssistancePosition(
                               GUI_BUTTON_POS_RIGHT, -5,
                               ( this->IsConfigTempEqualTo( this->settings_current ) == true ) ? false : true );
 
+    this->lbl_set_server = lv_label_create( this->screen, NULL );
+    lv_obj_set_style( this->lbl_set_server, &( GuiCommon::note_style ) );
+    lv_label_set_long_mode( this->lbl_set_server, LV_LABEL_LONG_BREAK );
+    lv_label_set_align( this->lbl_set_server, LV_LABEL_ALIGN_CENTER );
+    lv_label_set_text( this->lbl_set_server, "Coordinates set by the server" );
+
+    lv_obj_set_width( this->lbl_set_server, 230 );
+    lv_obj_align( this->lbl_set_server, NULL, LV_ALIGN_CENTER, 0, -20 );
+    lv_obj_set_hidden( this->lbl_set_server, ( this->settings_temp.set_by_network == false ) ? true : false );
+
     /*Create a keyboard and apply the styles*/
     this->kb_num = lv_kb_create( this->screen, NULL );
     lv_kb_set_mode( this->kb_num, LV_KB_MODE_NUM );
@@ -87,6 +97,12 @@ void GuiConfigGnssAssistancePosition::ConfigActionButton( )
     lv_btn_set_state( this->btn_save, ( ( this->IsConfigTempEqualTo( this->settings_current ) == true ) )
                                           ? LV_BTN_STATE_INA
                                           : LV_BTN_STATE_REL );
+
+    if( this->IsConfigTempEqualTo( this->settings_current ) == false )  // Settings have been changed manually
+    {
+        this->settings_temp.set_by_network = false;
+        lv_obj_set_hidden( this->lbl_set_server, ( this->settings_temp.set_by_network == false ) ? true : false );
+    }
 }
 
 void GuiConfigGnssAssistancePosition::ConfigParam( )

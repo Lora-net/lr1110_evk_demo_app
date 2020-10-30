@@ -3,4 +3,3 @@ from .KmlGenerator import (
     KmlGeneratorUnknownLineTypeException,
     KmlGeneratorUnknownLocationTypeException,
 )
-
