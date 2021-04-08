@@ -32,7 +32,7 @@
 #ifndef __VERSION_H__
 #define __VERSION_H__
 
-#define DEMO_VERSION "v2.1.0"
+#define DEMO_VERSION "v2.2.0"
 
 #define VERSION_STRING_LENGTH 10
 #define EUI_LENGTH 8
