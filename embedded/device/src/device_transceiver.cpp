@@ -111,8 +111,8 @@ bool DeviceTransceiver::FetchInterrupt( InterruptionInterface** interruption )
     // After that, the next call to FetchInterrupt must return false immediatly.
 
     uint32_t              interruption_mask = 0;
-    lr1110_system_stat1_t stat1             = {};
-    lr1110_system_stat2_t stat2             = {};
+    lr1110_system_stat1_t stat1             = { };
+    lr1110_system_stat2_t stat2             = { };
 
     lr1110_system_get_status( this->radio, &stat1, &stat2, &interruption_mask );
     lr1110_system_clear_irq_status( this->GetRadio( ), interruption_mask );
@@ -211,4 +211,11 @@ void DeviceTransceiver::FetchAssistanceLocation( DeviceAssistedLocation_t* assis
     assistance_location->longitude = tmp_assistance_position.longitude;
 }
 
+void DeviceTransceiver::FetchLastApplicationServerEvent( ApplicationServerEvent_t* last_application_server_event )
+{
+    *last_application_server_event = APPLICATION_SERVER_NO_EVENT;
+}
+
 bool DeviceTransceiver::HasAssistedLocationUpdated( ) { return false; }
+
+bool DeviceTransceiver::HasApplicationServerEvent( ) { return false; }

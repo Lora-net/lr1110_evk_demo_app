@@ -37,6 +37,7 @@
 #include "lr1110_modem_lorawan.h"
 #include "demo_wifi_types.h"
 #include "demo_gnss_types.h"
+#include "demo_modem_temperature.h"
 
 typedef enum
 {
@@ -68,7 +69,7 @@ typedef enum
 #define DEMO_WIFI_MAX_RESULTS_DEFAULT 15
 #define DEMO_WIFI_TIMEOUT_IN_MS_DEFAULT 110
 #define DEMO_WIFI_RESULT_TYPE_DEFAULT ( DEMO_WIFI_RESULT_TYPE_BASIC_COMPLETE )
-#define DEMO_WIFI_DOES_ABORT_ON_TIMEOUT_DEFAULT ( false )
+#define DEMO_WIFI_DOES_ABORT_ON_TIMEOUT_DEFAULT ( true )
 
 #define DEMO_GNSS_AUTONOMOUS_OPTION_DEFAULT ( DEMO_GNSS_OPTION_DEFAULT )
 #define DEMO_GNSS_AUTONOMOUS_CAPTURE_MODE_DEFAULT ( DEMO_GNSS_SINGLE_SCAN_MODE )

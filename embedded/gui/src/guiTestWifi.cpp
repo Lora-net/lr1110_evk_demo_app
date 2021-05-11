@@ -37,9 +37,7 @@
 GuiTestWifi::GuiTestWifi( const GuiWifiResult_t* results, bool at_least_one_scan_done )
     : GuiCommon( GUI_PAGE_WIFI_TEST ), _results( results )
 {
-    this->createHeader( "Wi-Fi SCANNING" );
-
-    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
+    this->createHeaderWithIcons( "Wi-Fi SCAN" );
 
     this->createActionButton( &( this->btn_start_stop ), "START", GuiTestWifi::callback, GUI_BUTTON_POS_CENTER, -60,
                               true );
@@ -139,9 +137,9 @@ void GuiTestWifi::refresh( )
     this->updateButtons( );
 }
 
-void GuiTestWifi::updateHostConnectivityState( void ) { this->updateButtons( ); }
+void GuiTestWifi::propagateHostConnectivityStateChange( ) { this->updateButtons( ); }
 
-void GuiTestWifi::updateNetworkConnectivityState( ) { this->updateButtons( ); }
+void GuiTestWifi::propagateNetworkConnectivityStateChange( ) { this->updateButtons( ); }
 
 void GuiTestWifi::callback( lv_obj_t* obj, lv_event_t event )
 {

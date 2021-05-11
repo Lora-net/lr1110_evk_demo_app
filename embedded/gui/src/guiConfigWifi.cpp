@@ -36,9 +36,7 @@ GuiConfigWifi::GuiConfigWifi( GuiWifiDemoSetting_t* settings_current, const GuiW
 {
     this->settings_temp = *( this->settings_current );
 
-    this->createHeader( "Wi-Fi CONFIGURATION" );
-
-    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
+    this->createHeaderWithIcons( "Wi-Fi CONFIGURATION" );
 
     this->createSection( "TYPES", -100 );
     this->btnm_types = lv_btnm_create( this->screen, NULL );

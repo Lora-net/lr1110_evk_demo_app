@@ -40,9 +40,7 @@ GuiConfigGnssAssistancePosition::GuiConfigGnssAssistancePosition(
 {
     this->settings_temp = *( this->settings_current );
 
-    this->createHeader( "GNSS ASSISTANCE" );
-
-    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
+    this->createHeaderWithIcons( "GNSS ASSISTANCE" );
 
     char str[12];
     snprintf( str, 10, "%f", this->settings_temp.latitude );
@@ -212,7 +210,6 @@ void GuiConfigGnssAssistancePosition::callback_kb( lv_obj_t* obj, lv_event_t eve
     }
     else if( event == LV_EVENT_APPLY )
     {
-        char        str[10];
         const char* txt = lv_ta_get_text( ta );
         int         len = strlen( txt );
 

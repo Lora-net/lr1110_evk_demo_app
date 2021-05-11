@@ -40,16 +40,14 @@ GuiTestGnss::GuiTestGnss( const GuiGnssResult_t* results, guiPageType_t pageType
     switch( pageType )
     {
     case GUI_PAGE_GNSS_AUTONOMOUS_TEST:
-        this->createHeader( "GNSS AUTONOMOUS" );
+        this->createHeaderWithIcons( "GNSS AUTONOMOUS" );
         break;
     case GUI_PAGE_GNSS_ASSISTED_TEST:
-        this->createHeader( "GNSS ASSISTED" );
+        this->createHeaderWithIcons( "GNSS ASSISTED" );
         break;
     default:
         break;
     }
-
-    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
 
     this->createActionButton( &( this->btn_start_stop ), "START", GuiTestGnss::callback, GUI_BUTTON_POS_CENTER, -60,
                               true );
@@ -178,9 +176,9 @@ void GuiTestGnss::refresh( )
     this->updateButtons( );
 }
 
-void GuiTestGnss::updateHostConnectivityState( void ) { this->updateButtons( ); }
+void GuiTestGnss::propagateHostConnectivityStateChange( ) { this->updateButtons( ); }
 
-void GuiTestGnss::updateNetworkConnectivityState( ) { this->updateButtons( ); }
+void GuiTestGnss::propagateNetworkConnectivityStateChange( ) { this->updateButtons( ); }
 
 void GuiTestGnss::callback( lv_obj_t* obj, lv_event_t event )
 {

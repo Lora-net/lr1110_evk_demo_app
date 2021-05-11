@@ -40,24 +40,22 @@ GuiMenu::GuiMenu( version_handler_t* version_handler ) : GuiMenuCommon( GUI_PAGE
 {
     uint8_t index = 0;
 
-    this->createHeader( "MENU" );
-
-    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
+    this->createHeaderWithIcons( "MENU" );
 
     this->createTestEntry( index++, &( this->lbl_radio_test_modes ), &( this->btn_radio_test_modes ),
-                           &( this->lbl_btn_radio_test_modes ), "RADIO TEST MODES", true, GuiMenu::callback );
+                           &( this->lbl_btn_radio_test_modes ), "Radio test modes", true, GuiMenu::callback );
 
     this->createTestEntry( index++, &( this->lbl_demos ), &( this->btn_demos ), &( this->lbl_btn_demos ),
-                           "DEMONSTRATIONS", true, GuiMenu::callback );
+                           "Demonstrations", true, GuiMenu::callback );
 
     if( GuiCommon::_has_connectivity == true )
     {
         this->createTestEntry( index++, &( this->lbl_connectivity ), &( this->btn_connectivity ),
-                               &( this->lbl_btn_connectivity ), "CONNECTIVITY", true, GuiMenu::callback );
+                               &( this->lbl_btn_connectivity ), "Connectivity", true, GuiMenu::callback );
     }
 
-    this->createTestEntry( index++, &( this->lbl_eui ), &( this->btn_eui ), &( this->lbl_btn_eui ), "EUI", true,
-                           GuiMenu::callback );
+    this->createTestEntry( index++, &( this->lbl_eui ), &( this->btn_eui ), &( this->lbl_btn_eui ),
+                           "Provisioning (EUI, PIN)", true, GuiMenu::callback );
 
     lv_scr_load( this->screen );
 }

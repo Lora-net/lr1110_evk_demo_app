@@ -10,6 +10,8 @@
 #   2015-07-22 - first version
 # ------------------------------------------------
 
+include version.mk
+
 ######################################
 # target
 ######################################
@@ -29,12 +31,9 @@ OPT = -Og
 # Thanks to https://nullpointer.io/post/easily-embed-version-information-in-software-releases/
 #######################################
 
-GIT_VERSION := $(shell git --no-pager describe --tags --always --dirty)
-GIT_COMMIT  := $(shell git rev-parse --verify HEAD)
-GIT_DATE    := $(firstword $(shell git --no-pager show --date=iso-strict --format="%ad" --name-only))
 BUILD_DATE  := $(shell date --iso=seconds)
 
-EVK_TARGET_NAME = $(EVK_TARGET)_$(GIT_VERSION)
+EVK_TARGET_NAME = $(EVK_TARGET)_$(VERSION)
 
 #######################################
 # paths
@@ -76,6 +75,7 @@ system/src/system_uart.c \
 system/src/system_time.c \
 system/src/system_lptim.c \
 system/src/system.c \
+peripherals/src/lis2de12.c \
 lr1110_driver/src/lr1110_driver_version.c \
 lr1110_driver/src/lr1110_bootloader.c \
 lr1110_driver/src/lr1110_gnss.c \
@@ -116,6 +116,8 @@ demo/src/demo_modem_wifi.cpp \
 demo/src/demo_modem_gnss_interface.cpp \
 demo/src/demo_modem_gnss_autonomous.cpp \
 demo/src/demo_modem_gnss_assisted.cpp \
+demo/src/demo_modem_temperature.cpp \
+demo/src/demo_modem_file_upload.cpp \
 demo/src/demo_modem_radio_tx_continuous.cpp \
 demo/src/demo_modem_radio_tx_cw.cpp \
 demo/src/demo_modem_radio_rx_continuous.cpp \
@@ -135,6 +137,7 @@ demo/src/demo_transceiver_radio_per.cpp \
 demo/src/demo_manager_interface.cpp \
 demo/src/demo_manager_transceiver.cpp \
 demo/src/demo_manager_modem.cpp \
+device/src/application_server_interpreter.cpp \
 device/src/device_interface.cpp \
 device/src/device_transceiver.cpp \
 device/src/device_modem.cpp \
@@ -151,6 +154,8 @@ gui/src/guiRadioTxCw.cpp \
 gui/src/guiRadioPer.cpp \
 gui/src/guiRadioPingPong.cpp \
 gui/src/guiMenuDemo.cpp \
+gui/src/guiMenuGeolocDemo.cpp \
+gui/src/guiMenuRadioDemo.cpp \
 gui/src/guiResultsGnss.cpp \
 gui/src/guiResultsWifi.cpp \
 gui/src/guiSplashScreen.cpp \
@@ -161,6 +166,8 @@ gui/src/guiConfigWifi.cpp \
 gui/src/guiConfigGnss.cpp \
 gui/src/guiConfigGnssAssistancePosition.cpp \
 gui/src/guiEui.cpp \
+gui/src/guiTemperature.cpp\
+gui/src/guiFileUpload.cpp\
 supervisor/src/supervisor.cpp \
 connectivity/src/connectivity_conversions.cpp \
 hci/hci.cpp \
@@ -228,7 +235,7 @@ C_DEFS =  \
 -DLV_CONF_INCLUDE_SIMPLE \
 -DUSE_FULL_LL_DRIVER \
 -DSTM32L476xx \
--DGIT_VERSION=\"$(GIT_VERSION)\" \
+-DGIT_VERSION=\"$(VERSION)\" \
 -DGIT_COMMIT=\"$(GIT_COMMIT)\" \
 -DGIT_DATE=\"$(GIT_DATE)\" \
 -DBUILD_DATE=\"$(BUILD_DATE)\"
@@ -263,7 +270,8 @@ C_INCLUDES =  \
 -Ilr1110_driver/src \
 -Ilr1110_modem_driver/src \
 -Ihci \
--Ihci/Command/Inc
+-Ihci/Command/Inc \
+-Iperipherals/inc
 
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections

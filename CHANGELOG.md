@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v3.0.1] 2021-05-11
+
+### Added
+
+- Modify `FieldTestPost` adding the `-f` flag to filter the jobs to solve based on job ID
+- File upload and temperature demonstrations
+
+### Changed
+
+- Upgraded LR1110 modem driver to v3.0.1
+- __BREAKING CHANGE__: Add mandatory field `scan_interval` in field test job description
+- Wi-Fi transceiver and modem demos use *Abort on Timeout* parameter set to `true` (was `false` previously)
+- Field `wifi_abort_on_timeout` added the the json configuration of field test
+  - It is a required field
+  - It makes previous version of python/embedded binary incompatible for field tests with this version
+
+### Fixed
+
+- The embedded application configure the DM port when joining
+
 ## [v2.2.0] 2021-04-08
 
 ### Changed

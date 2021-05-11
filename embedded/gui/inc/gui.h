@@ -42,6 +42,8 @@
 #include "guiRadioPer.h"
 #include "guiRadioPingPong.h"
 #include "guiMenuDemo.h"
+#include "guiMenuGeolocDemo.h"
+#include "guiMenuRadioDemo.h"
 #include "guiResultsWifi.h"
 #include "guiResultsGnss.h"
 #include "guiSplashScreen.h"
@@ -52,6 +54,8 @@
 #include "guiConfigGnss.h"
 #include "guiConfigGnssAssistancePosition.h"
 #include "guiEui.h"
+#include "guiTemperature.h"
+#include "guiFileUpload.h"
 #include <stdint.h>
 #include <string.h>
 #include "stdio.h"
@@ -67,6 +71,8 @@ typedef enum
     GUI_LAST_EVENT_START_DEMO_WIFI,
     GUI_LAST_EVENT_START_DEMO_GNSS_AUTONOMOUS,
     GUI_LAST_EVENT_START_DEMO_GNSS_ASSISTED,
+    GUI_LAST_EVENT_START_DEMO_TEMPERATURE,
+    GUI_LAST_EVENT_START_DEMO_FILE_UPLOAD,
     GUI_LAST_EVENT_STOP_DEMO,
     GUI_LAST_EVENT_SEND,
     GUI_LAST_EVENT_UPDATE_DEMO_RADIO,
@@ -106,12 +112,17 @@ class Gui
 
     void HostConnectivityChange( bool is_connected );
     void NetworkConnectivityChange( const GuiNetworkConnectivityStatus_t* new_connectivity_status );
+    void CommissioningChange( );
+    void FakeLedStateChange( bool is_on );
+    void FakeLedStateToggle( );
 
     virtual GuiLastEvent_t GetLastEvent( );
     void                   UpdateRadioPingPongResult( GuiRadioPingPongResult_t& gui_demo_result );
     void                   UpdateRadioPerResult( GuiRadioPerResult_t& demo_result );
     void                   UpdateWifiDemoResult( GuiWifiResult_t& gui_demo_result );
     void                   UpdateGnssDemoResult( GuiGnssResult_t& gui_demo_result );
+    void                   UpdateTemperatureResult( GuiTemperatureResult_t& gui_demo_result );
+    void                   UpdateFileUploadResult( GuiFileUploadResult_t& gui_demo_result );
     void                   UpdateReverseGeoCoding( const GuiResultGeoLoc_t& new_reverse_geo_coding );
     void                   SetDemoStatus( GuiDemoStatus_t& demo_status );
     bool                   HasRefreshPending( ) const;

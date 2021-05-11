@@ -47,13 +47,14 @@ void Gui::Init( GuiDemoSettings_t* settings, GuiDemoSettings_t* settings_default
                 GuiGnssDemoAssistancePosition_t* assistance_position,
                 GuiGnssDemoAssistancePosition_t* assistance_position_default, version_handler_t* version_handler )
 {
-    this->demo_settings                             = *settings;
-    this->demo_settings_default                     = *settings_default;
-    this->gnss_assistance_position                  = *assistance_position;
-    this->gnss_assistance_position_default          = *assistance_position_default;
-    this->version_handler                           = version_handler;
-    this->network_connectivity_settings.region      = GUI_NETWORK_CONNECTIVITY_REGION_EU868;
-    this->network_connectivity_settings.adr_profile = GUI_NETWORK_CONNECTIVITY_ADR_NETWORK_SERVER_CONTROLLED;
+    this->demo_settings                               = *settings;
+    this->demo_settings_default                       = *settings_default;
+    this->gnss_assistance_position                    = *assistance_position;
+    this->gnss_assistance_position_default            = *assistance_position_default;
+    this->version_handler                             = version_handler;
+    this->network_connectivity_settings.region        = GUI_NETWORK_CONNECTIVITY_REGION_EU868;
+    this->network_connectivity_settings.adr_profile   = GUI_NETWORK_CONNECTIVITY_ADR_NETWORK_SERVER_CONTROLLED;
+    this->network_connectivity_settings.lorawan_class = GUI_NETWORK_CONNECTIVITY_LORAWAN_CLASS_A;
 
     this->guiCurrent = new GuiSplashScreen( this->version_handler );
 }
@@ -135,9 +136,6 @@ void Gui::Runtime( )
             case GUI_EVENT_LEAVE:
                 this->event = GUI_LAST_EVENT_LEAVE;
                 break;
-            case GUI_EVENT_RESTORE_EUI_KEYS:
-                this->event = GUI_LAST_EVENT_RESET_SEMTECH_DEFAULT_COMMISSIONING;
-                break;
             case GUI_EVENT_BACK:
                 next_page_type = GUI_PAGE_MENU;
                 break;
@@ -153,6 +151,9 @@ void Gui::Runtime( )
             {
             case GUI_EVENT_BACK:
                 next_page_type = GUI_PAGE_MENU;
+                break;
+            case GUI_EVENT_RESTORE_EUI_KEYS:
+                this->event = GUI_LAST_EVENT_RESET_SEMTECH_DEFAULT_COMMISSIONING;
                 break;
             default:
                 break;
@@ -277,6 +278,25 @@ void Gui::Runtime( )
         {
             switch( event_from_display )
             {
+            case GUI_EVENT_LAUNCH_GEOLOC_DEMO:
+                next_page_type = GUI_PAGE_MENU_GEOLOC_DEMO;
+                break;
+            case GUI_EVENT_LAUNCH_RADIO_DEMO:
+                next_page_type = GUI_PAGE_MENU_RADIO_DEMO;
+                break;
+            case GUI_EVENT_BACK:
+                next_page_type = GUI_PAGE_MENU;
+                break;
+            default:
+                break;
+            }
+            break;
+        }
+
+        case GUI_PAGE_MENU_GEOLOC_DEMO:
+        {
+            switch( event_from_display )
+            {
             case GUI_EVENT_START_WIFI:
                 next_page_type               = GUI_PAGE_WIFI_TEST;
                 this->at_least_one_scan_done = false;
@@ -290,7 +310,26 @@ void Gui::Runtime( )
                 this->at_least_one_scan_done = false;
                 break;
             case GUI_EVENT_BACK:
-                next_page_type = GUI_PAGE_MENU;
+                next_page_type = GUI_PAGE_MENU_DEMO;
+                break;
+            default:
+                break;
+            }
+            break;
+        }
+
+        case GUI_PAGE_MENU_RADIO_DEMO:
+        {
+            switch( event_from_display )
+            {
+            case GUI_EVENT_START_DEMO_TEMPERATURE:
+                next_page_type = GUI_PAGE_TEMPERATURE_DEMO;
+                break;
+            case GUI_EVENT_START_DEMO_FILE_UPLOAD:
+                next_page_type = GUI_PAGE_FILE_UPLOAD_DEMO;
+                break;
+            case GUI_EVENT_BACK:
+                next_page_type = GUI_PAGE_MENU_DEMO;
                 break;
             default:
                 break;
@@ -311,7 +350,7 @@ void Gui::Runtime( )
                 this->event = GUI_LAST_EVENT_STOP_DEMO;
                 break;
             case GUI_EVENT_BACK:
-                next_page_type = GUI_PAGE_MENU_DEMO;
+                next_page_type = GUI_PAGE_MENU_GEOLOC_DEMO;
                 this->event    = GUI_LAST_EVENT_STOP_DEMO;
                 break;
             case GUI_EVENT_RESULTS:
@@ -367,7 +406,7 @@ void Gui::Runtime( )
                 this->event = GUI_LAST_EVENT_STOP_DEMO;
                 break;
             case GUI_EVENT_BACK:
-                next_page_type = GUI_PAGE_MENU_DEMO;
+                next_page_type = GUI_PAGE_MENU_GEOLOC_DEMO;
                 this->event    = GUI_LAST_EVENT_STOP_DEMO;
                 break;
             case GUI_EVENT_START_GNSS_AUTONOMOUS:
@@ -432,7 +471,7 @@ void Gui::Runtime( )
                 this->event = GUI_LAST_EVENT_STOP_DEMO;
                 break;
             case GUI_EVENT_BACK:
-                next_page_type = GUI_PAGE_MENU_DEMO;
+                next_page_type = GUI_PAGE_MENU_GEOLOC_DEMO;
                 this->event    = GUI_LAST_EVENT_STOP_DEMO;
                 break;
             case GUI_EVENT_RESULTS:
@@ -491,6 +530,50 @@ void Gui::Runtime( )
             case GUI_EVENT_SAVE:
                 next_page_type = GUI_PAGE_GNSS_ASSISTED_TEST;
                 this->event    = GUI_LAST_EVENT_UPDATE_DEMO_GNSS_ASSISTANCE_POSITION;
+                break;
+            default:
+                break;
+            }
+            break;
+        }
+
+        case GUI_PAGE_TEMPERATURE_DEMO:
+        {
+            switch( event_from_display )
+            {
+            case GUI_EVENT_START_DEMO_TEMPERATURE:
+                this->guiCurrent->start( );
+                this->event = GUI_LAST_EVENT_START_DEMO_TEMPERATURE;
+                break;
+            case GUI_EVENT_STOP:
+                this->guiCurrent->stop( );
+                this->event = GUI_LAST_EVENT_STOP_DEMO;
+                break;
+            case GUI_EVENT_BACK:
+                next_page_type = GUI_PAGE_MENU_RADIO_DEMO;
+                this->event    = GUI_LAST_EVENT_STOP_DEMO;
+                break;
+            default:
+                break;
+            }
+            break;
+        }
+
+        case GUI_PAGE_FILE_UPLOAD_DEMO:
+        {
+            switch( event_from_display )
+            {
+            case GUI_EVENT_START_DEMO_FILE_UPLOAD:
+                this->guiCurrent->start( );
+                this->event = GUI_LAST_EVENT_START_DEMO_FILE_UPLOAD;
+                break;
+            case GUI_EVENT_STOP:
+                this->guiCurrent->stop( );
+                this->event = GUI_LAST_EVENT_STOP_DEMO;
+                break;
+            case GUI_EVENT_BACK:
+                next_page_type = GUI_PAGE_MENU_RADIO_DEMO;
+                this->event    = GUI_LAST_EVENT_STOP_DEMO;
                 break;
             default:
                 break;
@@ -560,6 +643,12 @@ void Gui::NetworkConnectivityChange( const GuiNetworkConnectivityStatus_t* new_c
     this->guiCurrent->updateNetworkConnectivityState( new_connectivity_status );
 }
 
+void Gui::CommissioningChange( ) { this->guiCurrent->updateCommissioningData( ); }
+
+void Gui::FakeLedStateChange( bool is_on ) { this->guiCurrent->updateFakeLedState( is_on ); }
+
+void Gui::FakeLedStateToggle( ) { this->guiCurrent->toggleFakeLedState( ); }
+
 GuiLastEvent_t Gui::GetLastEvent( )
 {
     GuiLastEvent_t event = this->event;
@@ -589,6 +678,18 @@ void Gui::UpdateRadioPerResult( GuiRadioPerResult_t& demo_result )
 {
     this->demo_results.radio_per_result = demo_result;
     this->refresh_pending               = true;
+}
+
+void Gui::UpdateTemperatureResult( GuiTemperatureResult_t& gui_demo_result )
+{
+    this->demo_results.temperature_result = gui_demo_result;
+    this->refresh_pending                 = true;
+}
+
+void Gui::UpdateFileUploadResult( GuiFileUploadResult_t& gui_demo_result )
+{
+    this->demo_results.file_upload_result = gui_demo_result;
+    this->refresh_pending                 = true;
 }
 
 void Gui::UpdateReverseGeoCoding( const GuiResultGeoLoc_t& new_reverse_geo_coding )
@@ -634,6 +735,16 @@ void Gui::CreateNewPage( guiPageType_t page_type )
         case GUI_PAGE_MENU_DEMO:
         {
             this->guiCurrent = new GuiMenuDemo( this->version_handler );
+            break;
+        }
+        case GUI_PAGE_MENU_GEOLOC_DEMO:
+        {
+            this->guiCurrent = new GuiMenuGeolocDemo( this->version_handler );
+            break;
+        }
+        case GUI_PAGE_MENU_RADIO_DEMO:
+        {
+            this->guiCurrent = new GuiMenuRadioDemo( this->version_handler );
             break;
         }
         case GUI_PAGE_MENU_RADIO_TEST_MODES:
@@ -724,6 +835,16 @@ void Gui::CreateNewPage( guiPageType_t page_type )
         {
             this->guiCurrent =
                 new GuiRadioPingPong( &demo_settings.radio_settings, &demo_results.radio_pingpong_result );
+            break;
+        }
+        case GUI_PAGE_TEMPERATURE_DEMO:
+        {
+            this->guiCurrent = new GuiTemperature( &demo_results.temperature_result );
+            break;
+        }
+        case GUI_PAGE_FILE_UPLOAD_DEMO:
+        {
+            this->guiCurrent = new GuiFileUpload( &demo_results.file_upload_result );
             break;
         }
         default:

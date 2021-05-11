@@ -42,6 +42,9 @@
 #include "environment_interface.h"
 #include "timer_interface.h"
 #include "interruption_interface.h"
+#include "connectivity_manager_interface.h"
+#include "demo_modem_temperature.h"
+#include "demo_modem_file_upload.h"
 
 typedef enum
 {
@@ -54,6 +57,8 @@ typedef enum
     DEMO_TYPE_TX_CW,
     DEMO_TYPE_RADIO_PER_TX,
     DEMO_TYPE_RADIO_PER_RX,
+    DEMO_TYPE_TEMPERATURE,
+    DEMO_TYPE_FILE_UPLOAD,
 } demo_type_t;
 
 class DemoManagerInterface
@@ -61,7 +66,8 @@ class DemoManagerInterface
    public:
     DemoManagerInterface( EnvironmentInterface* environment, AntennaSelectorInterface* antenna_selector,
                           SignalingInterface* signaling, TimerInterface* timer,
-                          CommunicationInterface* communication_interface );
+                          CommunicationInterface*       communication_interface,
+                          ConnectivityManagerInterface* connectivity_interface );
     virtual ~DemoManagerInterface( );
 
     void Init( );
@@ -108,6 +114,7 @@ class DemoManagerInterface
     demo_radio_settings_t             demo_radio_settings;
     demo_radio_settings_t             demo_radio_settings_default;
     CommunicationInterface*           communication_interface;
+    ConnectivityManagerInterface*     connectivity_interface;
 };
 
 #endif  // __DEMO_MANAGER_INTERFACE_H__

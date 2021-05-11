@@ -51,8 +51,6 @@ class DemoInterface
                    CommunicationInterface* communication_interface );
     virtual ~DemoInterface( );
 
-    void Initialize( );
-
     demo_status_t Runtime( );
     void          InterruptHandler( const InterruptionInterface* interruption );
 
@@ -60,7 +58,6 @@ class DemoInterface
     void         Stop( );
     virtual void Reset( );
 
-    void         ResetAndInitLr1110( );
     virtual bool HasIntermediateResults( ) const;
 
     bool          IsStarted( ) const;
@@ -80,7 +77,6 @@ class DemoInterface
     CommunicationInterface* communication_interface;
 
    private:
-    static bool          is_initialized;
     bool                 is_waiting_for_interrupt;
     volatile static bool has_received_interrupt;
     demo_status_t        status;

@@ -134,6 +134,10 @@ class WifiJobDocument(CommonJobDocument):
         multiple=1,
         description="Configures the maximal wait duration for a Wi-Fi preamble before considering a Wi-Fi channel is empty of signal. Expressed in ms.",
     )
+    wifi_abort_on_timeout = BooleanField(
+        description="Enable or disable the Wi-Fi abort on timeout. If set to True, the Wi-Fi scan will jump to next channel as soon as a preamble timeout is reached.",
+        required=True,
+    )
     wifi_mode = WifiModeField()
 
 
@@ -177,6 +181,12 @@ class GnssAssistedDocument(CommonJobDocument):
 class JobsDocument(Document):
     infinite_loops = BooleanField(
         description="Configures the repetition of the jobs. If set to true, the job file will be repeated infinitely. If set to false, the field test will end at the end of the last job in this file."
+    )
+    scan_interval = NumberField(
+        minimum=0,
+        multiple_of=1,
+        description="Number of seconds to wait between two consecutive list of jobs execution. Useful only if infinite_loops is true. Value in seconds. 0 means that there is no wait between list of jobs.",
+        required=True,
     )
     jobs = ArrayField(
         OneOfField(

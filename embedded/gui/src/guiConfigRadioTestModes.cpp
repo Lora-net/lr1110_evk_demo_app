@@ -47,9 +47,7 @@ GuiConfigRadioTestModes::GuiConfigRadioTestModes( GuiRadioSetting_t*       setti
 {
     this->settings_temp = *( this->settings_current );
 
-    this->createHeader( "RADIO CONFIGURATION" );
-
-    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
+    this->createHeaderWithIcons( "RADIO CONFIGURATION" );
 
     /* Create a Tab view object and configure it */
     this->tabview = lv_tabview_create( this->screen, NULL );
@@ -78,8 +76,8 @@ GuiConfigRadioTestModes::GuiConfigRadioTestModes( GuiRadioSetting_t*       setti
                          GuiConfigRadioTestModes::callback_ta );
     }
 
-    this->create_ddlist( &( this->ddlist_pwr ), this->tab_generic, 115, "Power (dBm)", lp_pa_options,
-                         GuiConfigRadioTestModes::callback_ddlist );
+    this->createDropDownList( &( this->ddlist_pwr ), this->tab_generic, 115, "Power (dBm)", lp_pa_options,
+                              GuiConfigRadioTestModes::callback_ddlist, DDLIST_WIDTH, 0 );
 
     this->createChoiceSwitch( &( this->sw_pkt_type ), this->tab_generic, "LoRa", "GFSK",
                               GuiConfigRadioTestModes::callback_sw, 30, true );
@@ -91,58 +89,58 @@ GuiConfigRadioTestModes::GuiConfigRadioTestModes( GuiRadioSetting_t*       setti
     switch( device_type )
     {
     case VERSION_DEVICE_TRANSCEIVER:
-        this->create_ddlist( &( this->lora_ddlist_sf ), this->tab_lora, 20, "Spreading Factor",
-                             "SF5\n"
-                             "SF6\n"
-                             "SF7\n"
-                             "SF8\n"
-                             "SF9\n"
-                             "SF10\n"
-                             "SF11\n"
-                             "SF12",
-                             GuiConfigRadioTestModes::callback_ddlist );
+        this->createDropDownList( &( this->lora_ddlist_sf ), this->tab_lora, 20, "Spreading Factor",
+                                  "SF5\n"
+                                  "SF6\n"
+                                  "SF7\n"
+                                  "SF8\n"
+                                  "SF9\n"
+                                  "SF10\n"
+                                  "SF11\n"
+                                  "SF12",
+                                  GuiConfigRadioTestModes::callback_ddlist, DDLIST_WIDTH, 0 );
         break;
     case VERSION_DEVICE_MODEM:
-        this->create_ddlist( &( this->lora_ddlist_sf ), this->tab_lora, 20, "Spreading Factor",
-                             "SF7\n"
-                             "SF8\n"
-                             "SF9\n"
-                             "SF10\n"
-                             "SF11\n"
-                             "SF12",
-                             GuiConfigRadioTestModes::callback_ddlist );
+        this->createDropDownList( &( this->lora_ddlist_sf ), this->tab_lora, 20, "Spreading Factor",
+                                  "SF7\n"
+                                  "SF8\n"
+                                  "SF9\n"
+                                  "SF10\n"
+                                  "SF11\n"
+                                  "SF12",
+                                  GuiConfigRadioTestModes::callback_ddlist, DDLIST_WIDTH, 0 );
         break;
     }
 
-    this->create_ddlist( &( this->lora_ddlist_bw ), this->tab_lora, 50, "Bandwidth",
-                         "125kHz\n"
-                         "250kHz\n"
-                         "500kHz",
-                         GuiConfigRadioTestModes::callback_ddlist );
+    this->createDropDownList( &( this->lora_ddlist_bw ), this->tab_lora, 50, "Bandwidth",
+                              "125kHz\n"
+                              "250kHz\n"
+                              "500kHz",
+                              GuiConfigRadioTestModes::callback_ddlist, DDLIST_WIDTH, 0 );
 
-    this->create_ddlist( &( this->lora_ddlist_cr ), this->tab_lora, 80, "Coding rate",
-                         "4/5\n"
-                         "4/6\n"
-                         "4/7\n"
-                         "4/8",
-                         GuiConfigRadioTestModes::callback_ddlist );
+    this->createDropDownList( &( this->lora_ddlist_cr ), this->tab_lora, 80, "Coding rate",
+                              "4/5\n"
+                              "4/6\n"
+                              "4/7\n"
+                              "4/8",
+                              GuiConfigRadioTestModes::callback_ddlist, DDLIST_WIDTH, 0 );
 
     if( this->device_type == VERSION_DEVICE_TRANSCEIVER )
     {
-        this->create_ddlist( &( this->lora_ddlist_iq ), this->tab_lora, 110, "IQ",
-                             "Standard\n"
-                             "Inverted",
-                             GuiConfigRadioTestModes::callback_ddlist );
+        this->createDropDownList( &( this->lora_ddlist_iq ), this->tab_lora, 110, "IQ",
+                                  "Standard\n"
+                                  "Inverted",
+                                  GuiConfigRadioTestModes::callback_ddlist, DDLIST_WIDTH, 0 );
 
-        this->create_ddlist( &( this->lora_ddlist_crc ), this->tab_lora, 140, "CRC",
-                             "OFF\n"
-                             "ON",
-                             GuiConfigRadioTestModes::callback_ddlist );
+        this->createDropDownList( &( this->lora_ddlist_crc ), this->tab_lora, 140, "CRC",
+                                  "OFF\n"
+                                  "ON",
+                                  GuiConfigRadioTestModes::callback_ddlist, DDLIST_WIDTH, 0 );
 
-        this->create_ddlist( &( this->lora_ddlist_hdr ), this->tab_lora, 170, "Header type",
-                             "Implicit\n"
-                             "Explicit",
-                             GuiConfigRadioTestModes::callback_ddlist );
+        this->createDropDownList( &( this->lora_ddlist_hdr ), this->tab_lora, 170, "Header type",
+                                  "Implicit\n"
+                                  "Explicit",
+                                  GuiConfigRadioTestModes::callback_ddlist, DDLIST_WIDTH, 0 );
     }
 
     if( this->device_type == VERSION_DEVICE_TRANSCEIVER )
@@ -153,23 +151,23 @@ GuiConfigRadioTestModes::GuiConfigRadioTestModes( GuiRadioSetting_t*       setti
         this->create_ta( &( this->gfsk_ta_fdev ), this->tab_gfsk, 45, "Freq. dev. (Hz)", 6, "50000",
                          GuiConfigRadioTestModes::callback_ta );
 
-        this->create_ddlist( &( this->gfsk_ddlist_crc ), this->tab_gfsk, 80, "CRC",
-                             "OFF\n"
-                             "1B\n"
-                             "2B\n"
-                             "1B inv.\n"
-                             "2B inv.",
-                             GuiConfigRadioTestModes::callback_ddlist );
+        this->createDropDownList( &( this->gfsk_ddlist_crc ), this->tab_gfsk, 80, "CRC",
+                                  "OFF\n"
+                                  "1B\n"
+                                  "2B\n"
+                                  "1B inv.\n"
+                                  "2B inv.",
+                                  GuiConfigRadioTestModes::callback_ddlist, DDLIST_WIDTH, 0 );
 
-        this->create_ddlist( &( this->gfsk_ddlist_hdr ), this->tab_gfsk, 110, "Header type",
-                             "Implicit\n"
-                             "Explicit",
-                             GuiConfigRadioTestModes::callback_ddlist );
+        this->createDropDownList( &( this->gfsk_ddlist_hdr ), this->tab_gfsk, 110, "Header type",
+                                  "Implicit\n"
+                                  "Explicit",
+                                  GuiConfigRadioTestModes::callback_ddlist, DDLIST_WIDTH, 0 );
 
-        this->create_ddlist( &( this->gfsk_ddlist_dcfree ), this->tab_gfsk, 140, "DC free",
-                             "OFF\n"
-                             "ON",
-                             GuiConfigRadioTestModes::callback_ddlist );
+        this->createDropDownList( &( this->gfsk_ddlist_dcfree ), this->tab_gfsk, 140, "DC free",
+                                  "OFF\n"
+                                  "ON",
+                                  GuiConfigRadioTestModes::callback_ddlist, DDLIST_WIDTH, 0 );
     }
 
     this->createActionButton( &( this->btn_cancel ), "CANCEL", GuiConfigRadioTestModes::callback, GUI_BUTTON_POS_LEFT,
@@ -290,7 +288,7 @@ void GuiConfigRadioTestModes::ConfigParamLora( )
 
         lv_ddlist_set_selected( this->lora_ddlist_crc, ( this->settings_temp.lora.is_crc_activated == false ) ? 0 : 1 );
 
-        lv_ddlist_set_selected( this->lora_ddlist_hdr, ( this->settings_temp.lora.is_hdr_implicit == false ) ? 0 : 1 );
+        lv_ddlist_set_selected( this->lora_ddlist_hdr, ( this->settings_temp.lora.is_hdr_implicit == true ) ? 0 : 1 );
     }
 }
 
@@ -676,25 +674,4 @@ void GuiConfigRadioTestModes::create_ta( lv_obj_t** ta, lv_obj_t* screen, int16_
     lv_ta_set_text( *ta, init_text );
     lv_ta_set_text_align( *ta, LV_LABEL_ALIGN_RIGHT );
     lv_obj_set_user_data( *ta, this );
-}
-
-void GuiConfigRadioTestModes::create_ddlist( lv_obj_t** ddlist, lv_obj_t* screen, int16_t off_y, const char* lbl_name,
-                                             const char* options, lv_event_cb_t event_cb )
-{
-    lv_obj_t* lbl;
-
-    lbl = lv_label_create( screen, NULL );
-    lv_obj_set_style( lbl, &( GuiCommon::screen_style ) );
-    lv_label_set_text( lbl, lbl_name );
-    lv_obj_align( lbl, NULL, LV_ALIGN_IN_TOP_LEFT, 5, off_y );
-
-    *ddlist = lv_ddlist_create( screen, NULL );
-    lv_ddlist_set_fix_width( *ddlist, DDLIST_WIDTH );
-    lv_ddlist_set_draw_arrow( *ddlist, true );
-    lv_ddlist_set_selected( *ddlist, 2 );
-    lv_obj_align( *ddlist, NULL, LV_ALIGN_IN_TOP_RIGHT, -10, off_y );
-    lv_obj_set_top( *ddlist, true );
-    lv_obj_set_event_cb( *ddlist, event_cb );
-    lv_ddlist_set_options( *ddlist, options );
-    lv_obj_set_user_data( *ddlist, this );
 }

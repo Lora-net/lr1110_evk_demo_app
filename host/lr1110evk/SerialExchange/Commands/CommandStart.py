@@ -97,6 +97,7 @@ class CommandStartWifiBase(CommandStart):
         self.wifi_nbr_retrials = None
         self.wifi_max_results_per_scan = None
         self.wifi_timeout = None
+        self.wifi_abort_on_timeout = None
 
     @staticmethod
     def channel_list_to_bit_mask(channel_list):
@@ -139,6 +140,9 @@ class CommandStartWifiScan(CommandStartWifiBase):
         )
         wifi_timeout_bytes = self.wifi_timeout.to_bytes(2, byteorder="little")
         wifi_mode_byte = self.wifi_mode.value
+        wifi_abort_on_timeout_byte = (
+            b"\x01" if self.wifi_abort_on_timeout is True else b"\x00"
+        )
 
         return (
             wifi_channel_mask_bytes
@@ -147,6 +151,7 @@ class CommandStartWifiScan(CommandStartWifiBase):
             + wifi_max_results_bytes
             + wifi_timeout_bytes
             + wifi_mode_byte
+            + wifi_abort_on_timeout_byte
         )
 
 
@@ -165,12 +170,16 @@ class CommandStartWifiCountryCode(CommandStartWifiBase):
             1, byteorder="little"
         )
         wifi_timeout_bytes = self.wifi_timeout.to_bytes(2, byteorder="little")
+        wifi_abort_on_timeout_byte = (
+            b"\x01" if self.wifi_abort_on_timeout is True else b"\x00"
+        )
 
         return (
             wifi_channel_mask_bytes
             + wifi_nbr_retrials_bytes
             + wifi_max_results_bytes
             + wifi_timeout_bytes
+            + wifi_abort_on_timeout_byte
         )
 
 

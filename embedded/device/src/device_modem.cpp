@@ -39,9 +39,13 @@
 #include <string.h>
 
 #define DEVICE_MODEM_PORT_HANDLE_SOLVER_MESSAGE ( 150 )
+#define DEVICE_MODEM_PORT_HANDLE_APPLICATION_SERVER_MESSAGE ( 151 )
 
 DeviceModem::DeviceModem( radio_t* radio, EnvironmentInterface* environment )
-    : DeviceInterface( radio, environment ), has_assisted_location_update( false )
+    : DeviceInterface( radio, environment ),
+      has_assisted_location_update( false ),
+      has_application_server_event( false ),
+      last_application_server_event( APPLICATION_SERVER_NO_EVENT )
 {
 }
 
@@ -99,7 +103,7 @@ void DeviceModem::UpdateAlmanac( const uint8_t* almanac_buffer, const uint8_t bu
 
 bool DeviceModem::FetchInterrupt( InterruptionInterface** interruption )
 {
-    lr1110_modem_event_fields_t event = {};
+    lr1110_modem_event_fields_t event = { };
     lr1110_modem_get_event( this->GetRadio( ), &event );
     bool has_event = false;
     if( event.event_type == LR1110_MODEM_LORAWAN_EVENT_NO_EVENT )
@@ -118,7 +122,8 @@ bool DeviceModem::FetchInterrupt( InterruptionInterface** interruption )
 
 bool DeviceModem::IsLorawanPortForDeviceManagement( const uint8_t port ) const
 {
-    return port == DEVICE_MODEM_PORT_HANDLE_SOLVER_MESSAGE;
+    return ( port == DEVICE_MODEM_PORT_HANDLE_SOLVER_MESSAGE ) ||
+           ( port == DEVICE_MODEM_PORT_HANDLE_APPLICATION_SERVER_MESSAGE );
 }
 
 void DeviceModem::HandleLorawanDeviceManagement( const uint8_t port, const uint8_t* payload,
@@ -132,6 +137,17 @@ void DeviceModem::HandleLorawanDeviceManagement( const uint8_t port, const uint8
         this->has_assisted_location_update = true;
         break;
     }
+    case DEVICE_MODEM_PORT_HANDLE_APPLICATION_SERVER_MESSAGE:
+    {
+        const ApplicationServerEvent_t app_server_event =
+            ApplicationServerInterpreter( ).parseFrame( payload, payload_length );
+        if( app_server_event != APPLICATION_SERVER_NO_EVENT )
+        {
+            this->has_application_server_event  = true;
+            this->last_application_server_event = app_server_event;
+        }
+        break;
+    }
     default:
     {
         // Does nothing
@@ -141,7 +157,7 @@ void DeviceModem::HandleLorawanDeviceManagement( const uint8_t port, const uint8
 
 bool DeviceModem::checkAlmanacUpdate( uint32_t expected_crc )
 {
-    lr1110_modem_gnss_context_t gnss_context = {};
+    lr1110_modem_gnss_context_t gnss_context = { };
     lr1110_modem_gnss_get_context( this->radio, &gnss_context );
     return expected_crc == gnss_context.global_almanac_crc;
 }
@@ -186,6 +202,11 @@ void DeviceModem::FetchAssistanceLocation( DeviceAssistedLocation_t* assistance_
     assistance_location->longitude = tmp_assistance_position.longitude;
 }
 
+void DeviceModem::FetchLastApplicationServerEvent( ApplicationServerEvent_t* last_application_server_event )
+{
+    *last_application_server_event = this->last_application_server_event;
+}
+
 void DeviceModem::SetAssistancePositionFromEnvironment( )
 {
     if( this->environment->HasLocation( ) == true )
@@ -211,4 +232,14 @@ bool DeviceModem::HasAssistedLocationUpdated( )
         this->has_assisted_location_update = false;
     }
     return tmp_has_assisted_location;
+}
+
+bool DeviceModem::HasApplicationServerEvent( )
+{
+    const bool tmp_has_app_serv_event = this->has_application_server_event;
+    if( this->has_application_server_event == true )
+    {
+        this->has_application_server_event = false;
+    }
+    return tmp_has_app_serv_event;
 }

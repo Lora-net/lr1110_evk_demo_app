@@ -58,7 +58,7 @@ network_connectivity_status_t ConnectivityManagerModem::Runtime( )
             this->SetAdrProfile( this->_settings.adr_profile );
 
             lr1110_modem_stream_init( this->_device->GetRadio( ), CONNECTIVITY_MANAGER_INTERFACE_STREAM_APP_PORT,
-                                      LR1110_MODEM_FILE_ENCRYPTION_DISABLE );
+                                      LR1110_MODEM_SERVICES_ENCRYPTION_DISABLE );
             return NETWORK_CONNECTIVITY_STATUS_JOIN;
         }
         case LR1110_MODEM_LORAWAN_EVENT_STREAM_DONE:
@@ -108,13 +108,15 @@ bool ConnectivityManagerModem::IsConnectable( ) const { return true; }
 
 void ConnectivityManagerModem::Join( network_connectivity_settings_t* settings )
 {
-    this->_settings.region      = settings->region;
-    this->_settings.adr_profile = settings->adr_profile;
+    this->_settings.region        = settings->region;
+    this->_settings.adr_profile   = settings->adr_profile;
+    this->_settings.lorawan_class = settings->lorawan_class;
 
-    const lr1110_modem_response_code_t set_class_response_code =
-        lr1110_modem_set_class( this->_device->GetRadio( ), LR1110_LORAWAN_CLASS_A );
+    this->SetClass( this->_settings.lorawan_class );
 
     this->SetRegion( this->_settings.region );
+
+    lr1110_modem_set_dm_port( this->_device->GetRadio( ), CONNECTIVITY_MANAGER_INTERFACE_DAS_PORT );
 
     /* Set DM info field */
     lr1110_modem_dm_info_fields_t dm_info_fields;
@@ -176,6 +178,12 @@ network_connectivity_cmd_status_t ConnectivityManagerModem::Send( uint8_t* data,
     return NETWORK_CONNECTIVITY_CMD_STATUS_OK;
 }
 
+#define CASE_NETWORK_TO_DRIVER( region_tok )                \
+    case LR1110_LORAWAN_REGION_##region_tok:                \
+    {                                                       \
+        *region = NETWORK_CONNECTIVITY_REGION_##region_tok; \
+        break;                                              \
+    }
 void ConnectivityManagerModem::GetCurrentRegion( network_connectivity_region_t* region )
 {
     lr1110_modem_regions_t region_modem;
@@ -184,43 +192,52 @@ void ConnectivityManagerModem::GetCurrentRegion( network_connectivity_region_t* 
 
     switch( region_modem )
     {
-    case LR1110_LORAWAN_REGION_EU868:
-    {
-        *region = NETWORK_CONNECTIVITY_REGION_EU868;
-        break;
-    }
-    case LR1110_LORAWAN_REGION_US915:
-    {
-        *region = NETWORK_CONNECTIVITY_REGION_US915;
-        break;
-    }
+        CASE_NETWORK_TO_DRIVER( EU868 )
+        CASE_NETWORK_TO_DRIVER( AS923_GRP1 )
+        CASE_NETWORK_TO_DRIVER( US915 )
+        CASE_NETWORK_TO_DRIVER( AU915 )
+        CASE_NETWORK_TO_DRIVER( CN470 )
+        CASE_NETWORK_TO_DRIVER( AS923_GRP2 )
+        CASE_NETWORK_TO_DRIVER( AS923_GRP3 )
+        CASE_NETWORK_TO_DRIVER( IN865 )
+        CASE_NETWORK_TO_DRIVER( KR920 )
+        CASE_NETWORK_TO_DRIVER( RU864 )
     default:
     {
         break;
     }
     }
 }
+#undef CASE_NETWORK_TO_DRIVER
+
+#define CASE_NETWORK_TO_DRIVER( region )                                                       \
+    case NETWORK_CONNECTIVITY_REGION_##region:                                                 \
+    {                                                                                          \
+        lr1110_modem_set_region( this->_device->GetRadio( ), LR1110_LORAWAN_REGION_##region ); \
+        break;                                                                                 \
+    }
 
 void ConnectivityManagerModem::SetRegion( network_connectivity_region_t region )
 {
     switch( region )
     {
-    case NETWORK_CONNECTIVITY_REGION_EU868:
-    {
-        lr1110_modem_set_region( this->_device->GetRadio( ), LR1110_LORAWAN_REGION_EU868 );
-        break;
-    }
-    case NETWORK_CONNECTIVITY_REGION_US915:
-    {
-        lr1110_modem_set_region( this->_device->GetRadio( ), LR1110_LORAWAN_REGION_US915 );
-        break;
-    }
+        CASE_NETWORK_TO_DRIVER( EU868 )
+        CASE_NETWORK_TO_DRIVER( AS923_GRP1 )
+        CASE_NETWORK_TO_DRIVER( US915 )
+        CASE_NETWORK_TO_DRIVER( AU915 )
+        CASE_NETWORK_TO_DRIVER( CN470 )
+        CASE_NETWORK_TO_DRIVER( AS923_GRP2 )
+        CASE_NETWORK_TO_DRIVER( AS923_GRP3 )
+        CASE_NETWORK_TO_DRIVER( IN865 )
+        CASE_NETWORK_TO_DRIVER( KR920 )
+        CASE_NETWORK_TO_DRIVER( RU864 )
     default:
     {
         break;
     }
     }
 }
+#undef CASE_NETWORK_TO_DRIVER
 
 void ConnectivityManagerModem::SetAdrProfile( network_connectivity_adr_profile_t profile )
 {
@@ -252,6 +269,27 @@ void ConnectivityManagerModem::SetAdrProfile( network_connectivity_adr_profile_t
     }
 }
 
+void ConnectivityManagerModem::SetClass( network_connectivity_lorawan_class_t lorawan_class )
+{
+    switch( lorawan_class )
+    {
+    case NETWORK_CONNECTIVITY_LORAWAN_CLASS_A:
+    {
+        lr1110_modem_set_class( this->_device->GetRadio( ), LR1110_LORAWAN_CLASS_A );
+        break;
+    }
+    case NETWORK_CONNECTIVITY_LORAWAN_CLASS_C:
+    {
+        lr1110_modem_set_class( this->_device->GetRadio( ), LR1110_LORAWAN_CLASS_C );
+        break;
+    }
+    default:
+    {
+        break;
+    }
+    }
+}
+
 void ConnectivityManagerModem::ResetCommissioningToSemtechJoinServer( )
 {
     // 1. Get the factory device EUI which is the chip EUI
@@ -273,6 +311,12 @@ void ConnectivityManagerModem::ResetCommissioningToSemtechJoinServer( )
         ( region_modem != LR1110_LORAWAN_REGION_EU868 ) ? LR1110_LORAWAN_REGION_EU868 : LR1110_LORAWAN_REGION_US915;
     lr1110_modem_set_region( this->_device->GetRadio( ), region_modem_fake );
     lr1110_modem_set_region( this->_device->GetRadio( ), region_modem );
+}
+
+void ConnectivityManagerModem::RequestTxUnconfirmed( const uint8_t port, const uint8_t* buffer,
+                                                     const uint8_t buffer_size )
+{
+    lr1110_modem_request_tx( this->_device->GetRadio( ), port, LR1110_MODEM_UPLINK_UNCONFIRMED, buffer, buffer_size );
 }
 
 void ConnectivityManagerModem::InterruptHandler( const InterruptionInterface* interruption )

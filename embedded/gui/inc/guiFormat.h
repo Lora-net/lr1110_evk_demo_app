@@ -162,10 +162,24 @@ typedef struct
 
 typedef struct
 {
+    float temperature;
+    bool  sent;
+} GuiTemperatureResult_t;
+
+typedef struct
+{
+    bool success;
+    bool terminated;
+} GuiFileUploadResult_t;
+
+typedef struct
+{
     GuiRadioPerResult_t      radio_per_result;
     GuiRadioPingPongResult_t radio_pingpong_result;
     GuiWifiResult_t          wifi_result;
     GuiGnssResult_t          gnss_result;
+    GuiTemperatureResult_t   temperature_result;
+    GuiFileUploadResult_t    file_upload_result;
 } GuiDemoResult_t;
 
 typedef struct
@@ -175,6 +189,7 @@ typedef struct
     bool     is_type_g;
     bool     is_type_n;
     bool     is_type_all;
+    bool     abort_on_timeout;
 } GuiWifiDemoSetting_t;
 
 typedef struct
@@ -233,21 +248,36 @@ typedef struct
 
 typedef enum
 {
-    GUI_NETWORK_CONNECTIVITY_REGION_EU868,
+    GUI_NETWORK_CONNECTIVITY_REGION_EU868 = 0,
+    GUI_NETWORK_CONNECTIVITY_REGION_AS923_GRP1,
     GUI_NETWORK_CONNECTIVITY_REGION_US915,
+    GUI_NETWORK_CONNECTIVITY_REGION_AU915,
+    GUI_NETWORK_CONNECTIVITY_REGION_CN470,
+    GUI_NETWORK_CONNECTIVITY_REGION_AS923_GRP2,
+    GUI_NETWORK_CONNECTIVITY_REGION_AS923_GRP3,
+    GUI_NETWORK_CONNECTIVITY_REGION_IN865,
+    GUI_NETWORK_CONNECTIVITY_REGION_KR920,
+    GUI_NETWORK_CONNECTIVITY_REGION_RU864,
 } GuiNetworkConnectivityLorawanRegion_t;
 
 typedef enum
 {
-    GUI_NETWORK_CONNECTIVITY_ADR_NETWORK_SERVER_CONTROLLED,
+    GUI_NETWORK_CONNECTIVITY_ADR_NETWORK_SERVER_CONTROLLED = 0,
     GUI_NETWORK_CONNECTIVITY_ADR_MOBILE_LONG_RANGE,
     GUI_NETWORK_CONNECTIVITY_ADR_MOBILE_LOW_POWER,
 } GuiNetworkConnectivityAdrProfile_t;
+
+typedef enum
+{
+    GUI_NETWORK_CONNECTIVITY_LORAWAN_CLASS_A = 0,
+    GUI_NETWORK_CONNECTIVITY_LORAWAN_CLASS_C,
+} GuiNetworkConnectivityLorawanClass_t;
 
 typedef struct
 {
     GuiNetworkConnectivityLorawanRegion_t region;
     GuiNetworkConnectivityAdrProfile_t    adr_profile;
+    GuiNetworkConnectivityLorawanClass_t  lorawan_class;
 } GuiNetworkConnectivitySettings_t;
 
 typedef struct

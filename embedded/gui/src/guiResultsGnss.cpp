@@ -39,16 +39,14 @@ GuiResultsGnss::GuiResultsGnss( const GuiGnssResult_t* results, guiPageType_t pa
     switch( pageType )
     {
     case GUI_PAGE_GNSS_AUTONOMOUS_RESULTS:
-        this->createHeader( "GNSS AUTONOMOUS - RESULTS" );
+        this->createHeaderWithIcons( "GNSS AUTONOMOUS - RESULTS" );
         break;
     case GUI_PAGE_GNSS_ASSISTED_RESULTS:
-        this->createHeader( "GNSS ASSISTED - RESULTS" );
+        this->createHeaderWithIcons( "GNSS ASSISTED - RESULTS" );
         break;
     default:
         break;
     }
-
-    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
 
     this->lbl_info_page = lv_label_create( this->screen, NULL );
     lv_obj_set_style( this->lbl_info_page, &( GuiCommon::screen_style ) );

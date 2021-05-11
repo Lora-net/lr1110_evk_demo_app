@@ -37,9 +37,7 @@ GuiConfigGnss::GuiConfigGnss( guiPageType_t pageType, GuiGnssDemoSetting_t* sett
 {
     this->settings_temp = *( this->settings_current );
 
-    this->createHeader( "GNSS CONFIGURATION" );
-
-    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
+    this->createHeaderWithIcons( "GNSS CONFIGURATION" );
 
     this->createSection( "CONSTELLATIONS", -100 );
 

@@ -34,6 +34,7 @@
 #include "device_modem.h"
 #include "lr1110_modem_lorawan.h"
 #include "system.h"
+#include "lis2de12.h"
 
 #include "supervisor.h"
 #include "environment_interface.h"
@@ -214,6 +215,7 @@ int main( void )
     ConnectivityManagerInterface* connectivity_manager;
 
     system_init( );
+    const uint8_t acc_init_status = AccelerometerInit( INT_NONE );
 
     system_time_wait_ms( 100 );  // Added to avoid screen flickering during power-up
 
@@ -245,10 +247,11 @@ int main( void )
     {
         lr1110_modem_event_fields_t modem_event;
 
-        device       = new DeviceModem( &radio, &environment );
-        demo_manager = new DemoManagerModem( ( DeviceModem* ) device, &environment, &antenna_selector, &signaling,
-                                             &timer, &communication_manager );
+        device               = new DeviceModem( &radio, &environment );
         connectivity_manager = new ConnectivityManagerModem( ( DeviceModem* ) device );
+        demo_manager =
+            new DemoManagerModem( ( DeviceModem* ) device, &environment, &antenna_selector, &signaling, &timer,
+                                  &communication_manager, ( ConnectivityManagerModem* ) connectivity_manager );
 
         while( system_gpio_get_pin_state( radio.irq ) == SYSTEM_GPIO_PIN_STATE_LOW )
         {
@@ -264,10 +267,11 @@ int main( void )
     }
     else
     {
-        device       = new DeviceTransceiver( &radio, &environment );
-        demo_manager = new DemoManagerTransceiver( ( DeviceTransceiver* ) device, &environment, &antenna_selector,
-                                                   &signaling, &timer, &communication_manager );
+        device               = new DeviceTransceiver( &radio, &environment );
         connectivity_manager = new ConnectivityManagerTransceiver( );
+        demo_manager = new DemoManagerTransceiver( ( DeviceTransceiver* ) device, &environment, &antenna_selector,
+                                                   &signaling, &timer, &communication_manager,
+                                                   ( ConnectivityManagerTransceiver* ) connectivity_manager );
     }
 
     CommandGetVersion         com_get_version( hci );
@@ -290,6 +294,7 @@ int main( void )
 
     Supervisor supervisor( &gui, device, demo_manager, &environment, &communication_manager, connectivity_manager );
 
+    device->Init( );
     supervisor.Init( );
     com_get_version.SetVersion( supervisor.GetVersionHandler( ) );
 

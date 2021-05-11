@@ -55,7 +55,9 @@ class ConnectivityManagerTransceiver : public ConnectivityManagerInterface
     void                              GetCurrentRegion( network_connectivity_region_t* region ) final;
     void                              SetRegion( network_connectivity_region_t region ) final;
     void                              SetAdrProfile( network_connectivity_adr_profile_t profile ) final;
+    void                              SetClass( network_connectivity_lorawan_class_t lorawan_class ) final;
     void                              ResetCommissioningToSemtechJoinServer( ) final;
+    void RequestTxUnconfirmed( const uint8_t port, const uint8_t* buffer, const uint8_t buffer_size ) final;
 
     void InterruptHandler( const InterruptionInterface* interruption ) final;
 };

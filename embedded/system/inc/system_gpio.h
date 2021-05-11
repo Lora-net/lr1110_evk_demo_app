@@ -70,6 +70,7 @@ void                    system_gpio_set_pin_state( gpio_t gpio, const system_gpi
 system_gpio_pin_state_t system_gpio_get_pin_state( gpio_t gpio );
 void system_gpio_init_direction_state( const gpio_t gpio, const system_gpio_pin_direction_t direction,
                                        const system_gpio_pin_state_t state );
+void system_gpio_init_irq( const gpio_t gpio, const system_gpio_interrupt_t interrupt );
 void system_gpio_wait_for_state( gpio_t io, uint8_t state );
 
 #ifdef __cplusplus

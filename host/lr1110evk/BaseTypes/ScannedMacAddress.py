@@ -143,7 +143,7 @@ class ScannedMacAddress:
 
         This factory method try to build a ScannedMacAddress object out of
         a CSV line. The expected schema of the CSV line is:
-        '<MAC-ADDRESS>,<CHANNEL-NAME>,<WIFI-TYPE-NAME>,<RSSI>,<TIMING_DEMODULATION>,<TIMING_CAPTURE>,<TIMING_CORRELATION>,<TIMING_DEMODULATION>,<TIMING_DETECTION>'
+        '<MAC-ADDRESS>,<CHANNEL-NAME>,<WIFI-TYPE-NAME>,<RSSI>,<TIMING_DEMODULATION>,<TIMING_CAPTURE>,<TIMING_CORRELATION>,<TIMING_DETECTION>'
 
         A ScannedMacAddressMalformedCsvLineException exception is raised if
         the line does not respect the expected formatting.

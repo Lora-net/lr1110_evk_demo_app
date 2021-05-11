@@ -42,22 +42,22 @@ GuiAbout::GuiAbout( version_handler_t* version_handler )
 
     this->createHeader( "ABOUT" );
 
-    snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "EVK DEMO APP -  %s", DEMO_VERSION );
+    snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "EVK demo app -  %s", DEMO_VERSION );
     this->createSection( buffer, -100 );
 
     switch( this->version_handler->device_type )
     {
     case VERSION_DEVICE_TRANSCEIVER:
     {
-        snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "LR1110 TYPE - 0x%02x",
+        snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "LR1110 type - 0x%02x",
                   this->version_handler->transceiver.version_chip_type );
         this->createSection( buffer, -80 );
 
-        snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "LR1110 HARDWARE - 0x%02x",
+        snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "LR1110 hardware - 0x%02x",
                   this->version_handler->transceiver.version_chip_hw );
         this->createSection( buffer, -60 );
 
-        snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "LR1110 FIRMWARE - 0x%04x",
+        snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "LR1110 firmware - 0x%04x",
                   this->version_handler->transceiver.version_chip_fw );
         this->createSection( buffer, -40 );
         break;
@@ -65,15 +65,15 @@ GuiAbout::GuiAbout( version_handler_t* version_handler )
 
     case VERSION_DEVICE_MODEM:
     {
-        snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "MODEM TYPE - 0x%02x",
+        snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "Modem type - 0x%02x",
                   this->version_handler->modem.version_chip_type );
         this->createSection( buffer, -80 );
 
-        snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "MODEM BLOADER - 0x%08x",
+        snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "Modem bootloader - 0x%08x",
                   this->version_handler->modem.version_chip_bootloader );
         this->createSection( buffer, -60 );
 
-        snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "MODEM FIRMWARE - 0x%06x",
+        snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "Modem firmware - 0x%06x",
                   this->version_handler->modem.version_chip_fw );
         this->createSection( buffer, -40 );
         break;

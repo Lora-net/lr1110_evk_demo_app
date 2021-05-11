@@ -74,7 +74,7 @@ void system_i2c_write( const uint8_t address, const uint8_t* buffer_in, const ui
 {
     uint8_t i = 0;
 
-    LL_I2C_HandleTransfer( I2C1, 0x70, LL_I2C_ADDRSLAVE_7BIT, length, LL_I2C_MODE_AUTOEND,
+    LL_I2C_HandleTransfer( I2C1, address, LL_I2C_ADDRSLAVE_7BIT, length, LL_I2C_MODE_AUTOEND,
                            LL_I2C_GENERATE_START_WRITE );
 
     /* Loop until STOP flag is raised  */
@@ -93,7 +93,8 @@ void system_i2c_read( const uint8_t address, uint8_t* buffer_out, const uint8_t 
 {
     uint8_t i = 0;
 
-    LL_I2C_HandleTransfer( I2C1, 0x70, LL_I2C_ADDRSLAVE_7BIT, length, LL_I2C_MODE_AUTOEND, LL_I2C_GENERATE_START_READ );
+    LL_I2C_HandleTransfer( I2C1, address, LL_I2C_ADDRSLAVE_7BIT, length, LL_I2C_MODE_AUTOEND,
+                           LL_I2C_GENERATE_START_READ );
 
     /* Loop until STOP flag is raised  */
     while( !LL_I2C_IsActiveFlag_STOP( I2C1 ) )

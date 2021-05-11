@@ -33,14 +33,19 @@
 #include "demo_modem_wifi.h"
 #include "demo_modem_gnss_autonomous.h"
 #include "demo_modem_gnss_assisted.h"
+#include "demo_modem_temperature.h"
+#include "demo_modem_file_upload.h"
 #include "demo_modem_radio_tx_continuous.h"
 #include "demo_modem_radio_tx_cw.h"
 #include "demo_modem_radio_rx_continuous.h"
 
 DemoManagerModem::DemoManagerModem( DeviceModem* device, EnvironmentInterface* environment,
                                     AntennaSelectorInterface* antenna_selector, SignalingInterface* signaling,
-                                    TimerInterface* timer, CommunicationInterface* communication_interface )
-    : DemoManagerInterface( environment, antenna_selector, signaling, timer, communication_interface ), device( device )
+                                    TimerInterface* timer, CommunicationInterface* communication_interface,
+                                    ConnectivityManagerModem* connectivity_manager )
+    : DemoManagerInterface( environment, antenna_selector, signaling, timer, communication_interface,
+                            connectivity_manager ),
+      device( device )
 {
 }
 
@@ -66,6 +71,18 @@ void DemoManagerModem::Start( demo_type_t demo_type )
             this->running_demo = new DemoModemGnssAssisted( device, signaling, environment, antenna_selector, timer,
                                                             this->communication_interface );
             break;
+        case DEMO_TYPE_TEMPERATURE:
+        {
+            this->running_demo = new DemoModemTemperature( device, signaling, this->communication_interface,
+                                                           environment, this->connectivity_interface );
+            break;
+        }
+        case DEMO_TYPE_FILE_UPLOAD:
+        {
+            this->running_demo = new DemoModemFileUpload( device, signaling, this->communication_interface, environment,
+                                                          this->connectivity_interface );
+            break;
+        }
         case DEMO_TYPE_RADIO_PER_TX:
         {
             this->running_demo = new DemoModemRadioTxContinuous( device, signaling, this->communication_interface );
@@ -88,7 +105,6 @@ void DemoManagerModem::Start( demo_type_t demo_type )
         this->demo_type_current = demo_type;
     }
 
-    this->running_demo->Initialize( );
     this->running_demo->Reset( );
 
     switch( demo_type )
@@ -102,6 +118,16 @@ void DemoManagerModem::Start( demo_type_t demo_type )
     case DEMO_TYPE_GNSS_ASSISTED:
         ( ( DemoModemGnssAssisted* ) this->running_demo )->Configure( this->demo_gnss_assisted_settings );
         break;
+    case DEMO_TYPE_TEMPERATURE:
+    {
+        ( ( DemoModemTemperature* ) this->running_demo )->Configure( );
+        break;
+    }
+    case DEMO_TYPE_FILE_UPLOAD:
+    {
+        ( ( DemoModemFileUpload* ) this->running_demo )->Configure( );
+        break;
+    }
     case DEMO_TYPE_RADIO_PER_TX:
     {
         ( ( DemoModemRadioTxContinuous* ) this->running_demo )->Configure( this->demo_radio_settings );
@@ -134,6 +160,14 @@ void* DemoManagerModem::GetResults( )
         return ( void* ) ( ( DemoModemGnssAutonomous* ) this->running_demo )->GetResult( );
     case DEMO_TYPE_GNSS_ASSISTED:
         return ( void* ) ( ( DemoModemGnssAssisted* ) this->running_demo )->GetResult( );
+    case DEMO_TYPE_TEMPERATURE:
+    {
+        return ( void* ) ( ( DemoModemTemperature* ) this->running_demo )->GetResultsAndResetIntermediateFlag( );
+    }
+    case DEMO_TYPE_FILE_UPLOAD:
+    {
+        return ( void* ) ( ( DemoModemFileUpload* ) this->running_demo )->GetResultsAndResetIntermediateFlag( );
+    }
     case DEMO_TYPE_RADIO_PER_RX:
     {
         return ( void* ) ( ( DemoModemRadioRxContinuous* ) this->running_demo )->GetResultsAndResetIntermediateFlag( );

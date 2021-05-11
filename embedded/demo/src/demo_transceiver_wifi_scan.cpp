@@ -33,7 +33,6 @@
 #include "lr1110_wifi.h"
 #include <string.h>
 
-#define WIFI_SCAN_ABORT_ON_TIMEOUT ( false )
 #define DEMO_WIFI_MAX_RESULTS_PER_SCAN ( 20 )
 
 DemoTransceiverWifiScan::DemoTransceiverWifiScan( DeviceTransceiver* device, SignalingInterface* signaling,
@@ -51,7 +50,7 @@ void DemoTransceiverWifiScan::ExecuteScan( radio_t* radio )
                       this->settings.channels,
                       DemoTransceiverWifiInterface::transceiver_wifi_mode_from_demo( this->settings.scan_mode ),
                       this->settings.max_results, this->settings.nbr_retrials, this->settings.timeout,
-                      WIFI_SCAN_ABORT_ON_TIMEOUT );
+                      this->settings.does_abort_on_timeout );
 }
 
 void DemoTransceiverWifiScan::FetchAndSaveResults( radio_t* radio )

@@ -37,6 +37,7 @@
 #include "lr1110_modem_lorawan.h"
 
 #define CONNECTIVITY_MANAGER_INTERFACE_STREAM_APP_PORT ( 199 )
+#define CONNECTIVITY_MANAGER_INTERFACE_DAS_PORT ( 199 )
 #define CONNECTIVITY_MANAGER_INTERFACE_MAX_DOWNLINK_BUFFER_SIZE ( 255 )
 typedef enum
 {
@@ -61,7 +62,15 @@ typedef struct
 typedef enum
 {
     NETWORK_CONNECTIVITY_REGION_EU868,
+    NETWORK_CONNECTIVITY_REGION_AS923_GRP1,
     NETWORK_CONNECTIVITY_REGION_US915,
+    NETWORK_CONNECTIVITY_REGION_AU915,
+    NETWORK_CONNECTIVITY_REGION_CN470,
+    NETWORK_CONNECTIVITY_REGION_AS923_GRP2,
+    NETWORK_CONNECTIVITY_REGION_AS923_GRP3,
+    NETWORK_CONNECTIVITY_REGION_IN865,
+    NETWORK_CONNECTIVITY_REGION_KR920,
+    NETWORK_CONNECTIVITY_REGION_RU864,
 } network_connectivity_region_t;
 
 typedef enum
@@ -78,10 +87,17 @@ typedef enum
     NETWORK_CONNECTIVITY_ADR_MOBILE_LOW_POWER,
 } network_connectivity_adr_profile_t;
 
+typedef enum
+{
+    NETWORK_CONNECTIVITY_LORAWAN_CLASS_A,
+    NETWORK_CONNECTIVITY_LORAWAN_CLASS_C,
+} network_connectivity_lorawan_class_t;
+
 typedef struct
 {
-    network_connectivity_region_t      region;
-    network_connectivity_adr_profile_t adr_profile;
+    network_connectivity_region_t        region;
+    network_connectivity_adr_profile_t   adr_profile;
+    network_connectivity_lorawan_class_t lorawan_class;
 } network_connectivity_settings_t;
 
 class ConnectivityManagerInterface
@@ -92,14 +108,16 @@ class ConnectivityManagerInterface
 
     virtual network_connectivity_status_t Runtime( ) = 0;
 
-    virtual bool                              IsConnectable( ) const                                      = 0;
-    virtual void                              Join( network_connectivity_settings_t* settings )           = 0;
-    virtual void                              Leave( )                                                    = 0;
-    virtual network_connectivity_cmd_status_t Send( uint8_t* data, uint8_t length )                       = 0;
-    virtual void                              GetCurrentRegion( network_connectivity_region_t* region )   = 0;
-    virtual void                              SetRegion( network_connectivity_region_t region )           = 0;
-    virtual void                              SetAdrProfile( network_connectivity_adr_profile_t profile ) = 0;
-    virtual void                              ResetCommissioningToSemtechJoinServer( )                    = 0;
+    virtual bool                              IsConnectable( ) const                                          = 0;
+    virtual void                              Join( network_connectivity_settings_t* settings )               = 0;
+    virtual void                              Leave( )                                                        = 0;
+    virtual network_connectivity_cmd_status_t Send( uint8_t* data, uint8_t length )                           = 0;
+    virtual void                              GetCurrentRegion( network_connectivity_region_t* region )       = 0;
+    virtual void                              SetRegion( network_connectivity_region_t region )               = 0;
+    virtual void                              SetAdrProfile( network_connectivity_adr_profile_t profile )     = 0;
+    virtual void                              SetClass( network_connectivity_lorawan_class_t lorawan_class )  = 0;
+    virtual void                              ResetCommissioningToSemtechJoinServer( )                        = 0;
+    virtual void RequestTxUnconfirmed( const uint8_t port, const uint8_t* buffer, const uint8_t buffer_size ) = 0;
 
     virtual void InterruptHandler( const InterruptionInterface* interruption ) = 0;
 
@@ -135,7 +153,7 @@ class ConnectivityManagerInterface
     bool                            _is_time_sync;
     bool                            _is_joined;
     network_connectivity_settings_t _settings;
-    static const uint8_t            SEMTECH_DEFAULT_JOIN_EUI[LR1110_MODEM_DM_MESSAGE_JOIN_EUI_LENGTH];
+    static const uint8_t            SEMTECH_DEFAULT_JOIN_EUI[LR1110_MODEM_JOIN_EUI_LENGTH];
     network_connectivity_downlink_t _last_downlink;
     bool                            _has_new_downlink;
 };

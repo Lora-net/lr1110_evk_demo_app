@@ -41,8 +41,11 @@
 DemoManagerTransceiver::DemoManagerTransceiver( DeviceTransceiver* device, EnvironmentInterface* environment,
                                                 AntennaSelectorInterface* antenna_selector,
                                                 SignalingInterface* signaling, TimerInterface* timer,
-                                                CommunicationInterface* communication_interface )
-    : DemoManagerInterface( environment, antenna_selector, signaling, timer, communication_interface ), device( device )
+                                                CommunicationInterface*         communication_interface,
+                                                ConnectivityManagerTransceiver* connectivity_manager )
+    : DemoManagerInterface( environment, antenna_selector, signaling, timer, communication_interface,
+                            connectivity_manager ),
+      device( device )
 {
 }
 
@@ -96,7 +99,6 @@ void DemoManagerTransceiver::Start( demo_type_t demo_type )
         this->demo_type_current = demo_type;
     }
 
-    this->running_demo->Initialize( );
     this->running_demo->Reset( );
 
     switch( demo_type )

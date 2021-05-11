@@ -72,6 +72,7 @@ typedef struct
     uint8_t                      nbr_retrials;
     uint8_t                      max_results;
     uint16_t                     timeout;
+    bool                         does_abort_on_timeout;
     demo_wifi_result_type_t      result_type;
 } demo_wifi_settings_t;
 

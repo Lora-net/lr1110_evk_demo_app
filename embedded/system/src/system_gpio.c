@@ -207,6 +207,11 @@ void system_gpio_init_direction_state( const gpio_t gpio, const system_gpio_pin_
     }
 }
 
+void system_gpio_init_irq( const gpio_t gpio, const system_gpio_interrupt_t interrupt )
+{
+    system_gpio_init_input( gpio.port, gpio.pin, interrupt );
+}
+
 void system_gpio_set_pin_state( gpio_t gpio, const system_gpio_pin_state_t state )
 {
     switch( state )

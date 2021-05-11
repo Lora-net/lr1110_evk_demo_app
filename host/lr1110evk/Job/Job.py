@@ -47,6 +47,7 @@ class Job:
     WIFI_MAX_RESULT_PER_SCAN_KEY = "wifi_max_result_per_scan"
     WIFI_TIMEOUT_KEY = "wifi_timeout"
     WIFI_MODE_KEY = "wifi_mode"
+    WIFI_ABORT_ON_TIMEOUT_KEY = "wifi_abort_on_timeout"
     GNSS_AUTONOMOUS_ENABLE_KEY = "gnss_autonomous_enable"
     GNSS_AUTONOMOUS_OPTION_KEY = "gnss_autonomous_option"
     GNSS_AUTONOMOUS_CAPTURE_MODE_KEY = "gnss_autonomous_capture_mode"
@@ -82,6 +83,7 @@ class Job:
         self.wifi_max_results = 0
         self.wifi_timeout = 0
         self.wifi_mode = WifiMode.beacon_only
+        self.wifi_abort_on_timeout = False
         self.gnss_autonomous_enable = gnss_autonomous_enable
         self.gnss_autonomous_option = GnssOption.default
         self.gnss_autonomous_capture_mode = GnssCaptureMode.single
@@ -165,6 +167,9 @@ class Job:
             ),
             Job.WIFI_MODE_KEY: lambda obj, value: Job.SetWifiModeFromJobDict(
                 obj, value
+            ),
+            Job.WIFI_ABORT_ON_TIMEOUT_KEY: lambda obj, value: setattr(
+                obj, "wifi_abort_on_timeout", value
             ),
             Job.GNSS_AUTONOMOUS_OPTION_KEY: lambda obj, value: Job.SetGnssAutonomousOptionFromJobDict(
                 obj, value

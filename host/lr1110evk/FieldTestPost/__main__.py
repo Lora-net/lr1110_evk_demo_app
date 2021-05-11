@@ -187,6 +187,13 @@ def post_analyzis_fetch_results():
         default=None,
     )
     parser.add_argument(
+        "-f",
+        "--filter-job-id",
+        help="Job ID to keep. It is possible indicate several job ids to keep by specifying this flag several time",
+        action="append",
+        default=None,
+    )
+    parser.add_argument(
         "--verbose", "-v", help="Verbose", action="store_true", default=False
     )
     parser.add_argument("--version", action="version", version=version)
@@ -196,6 +203,11 @@ def post_analyzis_fetch_results():
 
     request_sender = RequestSender(configuration)
     scan_results, version = FileReader.parse_file(args.resultFile)
+
+    # Handle the filtering of jobs
+    if args.filter_job_id:
+        list_of_ids_to_keep = [int(job_id_str) for job_id_str in args.filter_job_id]
+        scan_results = [scan for scan in scan_results if scan.job_id in list_of_ids_to_keep]
 
     if args.chip_id:
         request_sender.device_eui = args.chip_id

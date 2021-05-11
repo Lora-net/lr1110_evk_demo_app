@@ -33,7 +33,7 @@
 
 #define BUTTON_HEIGHT 40
 #define BUTTON_WIDTH 60
-#define LABEL_WIDTH 150
+#define LABEL_WIDTH 160
 #define MARGIN 10
 
 #define TEST_ENTRY_BASE -80

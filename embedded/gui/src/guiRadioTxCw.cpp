@@ -40,13 +40,11 @@ GuiRadioTxCw::GuiRadioTxCw( const GuiRadioSetting_t* settings )
     char buffer_2[TMP_BUFFER_REFRESH_LENGTH] = { 0 };
     char buffer_3[TMP_BUFFER_REFRESH_LENGTH] = { 0 };
 
-    this->createHeader( "TX CONTINUOUS WAVE" );
-
-    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
+    this->createHeaderWithIcons( "TX CONTINUOUS WAVE" );
 
     snprintf( buffer_1, TMP_BUFFER_REFRESH_LENGTH, "Freq = %i Hz", this->settings->rf_freq_in_hz );
     snprintf( buffer_2, TMP_BUFFER_REFRESH_LENGTH, "Power = %i dBm", this->settings->pwr_in_dbm );
-    snprintf( buffer_3, TMP_BUFFER_REFRESH_LENGTH, "PRESS START TO BEGIN", this->settings->pwr_in_dbm );
+    snprintf( buffer_3, TMP_BUFFER_REFRESH_LENGTH, "PRESS START TO BEGIN" );
     this->createInfoFrame( &( this->info_frame ), &( this->lbl_info_frame_1 ), buffer_1, &( this->lbl_info_frame_2 ),
                            buffer_2, &( this->lbl_info_frame_3 ), buffer_3 );
 

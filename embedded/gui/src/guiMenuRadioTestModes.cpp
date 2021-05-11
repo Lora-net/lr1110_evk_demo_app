@@ -36,9 +36,7 @@ GuiMenuRadioTestModes::GuiMenuRadioTestModes( version_handler_t* version_handler
 {
     uint8_t index = 0;
 
-    this->createHeader( "RADIO TEST MODES" );
-
-    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
+    this->createHeaderWithIcons( "RADIO TEST MODES" );
 
     this->createTestEntry( index++, &( this->lbl_radio_tx_cw ), &( this->btn_radio_tx_cw ),
                            &( this->lbl_btn_radio_tx_cw ), "TX Cont. Wave", true, GuiMenuRadioTestModes::callback );

@@ -36,6 +36,7 @@ from ..SerialExchange import (
 )
 from .JobExecutor import JobExecutor, JobExecutorException, JobResetFailed
 from .JobJsonValidator import JobValidator
+from time import sleep
 
 
 class ExecutorException(Exception):
@@ -83,8 +84,18 @@ class Executor:
         self.communication_handler.wait_embedded_to_be_configured_for_field_test()
         self.get_and_save_version_info()
         if self.job_reader.infinite_execution:
+            # In this case, the list of jobs is executed in a row and never stops, util user press CTRL-c.
+            # If the jobs has been configured with a scan_interval different from 0, then a wait of the
+            # configured amount of seconds is executed before starting the next job list.
             while True:
                 self.execute_jobs()
+                if self.job_reader.scan_interval > 0:
+                    self.log(
+                        "Wait {} second(s) before starting next job list...".format(
+                            self.job_reader.scan_interval
+                        )
+                    )
+                    sleep(self.job_reader.scan_interval)
         else:
             self.execute_jobs()
         self.stop()

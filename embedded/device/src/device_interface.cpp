@@ -42,6 +42,10 @@ DeviceEvent_t DeviceInterface::Runtime( )
     {
         return DEVICE_EVENT_ASSISTANCE_LOCATION_UPDATED;
     }
+    else if( this->HasApplicationServerEvent( ) )
+    {
+        return DEVICE_EVENT_APPLICATION_SERVER;
+    }
     else
     {
         return DEVICE_EVENT_NONE;

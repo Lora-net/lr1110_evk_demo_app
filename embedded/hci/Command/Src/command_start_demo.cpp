@@ -113,23 +113,25 @@ bool CommandStartDemo::ConfigureFromPayload( const uint8_t* buffer, const uint16
 bool CommandStartDemo::ConfigureWifiScan( const uint8_t* buffer, const uint16_t buffer_size )
 {
     bool success = false;
-    if( buffer_size == 8 )
+    if( buffer_size == 9 )
     {
-        const uint16_t         wifi_channel_mask = buffer[0] + buffer[1] * 256;
-        const uint8_t          wifi_type_mask    = buffer[2];
-        const uint8_t          wifi_nbr_retrials = buffer[3];
-        const uint8_t          wifi_max_results  = buffer[4];
-        const uint16_t         wifi_timeout_ms   = buffer[5] + ( buffer[6] * 256 );
-        const demo_wifi_mode_t wifi_mode         = CommandStartDemo::wifi_mode_from_value( buffer[7] );
+        const uint16_t         wifi_channel_mask     = buffer[0] + buffer[1] * 256;
+        const uint8_t          wifi_type_mask        = buffer[2];
+        const uint8_t          wifi_nbr_retrials     = buffer[3];
+        const uint8_t          wifi_max_results      = buffer[4];
+        const uint16_t         wifi_timeout_ms       = buffer[5] + ( buffer[6] * 256 );
+        const demo_wifi_mode_t wifi_mode             = CommandStartDemo::wifi_mode_from_value( buffer[7] );
+        const bool             wifi_abort_on_timeout = ( buffer[8] == 0x01 ) ? true : false;
 
         this->demo_settings.wifi_settings.channels = ( demo_wifi_channel_mask_t ) wifi_channel_mask;
         this->demo_settings.wifi_settings.types    = CommandStartDemo::wifi_signal_type_scan_from_val( wifi_type_mask );
-        this->demo_settings.wifi_settings.scan_mode    = wifi_mode;
-        this->demo_settings.wifi_settings.nbr_retrials = wifi_nbr_retrials;
-        this->demo_settings.wifi_settings.max_results  = wifi_max_results;
-        this->demo_settings.wifi_settings.timeout      = wifi_timeout_ms;
-        this->demo_settings.wifi_settings.result_type  = DEMO_WIFI_RESULT_TYPE_DEFAULT;
-        success                                        = true;
+        this->demo_settings.wifi_settings.scan_mode             = wifi_mode;
+        this->demo_settings.wifi_settings.nbr_retrials          = wifi_nbr_retrials;
+        this->demo_settings.wifi_settings.max_results           = wifi_max_results;
+        this->demo_settings.wifi_settings.timeout               = wifi_timeout_ms;
+        this->demo_settings.wifi_settings.result_type           = DEMO_WIFI_RESULT_TYPE_DEFAULT;
+        this->demo_settings.wifi_settings.does_abort_on_timeout = wifi_abort_on_timeout;
+        success                                                 = true;
     }
     else
     {
@@ -141,18 +143,20 @@ bool CommandStartDemo::ConfigureWifiScan( const uint8_t* buffer, const uint16_t 
 bool CommandStartDemo::ConfigureWifiCountryCode( const uint8_t* buffer, const uint16_t buffer_size )
 {
     bool success = false;
-    if( buffer_size == 6 )
+    if( buffer_size == 7 )
     {
-        const uint16_t wifi_channel_mask = buffer[0] + buffer[1] * 256;
-        const uint8_t  wifi_nbr_retrials = buffer[2];
-        const uint8_t  wifi_max_results  = buffer[3];
-        const uint16_t wifi_timeout_ms   = buffer[4] + ( buffer[5] * 256 );
+        const uint16_t wifi_channel_mask     = buffer[0] + buffer[1] * 256;
+        const uint8_t  wifi_nbr_retrials     = buffer[2];
+        const uint8_t  wifi_max_results      = buffer[3];
+        const uint16_t wifi_timeout_ms       = buffer[4] + ( buffer[5] * 256 );
+        const bool     wifi_abort_on_timeout = ( buffer[6] == 0x01 ) ? true : false;
 
         this->demo_settings.wifi_country_code_settings.channels     = ( lr1110_wifi_channel_mask_t ) wifi_channel_mask;
         this->demo_settings.wifi_country_code_settings.nbr_retrials = wifi_nbr_retrials;
         this->demo_settings.wifi_country_code_settings.max_results  = wifi_max_results;
         this->demo_settings.wifi_country_code_settings.timeout      = wifi_timeout_ms;
-        success                                                     = true;
+        this->demo_settings.wifi_country_code_settings.does_abort_on_timeout = wifi_abort_on_timeout;
+        success                                                              = true;
     }
     else
     {

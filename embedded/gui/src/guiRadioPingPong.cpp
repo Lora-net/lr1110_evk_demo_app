@@ -36,9 +36,7 @@
 GuiRadioPingPong::GuiRadioPingPong( const GuiRadioSetting_t* settings, const GuiRadioPingPongResult_t* results )
     : GuiCommon( GUI_PAGE_RADIO_PING_PONG ), settings( settings ), results( results )
 {
-    this->createHeader( "PING PONG" );
-
-    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
+    this->createHeaderWithIcons( "PING PONG" );
 
     this->createInfoFrame( &( this->info_frame ), &( this->lbl_info_frame_1 ), "PRESS START TO BEGIN",
                            &( this->lbl_info_frame_2 ), "", &( this->lbl_info_frame_3 ), "" );

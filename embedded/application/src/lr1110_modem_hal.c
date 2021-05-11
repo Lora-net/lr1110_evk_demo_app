@@ -226,6 +226,40 @@ lr1110_modem_hal_status_t lr1110_modem_hal_write( const void* radio, const uint8
     return LR1110_MODEM_HAL_STATUS_BUSY_TIMEOUT;
 }
 
+lr1110_modem_hal_status_t lr1110_modem_hal_write_without_rc( const void* radio, const uint8_t* cbuffer,
+                                                             const uint16_t cbuffer_length, const uint8_t* cdata,
+                                                             const uint16_t cdata_length )
+{
+    radio_t* radio_local = ( radio_t* ) radio;
+    if( lr1110_modem_hal_wakeup( radio_local ) == LR1110_MODEM_HAL_STATUS_OK )
+    {
+        uint8_t                   crc    = 0;
+        lr1110_modem_hal_status_t status = LR1110_MODEM_HAL_STATUS_OK;
+
+        /* NSS low */
+        system_gpio_set_pin_state( radio_local->nss, 0 );
+
+        /* Send CMD */
+        system_spi_write( radio_local->spi, cbuffer, cbuffer_length );
+
+        /* Send Data */
+        system_spi_write( radio_local->spi, cdata, cdata_length );
+
+        /* Compute and send CRC */
+        crc = lr1110_modem_compute_crc( 0xFF, cbuffer, cbuffer_length );
+        crc = lr1110_modem_compute_crc( crc, cdata, cdata_length );
+
+        system_spi_write( radio_local->spi, &crc, 1 );
+
+        /* NSS high */
+        system_gpio_set_pin_state( radio_local->nss, 1 );
+
+        return status;
+    }
+
+    return LR1110_MODEM_HAL_STATUS_BUSY_TIMEOUT;
+}
+
 lr1110_modem_hal_status_t lr1110_modem_hal_write_read( const void* radio, const uint8_t* cbuffer, uint8_t* rbuffer,
                                                        const uint16_t length )
 {

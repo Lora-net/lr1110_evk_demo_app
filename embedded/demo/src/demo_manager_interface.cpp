@@ -33,22 +33,25 @@
 
 DemoManagerInterface::DemoManagerInterface( EnvironmentInterface*     environment,
                                             AntennaSelectorInterface* antenna_selector, SignalingInterface* signaling,
-                                            TimerInterface* timer, CommunicationInterface* communication_interface )
+                                            TimerInterface* timer, CommunicationInterface* communication_interface,
+                                            ConnectivityManagerInterface* connectivity_interface )
     : environment( environment ),
       antenna_selector( antenna_selector ),
       signaling( signaling ),
       timer( timer ),
       running_demo( NULL ),
       demo_type_current( DEMO_TYPE_NONE ),
-      communication_interface( communication_interface )
+      communication_interface( communication_interface ),
+      connectivity_interface( connectivity_interface )
 {
-    this->demo_wifi_settings_default.channels     = DEMO_WIFI_CHANNELS_DEFAULT >> 1;
-    this->demo_wifi_settings_default.types        = DEMO_WIFI_TYPE_SCAN_DEFAULT;
-    this->demo_wifi_settings_default.scan_mode    = DEMO_WIFI_MODE_DEFAULT;
-    this->demo_wifi_settings_default.nbr_retrials = DEMO_WIFI_NBR_RETRIALS_DEFAULT;
-    this->demo_wifi_settings_default.max_results  = DEMO_WIFI_MAX_RESULTS_DEFAULT;
-    this->demo_wifi_settings_default.timeout      = DEMO_WIFI_TIMEOUT_IN_MS_DEFAULT;
-    this->demo_wifi_settings_default.result_type  = DEMO_WIFI_RESULT_TYPE_DEFAULT;
+    this->demo_wifi_settings_default.channels              = DEMO_WIFI_CHANNELS_DEFAULT >> 1;
+    this->demo_wifi_settings_default.types                 = DEMO_WIFI_TYPE_SCAN_DEFAULT;
+    this->demo_wifi_settings_default.scan_mode             = DEMO_WIFI_MODE_DEFAULT;
+    this->demo_wifi_settings_default.nbr_retrials          = DEMO_WIFI_NBR_RETRIALS_DEFAULT;
+    this->demo_wifi_settings_default.max_results           = DEMO_WIFI_MAX_RESULTS_DEFAULT;
+    this->demo_wifi_settings_default.timeout               = DEMO_WIFI_TIMEOUT_IN_MS_DEFAULT;
+    this->demo_wifi_settings_default.result_type           = DEMO_WIFI_RESULT_TYPE_DEFAULT;
+    this->demo_wifi_settings_default.does_abort_on_timeout = DEMO_WIFI_DOES_ABORT_ON_TIMEOUT_DEFAULT;
 
     this->demo_wifi_country_code_settings_default.channels              = DEMO_WIFI_CHANNELS_DEFAULT >> 1;
     this->demo_wifi_country_code_settings_default.nbr_retrials          = DEMO_WIFI_NBR_RETRIALS_DEFAULT;
@@ -111,6 +114,7 @@ void DemoManagerInterface::Init( )
     this->SetConfigToDefault( DEMO_TYPE_RADIO_PER_TX );
     this->SetConfigToDefault( DEMO_TYPE_RADIO_PER_RX );
     this->SetConfigToDefault( DEMO_TYPE_TX_CW );
+    this->SetConfigToDefault( DEMO_TYPE_TEMPERATURE );
 }
 
 void DemoManagerInterface::SetConfigToDefault( demo_type_t demo_type )
@@ -149,6 +153,7 @@ void DemoManagerInterface::SetConfigToDefault( demo_type_t demo_type )
         this->demo_radio_settings = this->demo_radio_settings_default;
         break;
     }
+    case DEMO_TYPE_TEMPERATURE:
     default:
         break;
     }

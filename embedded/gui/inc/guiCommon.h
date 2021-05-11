@@ -57,6 +57,8 @@ typedef enum
     GUI_PAGE_RADIO_PER,
     GUI_PAGE_RADIO_PING_PONG,
     GUI_PAGE_MENU_DEMO,
+    GUI_PAGE_MENU_GEOLOC_DEMO,
+    GUI_PAGE_MENU_RADIO_DEMO,
     GUI_PAGE_WIFI_TEST,
     GUI_PAGE_WIFI_RESULTS,
     GUI_PAGE_WIFI_CONFIG,
@@ -67,6 +69,8 @@ typedef enum
     GUI_PAGE_GNSS_ASSISTED_RESULTS,
     GUI_PAGE_GNSS_ASSISTED_CONFIG,
     GUI_PAGE_GNSS_ASSISTANCE_POSITION_CONFIG,
+    GUI_PAGE_TEMPERATURE_DEMO,
+    GUI_PAGE_FILE_UPLOAD_DEMO,
 } guiPageType_t;
 
 typedef enum
@@ -86,6 +90,8 @@ typedef enum
     GUI_EVENT_EUI,
     GUI_EVENT_LAUNCH_RADIO_TEST_MODE,
     GUI_EVENT_LAUNCH_DEMO,
+    GUI_EVENT_LAUNCH_GEOLOC_DEMO,
+    GUI_EVENT_LAUNCH_RADIO_DEMO,
     GUI_EVENT_START_TX_CW,
     GUI_EVENT_START_PER_TX,
     GUI_EVENT_START_PER_RX,
@@ -94,6 +100,8 @@ typedef enum
     GUI_EVENT_START_GNSS_AUTONOMOUS,
     GUI_EVENT_START_GNSS_ASSISTED,
     GUI_EVENT_START_GNSS_ASSISTED_LP,
+    GUI_EVENT_START_DEMO_TEMPERATURE,
+    GUI_EVENT_START_DEMO_FILE_UPLOAD,
     GUI_EVENT_JOIN,
     GUI_EVENT_ABORT,
     GUI_EVENT_LEAVE,
@@ -114,33 +122,29 @@ class GuiCommon
     GuiCommon( guiPageType_t pageType );
     virtual ~GuiCommon( );
 
-    virtual void refresh( ){};
-    virtual void updateHostConnectivityState( ){};
-    virtual void updateNetworkConnectivityState( ){};
-    virtual void start( ){};
-    virtual void stop( ){};
+    virtual void refresh( ){ };
+    virtual void start( ){ };
+    virtual void stop( ){ };
 
     guiEvent_t    getAndClearEvent( );
     guiPageType_t getType( );
 
-    void createSection( const char* text, int16_t y_offfset_from_center );
-    void createInfoFrame( lv_obj_t** info_frame, lv_obj_t** lbl_info_frame_1, const char* text_1,
-                          lv_obj_t** lbl_info_frame_2, const char* text_2, lv_obj_t** lbl_info_frame_3,
-                          const char* text_3 );
-    void createActionButton( lv_obj_t** btn, const char* lbl_btn_name, lv_event_cb_t event_cb,
-                             guiButtonPos_t button_pos, int16_t y_pos, bool is_clickable );
-    void createChoiceSwitch( lv_obj_t** sw, lv_obj_t* screen, const char* lbl_sw_name_left,
-                             const char* lbl_sw_name_right, lv_event_cb_t event_cb, int16_t y_pos, bool is_visible );
-    void createNetworkConnectivityIcon( lv_obj_t** icon );
-    void updateNetworkConnectivityIcon( lv_obj_t* icon );
-    void updateHostConnectivityState( const bool is_connected );
-
-    void updateNetworkConnectivityState( const GuiNetworkConnectivityStatus_t* new_connectivity_status );
+    lv_obj_t* createSection( const char* text, int16_t y_offset_from_center );
+    void      createInfoFrame( lv_obj_t** info_frame, lv_obj_t** lbl_info_frame_1, const char* text_1,
+                               lv_obj_t** lbl_info_frame_2, const char* text_2, lv_obj_t** lbl_info_frame_3,
+                               const char* text_3 );
+    lv_obj_t* createActionButton( lv_obj_t** btn, const char* lbl_btn_name, lv_event_cb_t event_cb,
+                                  guiButtonPos_t button_pos, int16_t y_pos, bool is_clickable );
+    void      createChoiceSwitch( lv_obj_t** sw, lv_obj_t* screen, const char* lbl_sw_name_left,
+                                  const char* lbl_sw_name_right, lv_event_cb_t event_cb, int16_t y_pos, bool is_visible );
+    void      updateHostConnectivityState( const bool is_connected );
+    void      updateCommissioningData( );
+    void      updateFakeLedState( bool is_on );
+    void      updateNetworkConnectivityState( const GuiNetworkConnectivityStatus_t* new_connectivity_status );
+    void      toggleFakeLedState( );
 
     static float    convertConsoToUah( const uint32_t conso_uas );
     static uint32_t check_value_limits( const uint32_t value, const uint32_t limit_low, const uint32_t limit_high );
-
-    void createHeader( const char* text );
 
     static lv_style_t screen_style;
     static lv_style_t note_style;
@@ -153,17 +157,36 @@ class GuiCommon
     static lv_style_t sw_knob;
     static lv_style_t table_cell1;
     static lv_style_t tab;
+    static lv_style_t led_on;
+    static lv_style_t led_off;
 
     static guiEvent_t _event;
     static bool       _is_gui_environment_init;
     static bool       _has_connectivity;
 
    protected:
+    void createHeader( const char* text );
+    void createHeaderWithIcons( const char* text );
+    void createDropDownList( lv_obj_t** ddlist, lv_obj_t* screen, int16_t off_y, const char* lbl_name,
+                             const char* options, lv_event_cb_t event_cb, int16_t width, uint16_t selectedOption );
+
     guiPageType_t                         _pageType;
     lv_obj_t*                             screen;
     lv_obj_t*                             _label_connectivity_icon;
+    lv_obj_t*                             _label_fake_led_icon;
     static bool                           _is_host_connected;
     static GuiNetworkConnectivityStatus_t _network_connectivity_status;
+    static bool                           _fake_led_state;
+
+   private:
+    void         createHeaderIcons( );
+    void         createNetworkConnectivityIcon( );
+    void         createFakeLedIcon( );
+    void         updateNetworkConnectivityIcon( );
+    void         updateFakeLedIconState( );
+    virtual void propagateHostConnectivityStateChange( ){ };
+    virtual void propagateCommissioningChange( ){ };
+    virtual void propagateNetworkConnectivityStateChange( ){ };
 };
 
 #endif

@@ -32,8 +32,8 @@
 #include <string.h>  // memcpy
 #include "connectivity_manager_interface.h"
 
-const uint8_t ConnectivityManagerInterface::SEMTECH_DEFAULT_JOIN_EUI[LR1110_MODEM_DM_MESSAGE_JOIN_EUI_LENGTH] = {
-    0x00, 0x16, 0xC0, 0x01, 0xFF, 0xFE, 0x00, 0x01
+const uint8_t ConnectivityManagerInterface::SEMTECH_DEFAULT_JOIN_EUI[LR1110_MODEM_JOIN_EUI_LENGTH] = {
+    0x00, 0x16, 0xC0, 0x01, 0xFF, 0xFE, 0x00, 0x01,
 };
 
 ConnectivityManagerInterface::ConnectivityManagerInterface( )

@@ -36,6 +36,7 @@
 #include "version.h"
 #include "interruption_interface.h"
 #include "environment_interface.h"
+#include "application_server_interpreter.h"
 
 #define GNSS_HELPER_NUMBER_SATELLITES_ALMANAC_READ ( 128 )
 
@@ -55,6 +56,7 @@ typedef enum
 {
     DEVICE_EVENT_NONE,
     DEVICE_EVENT_ASSISTANCE_LOCATION_UPDATED,
+    DEVICE_EVENT_APPLICATION_SERVER,
 } DeviceEvent_t;
 
 typedef struct
@@ -81,10 +83,12 @@ class DeviceInterface
                                                     const uint8_t payload_length )                      = 0;
     virtual void     NotifyEnvironmentChange( )                                                         = 0;
     virtual radio_t* GetRadio( ) const;
-    virtual void     FetchAssistanceLocation( DeviceAssistedLocation_t* assistance_location ) = 0;
+    virtual void     FetchAssistanceLocation( DeviceAssistedLocation_t* assistance_location )                   = 0;
+    virtual void     FetchLastApplicationServerEvent( ApplicationServerEvent_t* last_application_server_event ) = 0;
 
    protected:
     virtual bool HasAssistedLocationUpdated( ) = 0;
+    virtual bool HasApplicationServerEvent( )  = 0;
 
     radio_t*              radio;
     EnvironmentInterface* environment;

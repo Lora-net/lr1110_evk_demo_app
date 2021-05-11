@@ -65,6 +65,8 @@ class Supervisor
     void TransferResultToGui( const demo_gnss_all_results_t* result );
     void TransferResultToGui( const demo_ping_pong_results_t* result );
     void TransferResultToGui( const demo_radio_per_results_t* result );
+    void TransferResultToGui( const demo_modem_temperature_results_t* result );
+    void TransferResultToGui( const demo_modem_file_upload_results_t* result );
 
     void TransferResultToConnectivity( const demo_wifi_scan_all_results_t* result );
     void TransferResultToConnectivity( const demo_gnss_all_results_t* result );

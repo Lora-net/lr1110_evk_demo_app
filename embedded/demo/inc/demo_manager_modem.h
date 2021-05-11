@@ -37,13 +37,14 @@
 #include "device_modem.h"
 #include "signaling_interface.h"
 #include "timer_interface.h"
+#include "connectivity_manager_modem.h"
 
 class DemoManagerModem : public DemoManagerInterface
 {
    public:
     DemoManagerModem( DeviceModem* device, EnvironmentInterface* environment,
                       AntennaSelectorInterface* antenna_selector, SignalingInterface* signaling, TimerInterface* timer,
-                      CommunicationInterface* communication_interface );
+                      CommunicationInterface* communication_interface, ConnectivityManagerModem* connectivity_manager );
     virtual ~DemoManagerModem( );
 
     void  Start( demo_type_t demo_type ) override;

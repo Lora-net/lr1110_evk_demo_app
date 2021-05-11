@@ -39,7 +39,6 @@
 #define WIFI_MODEM_DEMO_CONSUMPTION_DCDC_DEMODULATION_MA ( 4 )
 #define WIFI_MODEM_DEMO_CONSUMPTION_LDO_CORRELATION_MA ( 24 )
 #define WIFI_MODEM_DEMO_CONSUMPTION_LDO_DEMODULATION_MA ( 8 )
-#define WIFI_MODEM_DEMO_SCAN_ABORT_ON_TIMEOUT ( false )
 #define DEMO_MODEM_WIFI_MAX_RESULTS_PER_SCAN ( 32 )
 
 DemoModemWifi::DemoModemWifi( DeviceModem* device, SignalingInterface* signaling,
@@ -71,7 +70,6 @@ void DemoModemWifi::SpecificRuntime( )
     {
         this->SetWaitingForInterrupt( );
 
-        lr1110_modem_wifi_cfg_hardware_debarker( this->device->GetRadio( ), true );
         this->ExecuteScan( this->device->GetRadio( ) );
 
         this->state = DEMO_MODEM_WIFI_WAIT_FOR_SCAN;
@@ -148,7 +146,7 @@ void DemoModemWifi::ExecuteScan( radio_t* radio )
         this->device->GetRadio( ), DemoModemWifi::modem_wifi_scan_type_from_demo( this->settings.types ),
         this->settings.channels, DemoModemWifi::modem_wifi_mode_from_demo( this->settings.scan_mode ),
         this->settings.max_results, this->settings.nbr_retrials, this->settings.timeout,
-        WIFI_MODEM_DEMO_SCAN_ABORT_ON_TIMEOUT, this->ResultFormatFromSetting( this->settings.result_type ) );
+        this->settings.does_abort_on_timeout, this->ResultFormatFromSetting( this->settings.result_type ) );
 }
 
 void DemoModemWifi::FetchAndSaveResults( const uint8_t* buffer, uint16_t buffer_length )
@@ -181,7 +179,7 @@ void DemoModemWifi::ParseAndSaveBasicCompleteResults( const uint8_t* buffer, uin
     lr1110_modem_wifi_basic_complete_result_t wifi_results_mac_addr[DEMO_MODEM_WIFI_MAX_RESULTS_PER_SCAN] = { 0 };
     uint8_t                                   nb_result_parsed                                            = 0;
 
-    lr1110_modem_wifi_read_complete_results( buffer, buffer_length, wifi_results_mac_addr, &nb_result_parsed );
+    lr1110_modem_wifi_read_basic_complete_results( buffer, buffer_length, wifi_results_mac_addr, &nb_result_parsed );
 
     AddScanToResults( LR1110_MODEM_SYSTEM_REG_MODE_DCDC, this->results, wifi_results_mac_addr, nb_result_parsed );
 }
@@ -193,7 +191,8 @@ void DemoModemWifi::ParseAndSaveBasicMacChannelTypeResults( const uint8_t* buffe
     };
     uint8_t nb_result_parsed = 0;
 
-    lr1110_modem_wifi_read_basic_results( buffer, buffer_length, wifi_results_mac_addr, &nb_result_parsed );
+    lr1110_modem_wifi_read_basic_mac_type_channel_results( buffer, buffer_length, wifi_results_mac_addr,
+                                                           &nb_result_parsed );
 
     AddScanToResults( LR1110_MODEM_SYSTEM_REG_MODE_DCDC, this->results, wifi_results_mac_addr, nb_result_parsed );
 }
@@ -289,7 +288,7 @@ lr1110_modem_wifi_mode_t DemoModemWifi::modem_wifi_mode_from_demo( const demo_wi
 
     case DEMO_WIFI_SCAN_MODE_BEACON_AND_PACKET:
     {
-        modem_wifi_mode = LR1110_MODEM_WIFI_SCAN_MODE_BEACON_AND_PACKET;
+        modem_wifi_mode = LR1110_MODEM_WIFI_SCAN_MODE_BEACON_AND_PKT;
         break;
     }
     }

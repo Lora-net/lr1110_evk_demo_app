@@ -2,11 +2,9 @@ from setuptools import setup, find_packages
 
 PACKAGE_NAME = "lr1110evk"
 
-
 setup(
     name=PACKAGE_NAME,
-    version_format="{tag}.dev{commitcount}+{gitsha}",
-    setup_requires=["setuptools-git-version"],
+    version="v3.0.1",
     include_package_data=True,
     packages=find_packages(),
     author="Semtech",

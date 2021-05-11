@@ -41,11 +41,19 @@ class GuiEui : public GuiCommon
    public:
     GuiEui( version_handler_t* version_handler );
     virtual ~GuiEui( );
+    void propagateCommissioningChange( ) override;
 
     static void callback( lv_obj_t* obj, lv_event_t event );
 
    private:
-    lv_obj_t* btn_back;
+    void               UpdateSections( );
+    version_handler_t* version_handler;
+    lv_obj_t*          btn_back;
+    lv_obj_t*          btn_restore;
+    lv_obj_t*          lbl_chip_eui;
+    lv_obj_t*          lbl_dev_eui;
+    lv_obj_t*          lbl_join_eui;
+    lv_obj_t*          lbl_pin;
 };
 
 #endif  // __GUI_EUI_H__

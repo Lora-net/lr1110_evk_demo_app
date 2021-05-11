@@ -34,10 +34,12 @@ from .Job import Job
 class JobReader:
     INFINITE_LOOPS_KEY = "infinite_loops"
     JOBS_KEY = "jobs"
+    SCAN_INTERVAL_KEY = "scan_interval"
 
     def __init__(self):
         self.jobs = list()
         self.infinite_execution = False
+        self.scan_interval = 0
 
     def read_from_file(self, filename):
         with open(filename, "r") as f:
@@ -45,6 +47,7 @@ class JobReader:
 
         job_descriptions = [job for job in configuration_raw[JobReader.JOBS_KEY]]
         self.infinite_execution = configuration_raw[JobReader.INFINITE_LOOPS_KEY]
+        self.scan_interval = configuration_raw[JobReader.SCAN_INTERVAL_KEY]
 
         for job_id, job_desc in enumerate(job_descriptions):
             job = JobReader.job_from_json(job_desc, job_id)

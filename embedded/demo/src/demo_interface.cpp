@@ -32,7 +32,6 @@
 #include "demo_interface.h"
 
 volatile bool DemoInterface::has_received_interrupt = false;
-bool          DemoInterface::is_initialized         = false;
 
 DemoInterface::DemoInterface( DeviceInterface* device, SignalingInterface* signaling,
                               CommunicationInterface* communication_interface )
@@ -44,20 +43,9 @@ DemoInterface::DemoInterface( DeviceInterface* device, SignalingInterface* signa
 {
 }
 
-void DemoInterface::ResetAndInitLr1110( ) { this->device->Init( ); }
-
 bool DemoInterface::HasIntermediateResults( ) const { return false; }
 
 DemoInterface::~DemoInterface( ) {}
-
-void DemoInterface::Initialize( )
-{
-    if( is_initialized == false )
-    {
-        DemoInterface::ResetAndInitLr1110( );
-        is_initialized = true;
-    }
-}
 
 demo_status_t DemoInterface::GetStatus( ) const { return this->status; }
 

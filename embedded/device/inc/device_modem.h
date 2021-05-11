@@ -54,17 +54,21 @@ class DeviceModem : public DeviceInterface
     bool checkAlmanacUpdate( uint32_t expected_crc ) override;
     void NotifyEnvironmentChange( ) override;
     void FetchAssistanceLocation( DeviceAssistedLocation_t* assistance_location ) override;
+    void FetchLastApplicationServerEvent( ApplicationServerEvent_t* last_application_server_event ) override;
 
    protected:
     void        SetAssistancePositionFromEnvironment( );
     static void GnssPositionFromEnvironment( const environment_location_t&                   location,
                                              lr1110_modem_gnss_solver_assistance_position_t& gnss_position );
     bool        HasAssistedLocationUpdated( ) override;
+    bool        HasApplicationServerEvent( ) override;
 
     InterruptionModem interruption;
 
    private:
-    bool has_assisted_location_update;
+    bool                     has_assisted_location_update;
+    bool                     has_application_server_event;
+    ApplicationServerEvent_t last_application_server_event;
 };
 
 #endif  // __DEVICE_MODEM_H__

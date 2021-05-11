@@ -47,21 +47,25 @@
 bool                           GuiCommon::_is_host_connected           = false;
 bool                           GuiCommon::_is_gui_environment_init     = false;
 bool                           GuiCommon::_has_connectivity            = false;
-GuiNetworkConnectivityStatus_t GuiCommon::_network_connectivity_status = { .connectivity_state =
-                                                                               GUI_CONNECTIVITY_STATUS_NOT_CONNECTED,
-                                                                           .is_time_sync = false };
-guiEvent_t                     GuiCommon::_event                       = GUI_EVENT_NONE;
-lv_style_t                     GuiCommon::screen_style;
-lv_style_t                     GuiCommon::note_style;
-lv_style_t                     GuiCommon::title_style;
-lv_style_t                     GuiCommon::info_frame_style_init;
-lv_style_t                     GuiCommon::info_frame_style_ok;
-lv_style_t                     GuiCommon::info_frame_style_ongoing;
-lv_style_t                     GuiCommon::info_frame_style_error;
-lv_style_t                     GuiCommon::sw_knob;
-lv_style_t                     GuiCommon::sw_indic;
-lv_style_t                     GuiCommon::table_cell1;
-lv_style_t                     GuiCommon::tab;
+bool                           GuiCommon::_fake_led_state              = false;
+GuiNetworkConnectivityStatus_t GuiCommon::_network_connectivity_status = {
+    .connectivity_state = GUI_CONNECTIVITY_STATUS_NOT_CONNECTED,
+    .is_time_sync       = false,
+};
+guiEvent_t GuiCommon::_event = GUI_EVENT_NONE;
+lv_style_t GuiCommon::screen_style;
+lv_style_t GuiCommon::note_style;
+lv_style_t GuiCommon::title_style;
+lv_style_t GuiCommon::info_frame_style_init;
+lv_style_t GuiCommon::info_frame_style_ok;
+lv_style_t GuiCommon::info_frame_style_ongoing;
+lv_style_t GuiCommon::info_frame_style_error;
+lv_style_t GuiCommon::sw_knob;
+lv_style_t GuiCommon::sw_indic;
+lv_style_t GuiCommon::table_cell1;
+lv_style_t GuiCommon::tab;
+lv_style_t GuiCommon::led_on;
+lv_style_t GuiCommon::led_off;
 
 GuiCommon::GuiCommon( guiPageType_t pageType ) : _pageType( pageType )
 {
@@ -139,6 +143,20 @@ GuiCommon::GuiCommon( guiPageType_t pageType ) : _pageType( pageType )
         lv_style_copy( &( GuiCommon::tab ), &lv_style_btn_rel );
         GuiCommon::tab.body.padding.top    = 10;
         GuiCommon::tab.body.padding.bottom = 10;
+
+        lv_style_copy( &( GuiCommon::led_on ), &lv_style_scr );
+        GuiCommon::led_on.body.main_color   = LV_COLOR_BLACK;
+        GuiCommon::led_on.body.grad_color   = LV_COLOR_BLACK;
+        GuiCommon::led_on.body.border.color = LV_COLOR_BLACK;
+        GuiCommon::led_on.body.border.width = 3;
+        GuiCommon::led_on.text.color        = LV_COLOR_ORANGE;
+
+        lv_style_copy( &( GuiCommon::led_off ), &lv_style_scr );
+        GuiCommon::led_off.body.main_color   = LV_COLOR_BLACK;
+        GuiCommon::led_off.body.grad_color   = LV_COLOR_BLACK;
+        GuiCommon::led_off.body.border.color = LV_COLOR_BLACK;
+        GuiCommon::led_off.body.border.width = 3;
+        GuiCommon::led_off.text.color        = LV_COLOR_GRAY;
     }
 
     lv_obj_set_style( this->screen, &( GuiCommon::screen_style ) );
@@ -172,15 +190,53 @@ void GuiCommon::createHeader( const char* text )
     lv_obj_align( lbl_header, NULL, LV_ALIGN_CENTER, 0, 0 );
 }
 
-void GuiCommon::createSection( const char* text, int16_t y_offfset_from_center )
+void GuiCommon::createHeaderIcons( )
+{
+    this->createNetworkConnectivityIcon( );
+    this->createFakeLedIcon( );
+}
+
+void GuiCommon::createHeaderWithIcons( const char* text )
+{
+    this->createHeader( text );
+    this->createHeaderIcons( );
+}
+
+void GuiCommon::createDropDownList( lv_obj_t** ddlist, lv_obj_t* screen, int16_t off_y, const char* lbl_name,
+                                    const char* options, lv_event_cb_t event_cb, int16_t width,
+                                    uint16_t selectedOption )
+{
+    lv_obj_t* lbl;
+
+    lbl = lv_label_create( screen, NULL );
+    lv_obj_set_style( lbl, &( GuiCommon::screen_style ) );
+    lv_label_set_text( lbl, lbl_name );
+    lv_obj_align( lbl, NULL, LV_ALIGN_IN_TOP_LEFT, 5, off_y );
+
+    *ddlist = lv_ddlist_create( screen, NULL );
+    lv_ddlist_set_fix_width( *ddlist, width );
+    lv_ddlist_set_draw_arrow( *ddlist, true );
+    lv_ddlist_set_selected( *ddlist, 0 );
+    lv_obj_align( *ddlist, NULL, LV_ALIGN_IN_TOP_RIGHT, -10, off_y );
+    lv_obj_set_top( *ddlist, true );
+    lv_obj_set_event_cb( *ddlist, event_cb );
+    lv_ddlist_set_options( *ddlist, options );
+    lv_obj_set_user_data( *ddlist, this );
+    lv_ddlist_set_selected( *ddlist, selectedOption );
+}
+
+lv_obj_t* GuiCommon::createSection( const char* text, int16_t y_offset_from_center )
 {
     lv_obj_t* label = lv_label_create( this->screen, NULL );
+
     lv_obj_set_style( label, &( GuiCommon::screen_style ) );
     lv_label_set_long_mode( label, LV_LABEL_LONG_BREAK );
     lv_label_set_align( label, LV_LABEL_ALIGN_CENTER );
     lv_label_set_text( label, text );
     lv_obj_set_width( label, 240 );
-    lv_obj_align( label, NULL, LV_ALIGN_CENTER, 0, y_offfset_from_center );
+    lv_obj_align( label, NULL, LV_ALIGN_CENTER, 0, y_offset_from_center );
+
+    return label;
 }
 
 void GuiCommon::createInfoFrame( lv_obj_t** info_frame, lv_obj_t** lbl_info_frame_1, const char* text_1,
@@ -209,8 +265,8 @@ void GuiCommon::createInfoFrame( lv_obj_t** info_frame, lv_obj_t** lbl_info_fram
     lv_label_set_text( *lbl_info_frame_3, text_3 );
 }
 
-void GuiCommon::createActionButton( lv_obj_t** btn, const char* lbl_btn_name, lv_event_cb_t event_cb,
-                                    guiButtonPos_t button_pos, int16_t y_pos, bool is_clickable )
+lv_obj_t* GuiCommon::createActionButton( lv_obj_t** btn, const char* lbl_btn_name, lv_event_cb_t event_cb,
+                                         guiButtonPos_t button_pos, int16_t y_pos, bool is_clickable )
 {
     // Create the button
     *btn = lv_btn_create( this->screen, NULL );
@@ -236,6 +292,7 @@ void GuiCommon::createActionButton( lv_obj_t** btn, const char* lbl_btn_name, lv
     // Create the label attached to the button
     lv_obj_t* lbl_btn = lv_label_create( *btn, NULL );
     lv_label_set_text( lbl_btn, lbl_btn_name );
+    return lbl_btn;
 }
 
 void GuiCommon::createChoiceSwitch( lv_obj_t** sw, lv_obj_t* screen, const char* lbl_sw_name_left,
@@ -272,33 +329,55 @@ void GuiCommon::createChoiceSwitch( lv_obj_t** sw, lv_obj_t* screen, const char*
     }
 }
 
-void GuiCommon::createNetworkConnectivityIcon( lv_obj_t** icon )
+void GuiCommon::createNetworkConnectivityIcon( )
 {
-    *icon = lv_label_create( this->screen, NULL );
-    lv_label_set_text( *icon, LV_SYMBOL_WIFI );
-    lv_obj_align( *icon, NULL, LV_ALIGN_IN_TOP_RIGHT, -10, 10 );
-    lv_obj_set_hidden( *icon, ( GuiCommon::_has_connectivity == true ) ? false : true );
+    this->_label_connectivity_icon = lv_label_create( this->screen, NULL );
+    lv_label_set_text( this->_label_connectivity_icon, LV_SYMBOL_WIFI );
+    lv_obj_align( this->_label_connectivity_icon, NULL, LV_ALIGN_IN_TOP_RIGHT, -10, 10 );
+    lv_obj_set_hidden( this->_label_connectivity_icon, ( GuiCommon::_has_connectivity == true ) ? false : true );
 
-    this->updateNetworkConnectivityIcon( *icon );
+    this->updateNetworkConnectivityIcon( );
 }
 
-void GuiCommon::updateNetworkConnectivityIcon( lv_obj_t* icon )
+void GuiCommon::createFakeLedIcon( )
+{
+    this->_label_fake_led_icon = lv_label_create( this->screen, NULL );
+    lv_label_set_text( this->_label_fake_led_icon, LV_SYMBOL_CHARGE );
+    lv_obj_align( this->_label_fake_led_icon, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 10 );
+    lv_obj_set_hidden( this->_label_fake_led_icon, ( GuiCommon::_has_connectivity == true ) ? false : true );
+
+    this->updateFakeLedIconState( );
+}
+
+void GuiCommon::updateFakeLedIconState( )
+{
+    if( GuiCommon::_fake_led_state == true )
+    {
+        lv_obj_set_style( this->_label_fake_led_icon, &( GuiCommon::led_on ) );
+    }
+    else
+    {
+        lv_obj_set_style( this->_label_fake_led_icon, &( GuiCommon::led_off ) );
+    }
+}
+
+void GuiCommon::updateNetworkConnectivityIcon( )
 {
     switch( GuiCommon::_network_connectivity_status.connectivity_state )
     {
     case GUI_CONNECTIVITY_STATUS_NOT_CONNECTED:
     {
-        lv_obj_set_style( icon, &( GuiCommon::info_frame_style_error ) );
+        lv_obj_set_style( this->_label_connectivity_icon, &( GuiCommon::info_frame_style_error ) );
         break;
     }
     case GUI_CONNECTIVITY_STATUS_JOINING:
     {
-        lv_obj_set_style( icon, &( GuiCommon::info_frame_style_ongoing ) );
+        lv_obj_set_style( this->_label_connectivity_icon, &( GuiCommon::info_frame_style_ongoing ) );
         break;
     }
     case GUI_CONNECTIVITY_STATUS_CONNECTED:
     {
-        lv_obj_set_style( icon, &( GuiCommon::info_frame_style_ok ) );
+        lv_obj_set_style( this->_label_connectivity_icon, &( GuiCommon::info_frame_style_ok ) );
         break;
     }
     default:
@@ -313,14 +392,28 @@ void GuiCommon::updateNetworkConnectivityState( const GuiNetworkConnectivityStat
     GuiCommon::_network_connectivity_status.connectivity_state = new_connectivity_status->connectivity_state;
     GuiCommon::_network_connectivity_status.is_time_sync       = new_connectivity_status->is_time_sync;
 
-    this->updateNetworkConnectivityIcon( this->_label_connectivity_icon );
-    this->updateNetworkConnectivityState( );
+    this->updateNetworkConnectivityIcon( );
+    this->propagateNetworkConnectivityStateChange( );
 }
 
 void GuiCommon::updateHostConnectivityState( const bool is_connected )
 {
     GuiCommon::_is_host_connected = is_connected;
-    this->updateHostConnectivityState( );
+    this->propagateHostConnectivityStateChange( );
+}
+
+void GuiCommon::updateCommissioningData( ) { this->propagateCommissioningChange( ); }
+
+void GuiCommon::updateFakeLedState( const bool is_on )
+{
+    GuiCommon::_fake_led_state = is_on;
+    this->updateFakeLedIconState( );
+}
+
+void GuiCommon::toggleFakeLedState( )
+{
+    GuiCommon::_fake_led_state = !GuiCommon::_fake_led_state;
+    this->updateFakeLedIconState( );
 }
 
 float GuiCommon::convertConsoToUah( const uint32_t conso_uas ) { return conso_uas / GUI_COMMON_DIVIDER_CONSO; }

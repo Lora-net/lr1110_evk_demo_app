@@ -1,5 +1,6 @@
 {
     "infinite_loops": true,
+    "scan_interval": 10,
     "jobs": [
         {
             "name": "GPS and Beidou assisted single",

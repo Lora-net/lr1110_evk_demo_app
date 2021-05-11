@@ -45,13 +45,12 @@ DemoModemGnssAssisted::~DemoModemGnssAssisted( ) {}
 
 lr1110_modem_response_code_t DemoModemGnssAssisted::CallScan( )
 {
-
     if( !this->CheckAndStoreAlmanacAge( DEMO_GNSS_LIMIT_ALMANAC_AGE_DAYS ) )
     {
         this->communication_interface->Log( "Almanac is too old ! (> %u days)\n", DEMO_GNSS_LIMIT_ALMANAC_AGE_DAYS );
     }
 
-    const lr1110_modem_response_code_t scan_response_code = lr1110_modem_gnss_scan_assisted_md(
+    const lr1110_modem_response_code_t scan_response_code = lr1110_modem_gnss_scan_assisted(
         this->device->GetRadio( ), DemoModemGnssInterface::ModemSearchModeFromDemo( this->GetSettings( ).option ),
         LR1110_MODEM_GNSS_BIT_CHANGE_MASK | LR1110_MODEM_GNSS_DOPPLER_MASK | LR1110_MODEM_GNSS_PSEUDO_RANGE_MASK,
         this->GetSettings( ).nb_satellites );

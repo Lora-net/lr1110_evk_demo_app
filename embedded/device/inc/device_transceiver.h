@@ -52,9 +52,11 @@ class DeviceTransceiver : public DeviceInterface
     bool checkAlmanacUpdate( uint32_t expected_crc ) override;
     void NotifyEnvironmentChange( ) override;
     void FetchAssistanceLocation( DeviceAssistedLocation_t* assistance_location ) override;
+    void FetchLastApplicationServerEvent( ApplicationServerEvent_t* last_application_server_event ) override;
 
    protected:
     bool HasAssistedLocationUpdated( ) override;
+    bool HasApplicationServerEvent( ) override;
 
    private:
     InterruptionIrq last_interrupt;

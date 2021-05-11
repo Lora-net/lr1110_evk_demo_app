@@ -33,42 +33,57 @@
 
 #define GUI_ABOUT_BUFFER_LENGTH ( 40 )
 
-GuiEui::GuiEui( version_handler_t* version_handler ) : GuiCommon( GUI_PAGE_EUI )
+GuiEui::GuiEui( version_handler_t* version_handler ) : GuiCommon( GUI_PAGE_EUI ), version_handler( version_handler )
 {
-    char buffer[GUI_ABOUT_BUFFER_LENGTH];
+    const char buffer[GUI_ABOUT_BUFFER_LENGTH] = "EMPTY";
 
-    this->createHeader( "EUI" );
+    this->createHeaderWithIcons( "PROVISIONING" );
 
-    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
-
-    snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "CHIP EUI\n%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X",
-              version_handler->chip_uid[0], version_handler->chip_uid[1], version_handler->chip_uid[2],
-              version_handler->chip_uid[3], version_handler->chip_uid[4], version_handler->chip_uid[5],
-              version_handler->chip_uid[6], version_handler->chip_uid[7] );
-    this->createSection( buffer, -80 );
-
-    snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "DEV EUI\n%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X",
-              version_handler->dev_eui[0], version_handler->dev_eui[1], version_handler->dev_eui[2],
-              version_handler->dev_eui[3], version_handler->dev_eui[4], version_handler->dev_eui[5],
-              version_handler->dev_eui[6], version_handler->dev_eui[7] );
-    this->createSection( buffer, -30 );
-
-    snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "JOIN EUI\n%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X",
-              version_handler->join_eui[0], version_handler->join_eui[1], version_handler->join_eui[2],
-              version_handler->join_eui[3], version_handler->join_eui[4], version_handler->join_eui[5],
-              version_handler->join_eui[6], version_handler->join_eui[7] );
-    this->createSection( buffer, 20 );
-
-    snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "PIN: %02X-%02X-%02X-%02X", version_handler->pin[0],
-              version_handler->pin[1], version_handler->pin[2], version_handler->pin[3] );
-    this->createSection( buffer, 70 );
+    this->lbl_chip_eui = this->createSection( buffer, -80 );
+    this->lbl_dev_eui  = this->createSection( buffer, -30 );
+    this->lbl_join_eui = this->createSection( buffer, 20 );
+    this->lbl_pin      = this->createSection( buffer, 70 );
+    this->UpdateSections( );
 
     this->createActionButton( &( this->btn_back ), "BACK", GuiEui::callback, GUI_BUTTON_POS_CENTER, -5, true );
+
+    this->createActionButton( &( this->btn_restore ), "RESET", GuiEui::callback, GUI_BUTTON_POS_LEFT, -5, true );
 
     lv_scr_load( this->screen );
 }
 
 GuiEui::~GuiEui( ) {}
+
+void GuiEui::propagateCommissioningChange( ) { this->UpdateSections( ); }
+
+void GuiEui::UpdateSections( )
+{
+    char buffer[GUI_ABOUT_BUFFER_LENGTH];
+
+    snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "ChipEUI\n%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X",
+              this->version_handler->chip_uid[0], this->version_handler->chip_uid[1],
+              this->version_handler->chip_uid[2], this->version_handler->chip_uid[3],
+              this->version_handler->chip_uid[4], this->version_handler->chip_uid[5],
+              this->version_handler->chip_uid[6], this->version_handler->chip_uid[7] );
+    lv_label_set_text( this->lbl_chip_eui, buffer );
+
+    snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "DevEUI\n%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X",
+              this->version_handler->dev_eui[0], this->version_handler->dev_eui[1], this->version_handler->dev_eui[2],
+              this->version_handler->dev_eui[3], this->version_handler->dev_eui[4], this->version_handler->dev_eui[5],
+              this->version_handler->dev_eui[6], this->version_handler->dev_eui[7] );
+    lv_label_set_text( this->lbl_dev_eui, buffer );
+
+    snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "JoinEUI\n%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X",
+              this->version_handler->join_eui[0], this->version_handler->join_eui[1],
+              this->version_handler->join_eui[2], this->version_handler->join_eui[3],
+              this->version_handler->join_eui[4], this->version_handler->join_eui[5],
+              this->version_handler->join_eui[6], this->version_handler->join_eui[7] );
+    lv_label_set_text( this->lbl_join_eui, buffer );
+
+    snprintf( buffer, GUI_ABOUT_BUFFER_LENGTH, "PIN: %02X-%02X-%02X-%02X", this->version_handler->pin[0],
+              this->version_handler->pin[1], this->version_handler->pin[2], this->version_handler->pin[3] );
+    lv_label_set_text( this->lbl_pin, buffer );
+}
 
 void GuiEui::callback( lv_obj_t* obj, lv_event_t event )
 {
@@ -79,6 +94,10 @@ void GuiEui::callback( lv_obj_t* obj, lv_event_t event )
         if( obj == self->btn_back )
         {
             GuiCommon::_event = GUI_EVENT_BACK;
+        }
+        else if( obj == self->btn_restore )
+        {
+            GuiCommon::_event = GUI_EVENT_RESTORE_EUI_KEYS;
         }
     }
 }

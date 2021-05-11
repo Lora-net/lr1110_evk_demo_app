@@ -1,5 +1,6 @@
 {
     "infinite_loops": true,
+    "scan_interval": 10,
     "jobs": [
         {
             "name": "WiFi Scan",
@@ -17,7 +18,8 @@
             "wifi_max_result_per_scan": 5,
             "wifi_timeout": 110,
             "wifi_mode": "beacon_and_packet",
-            "wifi_api": "wifi_scan"
+            "wifi_api": "wifi_scan",
+            "wifi_abort_on_timeout": true
         },
         {
             "name": "GNSS autonomous",

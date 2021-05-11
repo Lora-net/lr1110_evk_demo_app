@@ -40,23 +40,21 @@ class GuiConnectivity : public GuiCommon
     GuiConnectivity( GuiNetworkConnectivitySettings_t* network_connectivity_settings );
     virtual ~GuiConnectivity( );
 
-    void updateNetworkConnectivityState( ) override;
+    void propagateNetworkConnectivityStateChange( ) override;
 
     static void callback( lv_obj_t* obj, lv_event_t event );
     static void callback_ddlist( lv_obj_t* obj, lv_event_t event );
 
    private:
-    void create_ddlist( lv_obj_t** ddlist, int16_t off_y, const char* lbl_name, const char* options,
-                        lv_event_cb_t event_cb, int16_t width );
+    void                              updateButtons( );
     GuiNetworkConnectivitySettings_t* _network_connectivity_settings;
     lv_obj_t*                         btn_back;
     lv_obj_t*                         btn_join;
-    lv_obj_t*                         btn_restore;
-    lv_obj_t*                         lbl_btn_restore;
     lv_obj_t*                         lbl_btn_join;
     lv_obj_t*                         lbl_connectivity_state;
     lv_obj_t*                         ddlist_lorawan_region;
     lv_obj_t*                         ddlist_adr_profile;
+    lv_obj_t*                         ddlist_lorawan_class;
 };
 
 #endif  // __GUI_CONNECTIVITY_H__

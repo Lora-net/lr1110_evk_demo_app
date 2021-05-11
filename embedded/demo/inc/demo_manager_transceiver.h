@@ -38,13 +38,15 @@
 #include "timer_interface.h"
 #include "lr1110_system.h"
 #include "lr1110_bootloader.h"
+#include "connectivity_manager_transceiver.h"
 
 class DemoManagerTransceiver : public DemoManagerInterface
 {
    public:
     DemoManagerTransceiver( DeviceTransceiver* device, EnvironmentInterface* environment,
                             AntennaSelectorInterface* antenna_selector, SignalingInterface* signaling,
-                            TimerInterface* timer, CommunicationInterface* communication_interface );
+                            TimerInterface* timer, CommunicationInterface* communication_interface,
+                            ConnectivityManagerTransceiver* connectivity_manager );
     virtual ~DemoManagerTransceiver( );
 
     void  Start( demo_type_t demo_type ) override;

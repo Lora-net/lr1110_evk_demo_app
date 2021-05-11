@@ -36,9 +36,7 @@
 GuiRadioPer::GuiRadioPer( const GuiRadioSetting_t* settings, const GuiRadioPerResult_t* results )
     : GuiCommon( GUI_PAGE_RADIO_PER ), settings( settings ), results( results )
 {
-    this->createHeader( "PACKET ERROR RATE" );
-
-    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
+    this->createHeaderWithIcons( "PACKET ERROR RATE" );
 
     this->createInfoFrame( &( this->info_frame ), &( this->lbl_info_frame_1 ), "CHOOSE TX OR RX",
                            &( this->lbl_info_frame_2 ), "", &( this->lbl_info_frame_3 ), "" );

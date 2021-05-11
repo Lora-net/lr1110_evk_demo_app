@@ -41,24 +41,16 @@ class GuiMenuDemo : public GuiMenuCommon
     GuiMenuDemo( version_handler_t* version_handler );
     virtual ~GuiMenuDemo( );
 
-    virtual void updateHostConnectivityState( );
-    virtual void updateNetworkConnectivityState( );
-
     static void callback( lv_obj_t* obj, lv_event_t event );
 
    private:
-    void      updateButtons( );
-    lv_obj_t* lbl_wifi;
-    lv_obj_t* btn_wifi;
-    lv_obj_t* lbl_btn_wifi;
-    lv_obj_t* lbl_gnss_autonomous;
-    lv_obj_t* btn_gnss_autonomous;
-    lv_obj_t* lbl_btn_gnss_autonomous;
-    lv_obj_t* lbl_gnss_assisted;
-    lv_obj_t* btn_gnss_assisted;
-    lv_obj_t* lbl_btn_gnss_assisted;
+    lv_obj_t* lbl_geoloc_demo_menu;
+    lv_obj_t* btn_geoloc_demo_menu;
+    lv_obj_t* lbl_btn_geoloc_demo_menu;
+    lv_obj_t* lbl_radio_demo_menu;
+    lv_obj_t* btn_radio_demo_menu;
+    lv_obj_t* lbl_btn_radio_demo_menu;
     lv_obj_t* btn_back;
-    lv_obj_t* lbl_connectivity;
 };
 
 #endif

@@ -76,7 +76,18 @@ void ConnectivityManagerTransceiver::SetAdrProfile( network_connectivity_adr_pro
     return;
 }
 
+void ConnectivityManagerTransceiver::SetClass( network_connectivity_lorawan_class_t lorawan_class )
+{
+    ( void ) lorawan_class;
+    return;
+}
+
 void ConnectivityManagerTransceiver::ResetCommissioningToSemtechJoinServer( ) {}
+
+void ConnectivityManagerTransceiver::RequestTxUnconfirmed( const uint8_t port, const uint8_t* buffer,
+                                                           const uint8_t buffer_size )
+{
+}
 
 void ConnectivityManagerTransceiver::InterruptHandler( const InterruptionInterface* interruption )
 {

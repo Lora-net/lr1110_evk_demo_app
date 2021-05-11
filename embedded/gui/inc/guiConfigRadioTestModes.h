@@ -56,8 +56,6 @@ class GuiConfigRadioTestModes : public GuiCommon
     static void callback_ddlist( lv_obj_t* obj, lv_event_t event );
 
    private:
-    void create_ddlist( lv_obj_t** ddlist, lv_obj_t* screen, int16_t off_y, const char* lbl_name, const char* options,
-                        lv_event_cb_t event_cb );
     void create_ta( lv_obj_t** ta, lv_obj_t* screen, int16_t off_y, const char* lbl_name, uint16_t max_length,
                     const char* init_text, lv_event_cb_t event_cb );
 

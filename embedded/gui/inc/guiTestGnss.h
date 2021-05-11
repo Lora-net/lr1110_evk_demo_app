@@ -42,8 +42,9 @@ class GuiTestGnss : public GuiCommon
 
     virtual void start( );
     virtual void refresh( );
-    virtual void updateHostConnectivityState( void );
-    virtual void updateNetworkConnectivityState( );
+
+    void propagateHostConnectivityStateChange( ) override;
+    void propagateNetworkConnectivityStateChange( ) override;
 
     static void callback( lv_obj_t* obj, lv_event_t event );
 

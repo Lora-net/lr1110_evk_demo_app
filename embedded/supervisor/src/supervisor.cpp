@@ -56,8 +56,8 @@ Supervisor::Supervisor( Gui* gui, DeviceInterface* device, DemoManagerInterface*
       gui( gui ),
       environment( environment ),
       device( device ),
-      communication_manager( communication_manager ),
       connectivity_manager( connectivity_manager ),
+      communication_manager( communication_manager ),
       has_connectivity( connectivity_manager->IsConnectable( ) )
 {
     version_handler.almanac_crc  = 0;
@@ -126,6 +126,8 @@ void Supervisor::ConvertSettingsFromDemoToGui( const demo_all_settings_t* demo_s
 
     gui_demo_settings->wifi_settings.is_type_all =
         ( demo_settings->wifi_settings.types == DEMO_WIFI_SETTING_TYPE_B_G_N ) ? true : false;
+
+    gui_demo_settings->wifi_settings.abort_on_timeout = demo_settings->wifi_settings.does_abort_on_timeout;
 
     // GNSS autonomous
     gui_demo_settings->gnss_autonomous_settings.is_beidou_enabled =
@@ -434,7 +436,8 @@ void Supervisor::ConvertSettingsFromGuiToDemo( const GuiWifiDemoSetting_t* gui_s
     {
         demo_settings->types = DEMO_WIFI_SETTING_TYPE_B_G_N;
     }
-    demo_settings->result_type = DEMO_WIFI_RESULT_TYPE_BASIC_COMPLETE;
+    demo_settings->does_abort_on_timeout = gui_settings->abort_on_timeout;
+    demo_settings->result_type           = DEMO_WIFI_RESULT_TYPE_BASIC_COMPLETE;
 }
 
 void Supervisor::ConvertSettingsFromGuiToDemo( const GuiGnssDemoSetting_t* gui_settings,
@@ -512,9 +515,41 @@ void Supervisor::GuiRuntimeAndProcess( )
         {
             network_connectivity_settings.region = NETWORK_CONNECTIVITY_REGION_EU868;
         }
+        else if( gui_network_connectivity_settings.region == GUI_NETWORK_CONNECTIVITY_REGION_AS923_GRP1 )
+        {
+            network_connectivity_settings.region = NETWORK_CONNECTIVITY_REGION_AS923_GRP1;
+        }
         else if( gui_network_connectivity_settings.region == GUI_NETWORK_CONNECTIVITY_REGION_US915 )
         {
             network_connectivity_settings.region = NETWORK_CONNECTIVITY_REGION_US915;
+        }
+        else if( gui_network_connectivity_settings.region == GUI_NETWORK_CONNECTIVITY_REGION_AU915 )
+        {
+            network_connectivity_settings.region = NETWORK_CONNECTIVITY_REGION_AU915;
+        }
+        else if( gui_network_connectivity_settings.region == GUI_NETWORK_CONNECTIVITY_REGION_CN470 )
+        {
+            network_connectivity_settings.region = NETWORK_CONNECTIVITY_REGION_CN470;
+        }
+        else if( gui_network_connectivity_settings.region == GUI_NETWORK_CONNECTIVITY_REGION_AS923_GRP2 )
+        {
+            network_connectivity_settings.region = NETWORK_CONNECTIVITY_REGION_AS923_GRP2;
+        }
+        else if( gui_network_connectivity_settings.region == GUI_NETWORK_CONNECTIVITY_REGION_AS923_GRP3 )
+        {
+            network_connectivity_settings.region = NETWORK_CONNECTIVITY_REGION_AS923_GRP3;
+        }
+        else if( gui_network_connectivity_settings.region == GUI_NETWORK_CONNECTIVITY_REGION_IN865 )
+        {
+            network_connectivity_settings.region = NETWORK_CONNECTIVITY_REGION_IN865;
+        }
+        else if( gui_network_connectivity_settings.region == GUI_NETWORK_CONNECTIVITY_REGION_KR920 )
+        {
+            network_connectivity_settings.region = NETWORK_CONNECTIVITY_REGION_KR920;
+        }
+        else if( gui_network_connectivity_settings.region == GUI_NETWORK_CONNECTIVITY_REGION_RU864 )
+        {
+            network_connectivity_settings.region = NETWORK_CONNECTIVITY_REGION_RU864;
         }
 
         if( gui_network_connectivity_settings.adr_profile == GUI_NETWORK_CONNECTIVITY_ADR_NETWORK_SERVER_CONTROLLED )
@@ -530,6 +565,15 @@ void Supervisor::GuiRuntimeAndProcess( )
             network_connectivity_settings.adr_profile = NETWORK_CONNECTIVITY_ADR_MOBILE_LOW_POWER;
         }
 
+        if( gui_network_connectivity_settings.lorawan_class == GUI_NETWORK_CONNECTIVITY_LORAWAN_CLASS_A )
+        {
+            network_connectivity_settings.lorawan_class = NETWORK_CONNECTIVITY_LORAWAN_CLASS_A;
+        }
+        else if( gui_network_connectivity_settings.lorawan_class == GUI_NETWORK_CONNECTIVITY_LORAWAN_CLASS_C )
+        {
+            network_connectivity_settings.lorawan_class = NETWORK_CONNECTIVITY_LORAWAN_CLASS_C;
+        }
+
         this->connectivity_manager->Join( &network_connectivity_settings );
         break;
     }
@@ -542,6 +586,7 @@ void Supervisor::GuiRuntimeAndProcess( )
     {
         this->connectivity_manager->ResetCommissioningToSemtechJoinServer( );
         this->GetAndPropagateVersion( );
+        this->gui->CommissioningChange( );
         break;
     }
     case GUI_LAST_EVENT_PRINT_EUI:
@@ -585,6 +630,18 @@ void Supervisor::GuiRuntimeAndProcess( )
     case GUI_LAST_EVENT_START_DEMO_GNSS_ASSISTED:
     {
         demo_manager->Start( DEMO_TYPE_GNSS_ASSISTED );
+        this->run_demo = true;
+        break;
+    }
+    case GUI_LAST_EVENT_START_DEMO_TEMPERATURE:
+    {
+        demo_manager->Start( DEMO_TYPE_TEMPERATURE );
+        this->run_demo = true;
+        break;
+    }
+    case GUI_LAST_EVENT_START_DEMO_FILE_UPLOAD:
+    {
+        demo_manager->Start( DEMO_TYPE_FILE_UPLOAD );
         this->run_demo = true;
         break;
     }
@@ -897,7 +954,7 @@ void Supervisor::NetworkConnectivityRuntimeAndProcess( )
     case NETWORK_CONNECTIVITY_STATUS_HAS_DOWNLINK:
     {
         this->communication_manager->Log( "Received dnlink?\r\n" );
-        network_connectivity_downlink_t downlink = {};
+        network_connectivity_downlink_t downlink = { };
         if( this->connectivity_manager->FetchNewDownlink( &downlink ) == true )
         {
             this->communication_manager->Log( "Received downlink:\r\n" );
@@ -946,6 +1003,37 @@ void Supervisor::DeviceRuntime( )
         this->gui->SetGnssAssistancePosition( &gui_assistance_position );
         break;
     }
+    case DEVICE_EVENT_APPLICATION_SERVER:
+    {
+        ApplicationServerEvent_t app_serv_event = APPLICATION_SERVER_NO_EVENT;
+        this->device->FetchLastApplicationServerEvent( &app_serv_event );
+        switch( app_serv_event )
+        {
+        case APPLICATION_SERVER_LED_ON:
+        {
+            this->communication_manager->Log( "Turn on LED\n" );
+            this->gui->FakeLedStateChange( true );
+            break;
+        }
+        case APPLICATION_SERVER_LED_OFF:
+        {
+            this->communication_manager->Log( "Turn off LED\n" );
+            this->gui->FakeLedStateChange( false );
+            break;
+        }
+        case APPLICATION_SERVER_LED_TOGGLE:
+        {
+            this->communication_manager->Log( "Toggle LED\n" );
+            this->gui->FakeLedStateToggle( );
+            break;
+        }
+        default:
+        {
+            break;
+        }
+        }
+        break;
+    }
     case DEVICE_EVENT_NONE:
     default:
     {
@@ -976,7 +1064,7 @@ void Supervisor::InterruptionRuntime( )
             {
                 this->connectivity_manager->InterruptHandler( interruption );
             }
-            else
+            if( this->run_demo == true )
             {
                 this->demo_manager->InterruptHandler( interruption );
             }
@@ -1044,6 +1132,14 @@ void Supervisor::TransfertDemoResultsToGui( )
     case DEMO_TYPE_RADIO_PER_TX:
     case DEMO_TYPE_RADIO_PER_RX:
         this->TransferResultToGui( ( demo_radio_per_results_t* ) demo_manager->GetResults( ) );
+        break;
+
+    case DEMO_TYPE_TEMPERATURE:
+        this->TransferResultToGui( ( demo_modem_temperature_results_t* ) demo_manager->GetResults( ) );
+        break;
+
+    case DEMO_TYPE_FILE_UPLOAD:
+        this->TransferResultToGui( ( demo_modem_file_upload_results_t* ) demo_manager->GetResults( ) );
         break;
 
     default:
@@ -1156,6 +1252,26 @@ void Supervisor::TransferResultToGui( const demo_radio_per_results_t* result )
     guiResult.count_rx_wrong_packet   = result->count_rx_wrong_packet;
 
     this->gui->UpdateRadioPerResult( guiResult );
+}
+
+void Supervisor::TransferResultToGui( const demo_modem_temperature_results_t* result )
+{
+    GuiTemperatureResult_t guiResult = { };
+
+    guiResult.temperature = result->temperature;
+    guiResult.sent        = result->sent;
+
+    this->gui->UpdateTemperatureResult( guiResult );
+}
+
+void Supervisor::TransferResultToGui( const demo_modem_file_upload_results_t* result )
+{
+    GuiFileUploadResult_t guiResult = { .success =
+                                            ( result->termination_status == DEMO_MODEM_FILE_UPLOAD_TERMINATED_SUCCESS ),
+                                        .terminated =
+                                            ( result->termination_status != DEMO_MODEM_FILE_UPLOAD_NOT_TERMINATED ) };
+
+    this->gui->UpdateFileUploadResult( guiResult );
 }
 
 void Supervisor::TransferResultToConnectivity( const demo_wifi_scan_all_results_t* result )

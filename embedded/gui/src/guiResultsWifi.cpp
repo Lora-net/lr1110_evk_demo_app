@@ -36,9 +36,7 @@
 GuiResultsWifi::GuiResultsWifi( const GuiWifiResult_t* results )
     : GuiCommon( GUI_PAGE_WIFI_RESULTS ), _results( results ), _current_chan( NULL )
 {
-    this->createHeader( "Wi-Fi SCANNING - RESULTS" );
-
-    this->createNetworkConnectivityIcon( &( this->_label_connectivity_icon ) );
+    this->createHeaderWithIcons( "Wi-Fi SCAN - RESULTS" );
 
     this->lbl_info_page = lv_label_create( this->screen, NULL );
     lv_obj_set_style( this->lbl_info_page, &( GuiCommon::screen_style ) );

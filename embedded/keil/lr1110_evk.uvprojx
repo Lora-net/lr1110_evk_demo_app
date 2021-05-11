@@ -339,7 +339,7 @@
               <MiscControls>-Wno-deprecated-register</MiscControls>
               <Define>USE_FULL_LL_DRIVER, LV_CONF_INCLUDE_SIMPLE</Define>
               <Undefine></Undefine>
-              <IncludePath>..\lr1110_driver\src;..\STM32L4xx_HAL_Driver\Inc;..\STM32L4xx_HAL_Driver\Inc\Legacy;..\CMSIS\Core\Include;..\CMSIS\Device\ST\STM32L4xx\Include;..\application\inc;..\system\inc;..\gui\inc;..\display_touch\inc;..\supervisor\inc;..\demo\inc;..\hci\Command\Inc;..\hci;..\lvgl;..\lvgl\src;..\lvgl\src\lv_core;..\lvgl\src\lv_draw;..\lvgl\src\lv_font;..\lvgl\src\lv_hal;..\lvgl\src\lv_misc;..\lvgl\src\lv_objx;..\lvgl\src\lv_themes;..\communication\inc;..\lr1110_modem_driver\src;..\connectivity\inc;..\device\inc</IncludePath>
+              <IncludePath>..\lr1110_driver\src;..\STM32L4xx_HAL_Driver\Inc;..\STM32L4xx_HAL_Driver\Inc\Legacy;..\CMSIS\Core\Include;..\CMSIS\Device\ST\STM32L4xx\Include;..\application\inc;..\system\inc;..\gui\inc;..\display_touch\inc;..\supervisor\inc;..\demo\inc;..\hci\Command\Inc;..\hci;..\lvgl;..\lvgl\src;..\lvgl\src\lv_core;..\lvgl\src\lv_draw;..\lvgl\src\lv_font;..\lvgl\src\lv_hal;..\lvgl\src\lv_misc;..\lvgl\src\lv_objx;..\lvgl\src\lv_themes;..\communication\inc;..\lr1110_modem_driver\src;..\connectivity\inc;..\device\inc;..\peripherals\inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -713,6 +713,26 @@
               <FileType>8</FileType>
               <FilePath>..\gui\src\guiConfigGnssAssistancePosition.cpp</FilePath>
             </File>
+            <File>
+              <FileName>guiTemperature.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\gui\src\guiTemperature.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>guiFileUpload.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\gui\src\guiFileUpload.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>guiMenuRadioDemo.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\gui\src\guiMenuRadioDemo.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>guiMenuGeolocDemo.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\gui\src\guiMenuGeolocDemo.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -897,6 +917,16 @@
               <FileName>demo_modem_radio_tx_cw.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\demo\src\demo_modem_radio_tx_cw.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>demo_modem_temperature.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\demo\src\demo_modem_temperature.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>demo_modem_file_upload.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\demo\src\demo_modem_file_upload.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1443,6 +1473,11 @@
               <FileType>8</FileType>
               <FilePath>..\device\src\device_modem.cpp</FilePath>
             </File>
+            <File>
+              <FileName>application_server_interpreter.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\device\src\application_server_interpreter.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1497,6 +1532,16 @@
               <FileName>connectivity_manager_transceiver.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\connectivity\src\connectivity_manager_transceiver.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>peripherals</GroupName>
+          <Files>
+            <File>
+              <FileName>lis2de12.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\peripherals\src\lis2de12.c</FilePath>
             </File>
           </Files>
         </Group>
