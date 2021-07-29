@@ -73,7 +73,7 @@ lr1110_hal_status_t lr1110_hal_read( const void* radio, const uint8_t* cbuffer, 
     /* 2nd SPI transaction */
     system_gpio_set_pin_state( radio_local->nss, SYSTEM_GPIO_PIN_STATE_LOW );
     system_spi_write( radio_local->spi, &dummy_byte, 1 );
-    system_spi_read( radio_local->spi, rbuffer, rbuffer_length );
+    system_spi_read_with_dummy_byte( radio_local->spi, rbuffer, rbuffer_length, LR1110_NOP );
     system_gpio_set_pin_state( radio_local->nss, SYSTEM_GPIO_PIN_STATE_HIGH );
 
     return LR1110_HAL_STATUS_OK;
@@ -94,15 +94,14 @@ lr1110_hal_status_t lr1110_hal_write( const void* radio, const uint8_t* cbuffer,
     return LR1110_HAL_STATUS_OK;
 }
 
-lr1110_hal_status_t lr1110_hal_write_read( const void* radio, const uint8_t* cbuffer, uint8_t* rbuffer,
-                                           const uint16_t length )
+lr1110_hal_status_t lr1110_hal_direct_read( const void* radio, uint8_t* buffer, const uint16_t length )
 {
     radio_t* radio_local = ( radio_t* ) radio;
 
     system_gpio_wait_for_state( radio_local->busy, SYSTEM_GPIO_PIN_STATE_LOW );
 
     system_gpio_set_pin_state( radio_local->nss, SYSTEM_GPIO_PIN_STATE_LOW );
-    system_spi_write_read( radio_local->spi, cbuffer, rbuffer, length );
+    system_spi_read_with_dummy_byte( radio_local->spi, buffer, length, LR1110_NOP );
     system_gpio_set_pin_state( radio_local->nss, SYSTEM_GPIO_PIN_STATE_HIGH );
 
     return LR1110_HAL_STATUS_OK;

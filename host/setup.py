@@ -4,7 +4,7 @@ PACKAGE_NAME = "lr1110evk"
 
 setup(
     name=PACKAGE_NAME,
-    version="v3.0.1",
+    version="v3.1.0",
     include_package_data=True,
     packages=find_packages(),
     author="Semtech",

@@ -100,7 +100,7 @@ void DeviceTransceiver::UpdateAlmanac( const uint8_t* almanac_buffer, const uint
 {
     if( buffer_size == LR1110_GNSS_SINGLE_ALMANAC_WRITE_SIZE )
     {
-        lr1110_gnss_one_satellite_almanac_update( this->radio, almanac_buffer );
+        lr1110_gnss_almanac_update( this->radio, almanac_buffer, 1 );
     }
 }
 
@@ -158,9 +158,11 @@ bool DeviceTransceiver::checkAlmanacUpdate( uint32_t expected_crc )
         lr1110_gnss_read_results( this->radio, result_buffer, result_size );
         if( ( result_buffer[0] == 0 ) && ( result_buffer[1] == 0 ) )
         {
-            uint32_t actual_crc = 0;
-            lr1110_gnss_get_almanac_crc( this->radio, &actual_crc );
-            update_success = ( expected_crc == actual_crc );
+            lr1110_gnss_context_status_bytestream_t context_status_buffer;
+            lr1110_gnss_context_status_t            context_status;
+            lr1110_gnss_get_context_status( this->radio, context_status_buffer );
+            lr1110_gnss_parse_context_status_buffer( context_status_buffer, &context_status );
+            update_success = ( expected_crc == context_status.global_almanac_crc );
         }
         else
         {

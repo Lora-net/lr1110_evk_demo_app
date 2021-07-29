@@ -47,6 +47,7 @@ void system_spi_init( void );
 void system_spi_write( SPI_TypeDef* spi, const uint8_t* buffer, uint16_t length );
 void system_spi_read( SPI_TypeDef* spi, uint8_t* buffer, uint16_t length );
 void system_spi_write_read( SPI_TypeDef* spi, const uint8_t* cbuffer, uint8_t* rbuffer, uint16_t length );
+void system_spi_read_with_dummy_byte( SPI_TypeDef* spi, uint8_t* buffer, uint16_t length, uint8_t dummy_byte );
 
 #ifdef __cplusplus
 }

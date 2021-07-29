@@ -74,7 +74,6 @@ void DemoTransceiverWifiInterface::SpecificRuntime( )
     {
         this->SetWaitingForInterrupt( );
 
-        lr1110_wifi_cfg_hardware_debarker( this->device->GetRadio( ), true );
         this->ExecuteScan( this->device->GetRadio( ) );
 
         this->state = DEMO_WIFI_WAIT_FOR_SCAN;

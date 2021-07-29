@@ -116,3 +116,21 @@ void system_spi_write_read( SPI_TypeDef* spi, const uint8_t* cbuffer, uint8_t* r
         rbuffer[i] = LL_SPI_ReceiveData8( spi );
     }
 }
+
+void system_spi_read_with_dummy_byte( SPI_TypeDef* spi, uint8_t* buffer, uint16_t length, uint8_t dummy_byte )
+{
+    for( uint16_t i = 0; i < length; i++ )
+    {
+        while( LL_SPI_IsActiveFlag_TXE( spi ) == 0 )
+        {
+        };
+
+        LL_SPI_TransmitData8( spi, dummy_byte );
+
+        while( LL_SPI_IsActiveFlag_RXNE( spi ) == 0 )
+        {
+        };
+
+        buffer[i] = LL_SPI_ReceiveData8( spi );
+    }
+}

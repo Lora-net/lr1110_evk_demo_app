@@ -4,12 +4,29 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v3.1.0] 2021-07-20
+
+### Added
+
+- `system_spi_read_with_dummy_byte()` function to ease LR1110 HAL implementation
+- `lr1110_hal_direct_read()` - to replace `lr1110_hal_write_read()`
+
+### Changed
+
+- Upgraded LR1110 driver to v5.0.1
+- `DeviceTransceiver::UpdateAlmanac()` now uses `lr1110_gnss_get_context_status()` instead of `lr1110_gnss_get_almanac_crc()` to check the status of the almanac update
+- `lr1110_hal_read()` now uses `system_spi_read_with_dummy_byte()` instead of `system_spi_read()`
+
+### Removed
+
+- Call to `lr1110_wifi_cfg_hardware_debarker()` in `DemoTransceiverWifiInterface::SpecificRuntime()` (removed from the driver)
+- `lr1110_hal_write_read()` - replaced by `lr1110_hal_direct_read()`
+
 ## [v3.0.1] 2021-05-11
 
 ### Added
 
 - Modify `FieldTestPost` adding the `-f` flag to filter the jobs to solve based on job ID
-- File upload and temperature demonstrations
 
 ### Changed
 
