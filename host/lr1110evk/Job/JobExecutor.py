@@ -182,14 +182,16 @@ class JobExecutor:
         #         "Job is configured to run nothing: will not send commands and return no results")
         #     return list()
 
-        # 1. Configure and start
-        self.configure_and_start_job(job)
+        results = list()
+        for multi_scan_index in range(job.n_scan_iteration):
+            # 1. Configure and start
+            self.configure_and_start_job(job)
 
-        # 2. Wait for event
-        self.wait_event_job(job)
+            # 2. Wait for event
+            self.wait_event_job(job)
 
-        # 3. Fetch results
-        results = self.store_result_job(job)
+            # 3. Fetch results
+            results.extend(self.store_result_job(job))
         return results
 
     def get_version_info(self):

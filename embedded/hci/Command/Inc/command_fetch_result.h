@@ -66,8 +66,12 @@ class CommandFetchResult : public CommandInterface
      * \retval The number of bytes written
      */
     static uint8_t AppendValueAtIndex( uint8_t* array, const uint16_t index, const uint32_t value );
+    static uint8_t AppendValueAtIndex( uint8_t* array, const uint16_t index, const uint16_t value );
+    static uint8_t AppendValueAtIndex( uint8_t* array, const uint16_t index, const uint8_t value );
 
     static uint8_t ConvertWifiTypeToSerial( const demo_wifi_signal_type_t& wifi_result_type );
+
+    static uint8_t ConvertGnssConstellationToSerial( const demo_gnss_constellation_t& constellation );
 
    private:
     Hci&                  hci;

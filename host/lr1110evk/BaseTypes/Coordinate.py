@@ -39,8 +39,10 @@ class CoordinateStringMalformedException(CoordinateException):
         self.malformed_string = malformed_string
 
     def __str__(self):
-        return "Error while attempting to convert string '{}' to Coordinate object".format(
-            self.malformed_string
+        return (
+            "Error while attempting to convert string '{}' to Coordinate object".format(
+                self.malformed_string
+            )
         )
 
 
@@ -72,8 +74,7 @@ class Coordinate:
         )
 
     def __sub__(self, other):
-        """ Return the distance in meter between self and other
-        """
+        """Return the distance in meter between self and other"""
         R = 6400e3
 
         def degree_to_radian(deg):
@@ -115,6 +116,5 @@ class Coordinate:
 
     @staticmethod
     def degree_minutes_to_decimal_degree(degree, minute):
-        """ Convert a degree, minute, fraction of minute format into decimal degree
-        """
+        """Convert a degree, minute, fraction of minute format into decimal degree"""
         return degree + (minute / 60)

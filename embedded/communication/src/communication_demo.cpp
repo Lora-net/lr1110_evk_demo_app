@@ -87,7 +87,18 @@ void CommunicationDemo::Store( const demo_gnss_all_results_t& gnss_results, uint
     {
         printf( "%02x", gnss_results.nav_message.message[index] );
     }
-    printf( ", %u, %u, %u", delay_since_capture, gnss_results.timings.radio_ms, gnss_results.timings.computation_ms );
+    printf( ", %u, %u, %u, ", delay_since_capture, gnss_results.timings.radio_ms, gnss_results.timings.computation_ms );
+    for( uint8_t index_sv = 0; index_sv < gnss_results.nb_result; index_sv++ )
+    {
+        const demo_gnss_single_result_t& local_result = gnss_results.result[index_sv];
+        printf( "%u+%s+%i", local_result.satellite_id,
+                CommunicationDemo::ConstellationToChar( local_result.constellation ), local_result.snr );
+        if( index_sv < ( gnss_results.nb_result - 1 ) )
+        {
+            // Print the '|' separator between two consecutive satellite results
+            printf( "|" );
+        }
+    }
     printf( "\n" );
 }
 
@@ -251,4 +262,27 @@ CommunicationDemoStatus_t CommunicationDemo::AskAndParseResults( float& latitude
         sscanf( reception_buffer, format, &latitude, &longitude, &altitude, &accuracy, geo_coding );
     }
     return status;
+}
+
+const char* CommunicationDemo::ConstellationToChar( const demo_gnss_constellation_t constellation )
+{
+    const char* constellation_str = "";
+    switch( constellation )
+    {
+    case DEMO_GNSS_CONSTELLATION_BEIDOU:
+    {
+        constellation_str = ( const char* ) "BeiDou";
+        break;
+    }
+    case DEMO_GNSS_CONSTELLATION_GPS:
+    {
+        constellation_str = ( const char* ) "GPS";
+        break;
+    }
+    default:
+    {
+        constellation_str = ( const char* ) "unknown";
+    }
+    }
+    return constellation_str;
 }

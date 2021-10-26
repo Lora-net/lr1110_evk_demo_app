@@ -56,9 +56,10 @@ GuiConfigGnss::GuiConfigGnss( guiPageType_t pageType, GuiGnssDemoSetting_t* sett
         this->createSection( "SCAN PARAMETERS", -10 );
     }
 
-    this->createChoiceSwitch( &( this->sw_scan_mode ), this->screen, "Single", "Double",
-                              GuiConfigGnss::callbackSettings, 30,
-                              ( version_handler->device_type == VERSION_DEVICE_MODEM ) ? false : true );
+    this->createDropDownList( &( this->ddlist_scan_mode ), this->screen, 180, "Scan mode",
+                              "Mode 0\n"
+                              "Mode 3",
+                              GuiConfigGnss::callback_ddlist, 95, 0 );
 
     this->createChoiceSwitch( &( this->sw_scan_option ), this->screen, "Low power", "Best effort",
                               GuiConfigGnss::callbackSettings, 70,
@@ -102,14 +103,7 @@ void GuiConfigGnss::ConfigSettingsButton( )
         lv_btnm_clear_btn_ctrl( this->btnm_constellations, 0, LV_BTNM_CTRL_TGL_STATE );
     }
 
-    if( this->settings_temp.is_dual_scan_activated == true )
-    {
-        lv_sw_on( this->sw_scan_mode, LV_ANIM_OFF );
-    }
-    else
-    {
-        lv_sw_off( this->sw_scan_mode, LV_ANIM_OFF );
-    }
+    lv_ddlist_set_selected( this->ddlist_scan_mode, this->settings_temp.scan_mode );
 
     if( this->settings_temp.is_best_effort_activated == true )
     {
@@ -160,7 +154,7 @@ bool GuiConfigGnss::IsConfigTempEqualTo( const GuiGnssDemoSetting_t* settings_to
         return false;
     }
 
-    if( this->settings_temp.is_dual_scan_activated != settings_to_compare->is_dual_scan_activated )
+    if( this->settings_temp.scan_mode != settings_to_compare->scan_mode )
     {
         return false;
     }
@@ -223,15 +217,45 @@ void GuiConfigGnss::callbackSettings( lv_obj_t* obj, lv_event_t event )
                 break;
             }
         }
-        else if( obj == self->sw_scan_mode )
-        {
-            self->settings_temp.is_dual_scan_activated = !self->settings_temp.is_dual_scan_activated;
-            self->ConfigActionButton( );
-        }
         else if( obj == self->sw_scan_option )
         {
             self->settings_temp.is_best_effort_activated = !self->settings_temp.is_best_effort_activated;
             self->ConfigActionButton( );
         }
+    }
+}
+
+void GuiConfigGnss::callback_ddlist( lv_obj_t* obj, lv_event_t event )
+{
+    uint8_t        id;
+    GuiConfigGnss* self = ( GuiConfigGnss* ) lv_obj_get_user_data( obj );
+
+    if( event == LV_EVENT_VALUE_CHANGED )
+    {
+        id = lv_ddlist_get_selected( obj );
+
+        if( obj == self->ddlist_scan_mode )
+        {
+            switch( id )
+            {
+            case 0:
+            {
+                self->settings_temp.scan_mode = GUI_GNSS_SCAN_MODE_0;
+                break;
+            }
+            case 1:
+            {
+                self->settings_temp.scan_mode = GUI_GNSS_SCAN_MODE_3;
+                break;
+            }
+            default:
+            {
+                self->settings_temp.scan_mode = self->settings_default->scan_mode;
+                break;
+            }
+            }
+        }
+
+        self->ConfigActionButton( );
     }
 }

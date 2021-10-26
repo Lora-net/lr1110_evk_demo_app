@@ -30,6 +30,7 @@ Define job JSON validator classes
 from jsl.fields import StringField, ArrayField, BooleanField, NumberField, OneOfField
 from jsl import Document, DocumentField
 from lr1110evk.BaseTypes.WifiChannels import WifiChannels
+from lr1110evk.SerialExchange.Commands.CommandStart import GnssCaptureMode
 
 from jsonschema import validate
 from json import load
@@ -81,9 +82,10 @@ class GnssOptionField(StringField):
 
 class GnssCaptureModeField(StringField):
     def __init__(self, *args, **kwargs):
+
         super(GnssCaptureModeField, self).__init__(
-            pattern="^(single|dual)$",
-            description="Select the single or dual GNSS scanning strategy. Single scan does only one scan. Dual scan executes two consecutive scans.",
+            pattern="^({})$".format("|".join([mode.name for mode in GnssCaptureMode])),
+            description="Select the GNSS scanning strategy.",
         )
 
 
@@ -151,7 +153,16 @@ class AssistedCoordinateDocument(Document):
     altitude = NumberField(description="Altitude to provide to the GNSS scan API.")
 
 
-class GnssAutonomousDocument(CommonJobDocument):
+class CommonGnssJobDocument(CommonJobDocument):
+    n_scan_iteration = NumberField(
+        multiple_of=1,
+        minimum=1,
+        description="Number of scans to execute per iteration. Results of all scans in a single iteration are aggregated.",
+        required=True,
+    )
+
+
+class GnssAutonomousDocument(CommonGnssJobDocument):
     gnss_autonomous_option = GnssOptionField()
     gnss_autonomous_capture_mode = GnssCaptureModeField()
     gnss_autonomous_nb_satellite = NumberField(
@@ -164,7 +175,7 @@ class GnssAutonomousDocument(CommonJobDocument):
     gnss_autonomous_constellations = ArrayField(GnssConstellationField())
 
 
-class GnssAssistedDocument(CommonJobDocument):
+class GnssAssistedDocument(CommonGnssJobDocument):
     gnss_assisted_option = GnssOptionField()
     gnss_assisted_capture_mode = GnssCaptureModeField()
     gnss_assisted_nb_satellite = NumberField(

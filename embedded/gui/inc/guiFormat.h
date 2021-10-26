@@ -192,12 +192,18 @@ typedef struct
     bool     abort_on_timeout;
 } GuiWifiDemoSetting_t;
 
+typedef enum gui_gnss_scan_mode_e
+{
+    GUI_GNSS_SCAN_MODE_0,
+    GUI_GNSS_SCAN_MODE_3,
+} gui_gnss_scan_mode_t;
+
 typedef struct
 {
-    bool is_gps_enabled;
-    bool is_beidou_enabled;
-    bool is_dual_scan_activated;
-    bool is_best_effort_activated;
+    bool                 is_gps_enabled;
+    bool                 is_beidou_enabled;
+    gui_gnss_scan_mode_t scan_mode;
+    bool                 is_best_effort_activated;
 } GuiGnssDemoSetting_t;
 
 typedef struct

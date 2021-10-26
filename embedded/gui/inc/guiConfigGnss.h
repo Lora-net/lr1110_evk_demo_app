@@ -44,6 +44,7 @@ class GuiConfigGnss : public GuiCommon
 
     static void callback( lv_obj_t* obj, lv_event_t event );
     static void callbackSettings( lv_obj_t* obj, lv_event_t event );
+    static void callback_ddlist( lv_obj_t* obj, lv_event_t event );
 
     bool IsAtLeastOneConstellationSelected( );
     bool IsConfigTempEqualTo( const GuiGnssDemoSetting_t* settings_to_compare );
@@ -60,7 +61,7 @@ class GuiConfigGnss : public GuiCommon
     lv_obj_t*   btn_default;
     lv_obj_t*   btn_save;
     lv_obj_t*   btnm_constellations;
-    lv_obj_t*   sw_scan_mode;
+    lv_obj_t*   ddlist_scan_mode;
     lv_obj_t*   sw_scan_option;
     const char* btnm_constellations_map[3] = { "GPS", "BEIDOU", "" };
 };

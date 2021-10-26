@@ -7,7 +7,7 @@ Refer to [dedicated document](doc/install_instructions.md).
 Basically:
 
 ```bash
-python setup.py
+python setup.py sdist
 pip install dist/lr1110evk-<version>.tar.gz
 ```
 

@@ -68,6 +68,7 @@ class CommunicationDemo : public CommunicationInterface
                                        uint16_t& buffer_length_received, const uint16_t timeout );
     void                      SendCommand( const char* command );
     void                      Store( const char* fmt, ... );
+    static const char*        ConstellationToChar( const demo_gnss_constellation_t constellation );
 };
 
 #endif  // __COMMUNICATION_DEMO_H__

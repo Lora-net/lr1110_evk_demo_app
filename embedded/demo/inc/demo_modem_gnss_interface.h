@@ -135,9 +135,7 @@ class DemoModemGnssInterface : public DemoModemInterface
     demo_gnss_all_results_t   result;
     EnvironmentInterface*     environment;
     demo_gnss_settings_t      settings;
-    uint8_t                   inter_capture_delay_s;
     uint16_t                  instant_start_capture_ms;
-    uint16_t                  instant_second_capture_ms;
     AntennaSelectorInterface* antenna_selector;
 };
 

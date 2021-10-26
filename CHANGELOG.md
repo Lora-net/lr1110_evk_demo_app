@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [v3.2.0] 2021-11-03
+
+### Changed
+
+- Upgrade LR1110 driver to version v6.0.0 compliant with transceiver firmware 0307
+- GNSS scan modes are now `mode_0_legacy` and `mode_3_with_5_fast`
+- The python applications `Lr1110Demo` and `FieldTestPost` handle the multi-frame GNSS solving
+
+### Removed
+
+- GNSS scan mode `dual`
+
 ## [v3.1.0] 2021-07-20
 
 ### Added

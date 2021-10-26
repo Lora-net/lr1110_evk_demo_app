@@ -48,14 +48,10 @@ void DemoTransceiverGnssAutonomous::CallScan( )
     const lr1110_gnss_date_t gnss_time =
         DemoTransceiverGnssInterface::GnssTimeFromEnvironment( this->GetEnvironment( )->GetDateTime( ) );
 
-    if( this->GetSettings( ).capture_mode == DEMO_GNSS_DOUBLE_SCAN_MODE )
-    {
-        this->timer->set_and_start( 30000 );
-    }
-
     lr1110_gnss_scan_autonomous(
         this->device->GetRadio( ), gnss_time,
         DemoTransceiverGnssInterface::TransceiverSearchModeFromDemo( this->GetSettings( ).option ),
-        LR1110_GNSS_BIT_CHANGE_MASK | LR1110_GNSS_DOPPLER_MASK | LR1110_GNSS_IRQ_PSEUDO_RANGE_MASK,
+        LR1110_GNSS_RESULTS_DOPPLER_ENABLE_MASK | LR1110_GNSS_RESULTS_DOPPLER_MASK |
+            LR1110_GNSS_RESULTS_BIT_CHANGE_MASK,
         this->GetSettings( ).nb_satellites );
 }

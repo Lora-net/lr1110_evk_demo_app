@@ -161,21 +161,8 @@ class ResultLogger(Logger):
 
     def log_gnss(self, gnss_scan, job_id, job_counter):
         gnss_date = gnss_scan.gnss_scan.instant_scan
-        gnss_nav_message = gnss_scan.gnss_scan.nav_message
-        gnss_radio_timing = str(gnss_scan.gnss_scan.radio_timing_ms)
-        gnss_computation_timing = str(gnss_scan.gnss_scan.computation_timing_ms)
-        elapsed_s = "0"
 
         gnss_message = "[{} - {}] {}".format(
-            job_counter,
-            job_id,
-            ", ".join(
-                [
-                    gnss_nav_message,
-                    elapsed_s,
-                    gnss_radio_timing,
-                    gnss_computation_timing,
-                ]
-            ),
+            job_counter, job_id, gnss_scan.gnss_scan.to_csv_line()
         )
         self.log(gnss_message, gnss_date)

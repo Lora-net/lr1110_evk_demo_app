@@ -229,6 +229,21 @@ def entry_point_demo():
         ),
         default=None,
     )
+    multi_frame_arg_group = parser.add_mutually_exclusive_group()
+    multi_frame_arg_group.add_argument(
+        "--multi-frame-sliding",
+        action="store",
+        help="Enable multi-frame sliding strategy for GNSS solving and configure the depth. Default strategy for GNSS solving is single solve",
+        default=None,
+        type=int,
+    )
+    multi_frame_arg_group.add_argument(
+        "--multi-frame-grouping",
+        action="store",
+        help="Enable multi-frame grouping strategy for GNSS solving and configure the max length. Default strategy for GNSS solving is single solve",
+        default=None,
+        type=int,
+    )
     parser.add_argument(
         "--verbose", "-v", help="Verbose", action="store_true", default=False
     )

@@ -58,15 +58,11 @@ void DemoTransceiverGnssAssisted::CallScan( )
 
     lr1110_gnss_set_assistance_position( this->device->GetRadio( ), &gnss_position );
 
-    if( this->GetSettings( ).capture_mode == DEMO_GNSS_DOUBLE_SCAN_MODE )
-    {
-        this->timer->set_and_start( 30005 );
-    }
-
     lr1110_gnss_scan_assisted(
         this->device->GetRadio( ), gnss_time,
         DemoTransceiverGnssInterface::TransceiverSearchModeFromDemo( this->GetSettings( ).option ),
-        LR1110_GNSS_BIT_CHANGE_MASK | LR1110_GNSS_DOPPLER_MASK | LR1110_GNSS_IRQ_PSEUDO_RANGE_MASK,
+        LR1110_GNSS_RESULTS_DOPPLER_ENABLE_MASK | LR1110_GNSS_RESULTS_DOPPLER_MASK |
+            LR1110_GNSS_RESULTS_BIT_CHANGE_MASK,
         this->GetSettings( ).nb_satellites );
 }
 

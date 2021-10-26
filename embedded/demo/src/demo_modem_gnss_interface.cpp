@@ -45,9 +45,7 @@ DemoModemGnssInterface::DemoModemGnssInterface( DeviceModem* device, SignalingIn
       timer( timer ),
       state( DEMO_MODEM_GNSS_BASE_INIT ),
       environment( environment ),
-      inter_capture_delay_s( 0 ),
       instant_start_capture_ms( 0 ),
-      instant_second_capture_ms( 0 ),
       antenna_selector( antenna_selector )
 {
 }
@@ -57,18 +55,16 @@ DemoModemGnssInterface::~DemoModemGnssInterface( ) {}
 void DemoModemGnssInterface::Reset( )
 {
     this->DemoInterface::Reset( );
-    this->state                                           = DEMO_MODEM_GNSS_BASE_INIT;
-    this->result.nb_result                                = 0;
-    this->result.nav_message.size                         = 0;
-    this->result.consumption_uas                          = 0;
-    this->result.error                                    = DEMO_GNSS_BASE_NO_ERROR;
-    this->result.timings                                  = { 0 };
-    this->result.local_instant_measurement                = 0;
-    this->result.local_instant_measurement_second_capture = 0;
-    this->result.almanac_too_old                          = false;
-    this->result.almanac_age_days                         = 0;
-    this->instant_start_capture_ms                        = 0;
-    this->instant_second_capture_ms                       = 0;
+    this->state                            = DEMO_MODEM_GNSS_BASE_INIT;
+    this->result.nb_result                 = 0;
+    this->result.nav_message.size          = 0;
+    this->result.consumption_uas           = 0;
+    this->result.error                     = DEMO_GNSS_BASE_NO_ERROR;
+    this->result.timings                   = { 0 };
+    this->result.local_instant_measurement = 0;
+    this->result.almanac_too_old           = false;
+    this->result.almanac_age_days          = 0;
+    this->instant_start_capture_ms         = 0;
 }
 
 void DemoModemGnssInterface::JumpToErrorState( const demo_gnss_error_t error_code )

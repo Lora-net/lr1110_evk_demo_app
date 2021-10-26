@@ -70,10 +70,6 @@ class Executor:
         JobValidator.validate_job_json_file(job_filename)
         self.job_reader.read_from_file(job_filename)
 
-    def load_jobs_from_job_list(self, job_list, infinite_execution):
-        self.job_reader.jobs.extend(job_list)
-        self.job_reader.infinite_execution = infinite_execution
-
     def connect_serial(self):
         port = SerialHandler.discover(SerialHandler.DISCOVER_PORT_REGEXP)
         device = port.device

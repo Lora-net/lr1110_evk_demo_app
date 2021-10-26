@@ -32,15 +32,13 @@ import re
 
 
 class ScannedMacAddressException(Exception):
-    """Base exception for ScannedMacAddress module
-
-    """
+    """Base exception for ScannedMacAddress module"""
 
     pass
 
 
 class ScannedMacAddressMalformedCsvLineException(ScannedMacAddressException):
-    """ Exception describing the failure to interpret a CSV-like line
+    """Exception describing the failure to interpret a CSV-like line
     as ScannedMacAddress
 
     Attributes:
@@ -59,7 +57,7 @@ class ScannedMacAddressMalformedCsvLineException(ScannedMacAddressException):
 
 
 class ScannedMacAddress:
-    """ Describes a MAC address discovered by LR1110
+    """Describes a MAC address discovered by LR1110
 
     This class describe immutable objects that hold meta-data
     associated to a MAC address discovered by LR1110.
@@ -139,7 +137,7 @@ class ScannedMacAddress:
 
     @staticmethod
     def from_csv_line(date_scan, csv_line):
-        """ Factory method from a CSV-like line
+        """Factory method from a CSV-like line
 
         This factory method try to build a ScannedMacAddress object out of
         a CSV line. The expected schema of the CSV line is:

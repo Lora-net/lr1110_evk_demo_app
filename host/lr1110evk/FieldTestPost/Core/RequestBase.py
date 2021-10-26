@@ -44,7 +44,7 @@ class RequestBase:
 
 
 class RequestGnssGls(RequestBase):
-    def __init__(self, payload, timestamp, aiding_coordinate):
+    def __init__(self, payload, timestamp, aiding_coordinate=None):
         self.__payload = payload
         self.__timestamp = timestamp
         self.__aiding_coordinate = aiding_coordinate
@@ -80,6 +80,23 @@ class RequestGnssGls(RequestBase):
         return json_dict
 
 
+class RequestGnssMultiFrameGls(RequestBase):
+    def __init__(self, nav_messages):
+        self.__nav_messages = nav_messages
+
+    @property
+    def nav_messages(self):
+        return self.__nav_messages
+
+    def _to_json_dict(self):
+        json_dict = {
+            "captures": [
+                {"payload": nav_message.nav_message[2:]} for nav_message in self.nav_messages
+            ]
+        }
+        return json_dict
+
+
 class RequestWifiGls(RequestBase):
     def __init__(self):
         self.macs = list()
@@ -93,7 +110,11 @@ class RequestWifiGls(RequestBase):
                     "snr": 0,
                     "toa": 0,
                     "antennaId": 0,
-                    "antennaLocation": {"latitude": 0, "longitude": 0, "altitude": 0,},
+                    "antennaLocation": {
+                        "latitude": 0,
+                        "longitude": 0,
+                        "altitude": 0,
+                    },
                 },
             ],
             "wifiAccessPoints": [

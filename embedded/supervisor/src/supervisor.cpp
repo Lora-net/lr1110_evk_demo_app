@@ -136,8 +136,19 @@ void Supervisor::ConvertSettingsFromDemoToGui( const demo_all_settings_t* demo_s
     gui_demo_settings->gnss_autonomous_settings.is_gps_enabled =
         ( ( demo_settings->gnss_autonomous_settings.constellation_mask & DEMO_GNSS_GPS_MASK ) != 0 ) ? true : false;
 
-    gui_demo_settings->gnss_autonomous_settings.is_dual_scan_activated =
-        ( demo_settings->gnss_autonomous_settings.capture_mode == DEMO_GNSS_DOUBLE_SCAN_MODE ) ? true : false;
+    switch( demo_settings->gnss_autonomous_settings.capture_mode )
+    {
+    case DEMO_GNSS_SCAN_MODE_0:
+    {
+        gui_demo_settings->gnss_autonomous_settings.scan_mode = GUI_GNSS_SCAN_MODE_0;
+        break;
+    }
+    case DEMO_GNSS_SCAN_MODE_3:
+    {
+        gui_demo_settings->gnss_autonomous_settings.scan_mode = GUI_GNSS_SCAN_MODE_3;
+        break;
+    }
+    }
 
     gui_demo_settings->gnss_autonomous_settings.is_best_effort_activated =
         ( demo_settings->gnss_autonomous_settings.option == DEMO_GNSS_OPTION_BEST_EFFORT ) ? true : false;
@@ -149,8 +160,19 @@ void Supervisor::ConvertSettingsFromDemoToGui( const demo_all_settings_t* demo_s
     gui_demo_settings->gnss_assisted_settings.is_gps_enabled =
         ( ( demo_settings->gnss_assisted_settings.constellation_mask & DEMO_GNSS_GPS_MASK ) != 0 ) ? true : false;
 
-    gui_demo_settings->gnss_assisted_settings.is_dual_scan_activated =
-        ( demo_settings->gnss_assisted_settings.capture_mode == DEMO_GNSS_DOUBLE_SCAN_MODE ) ? true : false;
+    switch( demo_settings->gnss_assisted_settings.capture_mode )
+    {
+    case DEMO_GNSS_SCAN_MODE_0:
+    {
+        gui_demo_settings->gnss_assisted_settings.scan_mode = GUI_GNSS_SCAN_MODE_0;
+        break;
+    }
+    case DEMO_GNSS_SCAN_MODE_3:
+    {
+        gui_demo_settings->gnss_assisted_settings.scan_mode = GUI_GNSS_SCAN_MODE_3;
+        break;
+    }
+    }
 
     gui_demo_settings->gnss_assisted_settings.is_best_effort_activated =
         ( demo_settings->gnss_assisted_settings.option == DEMO_GNSS_OPTION_BEST_EFFORT ) ? true : false;
@@ -455,13 +477,18 @@ void Supervisor::ConvertSettingsFromGuiToDemo( const GuiGnssDemoSetting_t* gui_s
         demo_settings->constellation_mask |= DEMO_GNSS_GPS_MASK;
     }
 
-    if( gui_settings->is_dual_scan_activated == true )
+    switch( gui_settings->scan_mode )
     {
-        demo_settings->capture_mode = DEMO_GNSS_DOUBLE_SCAN_MODE;
+    case GUI_GNSS_SCAN_MODE_0:
+    {
+        demo_settings->capture_mode = DEMO_GNSS_SCAN_MODE_0;
+        break;
     }
-    else
+    case GUI_GNSS_SCAN_MODE_3:
     {
-        demo_settings->capture_mode = DEMO_GNSS_SINGLE_SCAN_MODE;
+        demo_settings->capture_mode = DEMO_GNSS_SCAN_MODE_3;
+        break;
+    }
     }
 
     if( gui_settings->is_best_effort_activated == true )
@@ -954,7 +981,7 @@ void Supervisor::NetworkConnectivityRuntimeAndProcess( )
     case NETWORK_CONNECTIVITY_STATUS_HAS_DOWNLINK:
     {
         this->communication_manager->Log( "Received dnlink?\r\n" );
-        network_connectivity_downlink_t downlink = { };
+        network_connectivity_downlink_t downlink = {};
         if( this->connectivity_manager->FetchNewDownlink( &downlink ) == true )
         {
             this->communication_manager->Log( "Received downlink:\r\n" );
@@ -1256,7 +1283,7 @@ void Supervisor::TransferResultToGui( const demo_radio_per_results_t* result )
 
 void Supervisor::TransferResultToGui( const demo_modem_temperature_results_t* result )
 {
-    GuiTemperatureResult_t guiResult = { };
+    GuiTemperatureResult_t guiResult = {};
 
     guiResult.temperature = result->temperature;
     guiResult.sent        = result->sent;

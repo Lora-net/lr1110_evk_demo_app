@@ -24,9 +24,10 @@
         {
             "name": "GNSS autonomous",
             "n_iterations": 1,
+            "n_scan_iteration": 1,
             "reset_before_job_start": false,
             "gnss_autonomous_option": "best_effort",
-            "gnss_autonomous_capture_mode": "single",
+            "gnss_autonomous_capture_mode": "mode_0_legacy",
             "gnss_autonomous_nb_satellite": 0,
             "gnss_autonomous_antenna_selection": "no_selection",
             "gnss_autonomous_constellations": [
@@ -34,28 +35,12 @@
             ]
         },
         {
-            "name": "GNSS assisted single",
+            "name": "GNSS assisted NAV2 multi",
             "n_iterations": 1,
+            "n_scan_iteration": 1,
             "reset_before_job_start": false,
             "gnss_assisted_option": "best_effort",
-            "gnss_assisted_capture_mode": "single",
-            "gnss_assisted_nb_satellite": 0,
-            "gnss_assisted_antenna_selection": "no_selection",
-            "gnss_assisted_constellations": [
-                "gps"
-            ],
-            "assisted_coordinate": {
-                "latitude": 45.208091,
-                "longitude": 5.778892,
-                "altitude": 0
-            }
-        },
-        {
-            "name": "GNSS assisted dual",
-            "n_iterations": 1,
-            "reset_before_job_start": false,
-            "gnss_assisted_option": "best_effort",
-            "gnss_assisted_capture_mode": "dual",
+            "gnss_assisted_capture_mode": "mode_3_with_5_fast",
             "gnss_assisted_nb_satellite": 0,
             "gnss_assisted_antenna_selection": "no_selection",
             "gnss_assisted_constellations": [

@@ -46,9 +46,7 @@ DemoTransceiverGnssInterface::DemoTransceiverGnssInterface( DeviceTransceiver* d
       timer( timer ),
       gnss_irq( LR1110_SYSTEM_IRQ_GNSS_SCAN_DONE ),
       state( DEMO_GNSS_BASE_INIT ),
-      inter_capture_delay_s( 0 ),
       instant_start_capture_ms( 0 ),
-      instant_second_capture_ms( 0 ),
       antenna_selector( antenna_selector )
 {
 }
@@ -58,18 +56,16 @@ DemoTransceiverGnssInterface::~DemoTransceiverGnssInterface( ) {}
 void DemoTransceiverGnssInterface::Reset( )
 {
     this->DemoInterface::Reset( );
-    this->state                                           = DEMO_GNSS_BASE_INIT;
-    this->result.nb_result                                = 0;
-    this->result.nav_message.size                         = 0;
-    this->result.consumption_uas                          = 0;
-    this->result.error                                    = DEMO_GNSS_BASE_NO_ERROR;
-    this->result.timings                                  = { 0 };
-    this->result.local_instant_measurement                = 0;
-    this->result.local_instant_measurement_second_capture = 0;
-    this->result.almanac_too_old                          = false;
-    this->result.almanac_age_days                         = 0;
-    this->instant_start_capture_ms                        = 0;
-    this->instant_second_capture_ms                       = 0;
+    this->state                            = DEMO_GNSS_BASE_INIT;
+    this->result.nb_result                 = 0;
+    this->result.nav_message.size          = 0;
+    this->result.consumption_uas           = 0;
+    this->result.error                     = DEMO_GNSS_BASE_NO_ERROR;
+    this->result.timings                   = { 0 };
+    this->result.local_instant_measurement = 0;
+    this->result.almanac_too_old           = false;
+    this->result.almanac_age_days          = 0;
+    this->instant_start_capture_ms         = 0;
 }
 
 void DemoTransceiverGnssInterface::JumpToErrorState( const demo_gnss_error_t error_code )
@@ -95,10 +91,8 @@ void DemoTransceiverGnssInterface::SpecificRuntime( )
 
         lr1110_gnss_set_constellations_to_use( this->device->GetRadio( ), this->settings.constellation_mask );
 
-        lr1110_gnss_set_scan_mode(
-            this->device->GetRadio( ),
-            DemoTransceiverGnssInterface::TransceiverScanModeFromDemo( this->settings.capture_mode ),
-            &this->inter_capture_delay_s );
+        lr1110_gnss_set_scan_mode( this->device->GetRadio( ), DemoTransceiverGnssInterface::TransceiverScanModeFromDemo(
+                                                                  this->settings.capture_mode ) );
 
         this->SetAntennaSwitch( this->settings.antenna_selection );
 
@@ -137,59 +131,14 @@ void DemoTransceiverGnssInterface::SpecificRuntime( )
         break;
     }
 
-    case DEMO_GNSS_BASE_WAIT_AND_EXECUTE_SECOND_SCAN:
-    {
-        if( this->timer->is_timer_elapsed( ) == true )
-        {
-            this->timer->clear_timer( );
-            lr1110_gnss_scan_continuous( this->device->GetRadio( ) );
-            this->instant_second_capture_ms = this->environment->GetLocalTimeMilliseconds( );
-            this->SetWaitingForInterrupt( );
-            this->state = DEMO_GNSS_BASE_WAIT_FOR_SECOND_SCAN;
-            this->signaling->StartCapture( );
-        }
-        break;
-    }
-
-    case DEMO_GNSS_BASE_WAIT_FOR_SECOND_SCAN:
-    {
-        if( this->InterruptHasRaised( ) )
-        {
-            if( ( this->last_received_irq_mask & LR1110_SYSTEM_IRQ_GNSS_SCAN_DONE ) != 0 )
-            {
-                this->state = DEMO_GNSS_BASE_GET_RESULTS;
-                this->signaling->StopCapture( );
-            }
-            else
-            {
-                this->SetWaitingForInterrupt( );
-                this->state = DEMO_GNSS_BASE_WAIT_FOR_SECOND_SCAN;
-            }
-        }
-        else
-        {
-            this->SetWaitingForInterrupt( );
-            this->state = DEMO_GNSS_BASE_WAIT_FOR_SECOND_SCAN;
-        }
-        break;
-    }
-
     case DEMO_GNSS_BASE_WAIT_FOR_SCAN:
     {
         if( this->InterruptHasRaised( ) )
         {
             if( ( this->last_received_irq_mask & LR1110_SYSTEM_IRQ_GNSS_SCAN_DONE ) != 0 )
             {
-                if( this->settings.capture_mode == DEMO_GNSS_SINGLE_SCAN_MODE )
-                {
-                    this->state = DEMO_GNSS_BASE_GET_RESULTS;
-                }
-                else
-                {
-                    this->state = DEMO_GNSS_BASE_WAIT_AND_EXECUTE_SECOND_SCAN;
-                }
-
                 this->signaling->StopCapture( );
+                this->state = DEMO_GNSS_BASE_GET_RESULTS;
             }
             else
             {
@@ -238,8 +187,7 @@ void DemoTransceiverGnssInterface::SpecificRuntime( )
                 ( this->result.timings.radio_ms * DEMO_GNSS_CONSUMPTION_DCDC_ACQUISITION_MA +
                   this->result.timings.computation_ms * DEMO_GNSS_CONSUMPTION_DCDC_COMPUTATION_MA );
 
-            this->result.local_instant_measurement                = measurement_instant_s;
-            this->result.local_instant_measurement_second_capture = this->instant_second_capture_ms;
+            this->result.local_instant_measurement = measurement_instant_s;
 
             this->result.nb_result = nb_sv_detected;
 
@@ -296,10 +244,11 @@ bool DemoTransceiverGnssInterface::CanFetchResults( demo_gnss_nav_result_t& nav_
     else
     {
         const demo_gnss_error_t error_code = DemoTransceiverGnssInterface::GetHostErrorFromResult( nav_message );
-        if( error_code == DEMO_GNSS_BASE_ERROR_NO_SATELLITE )
+        if( ( error_code == DEMO_GNSS_BASE_ERROR_NO_SATELLITE ) ||
+            ( error_code == DEMO_GNSS_BASE_ERROR_NO_ENOUGH_SATTELITE_TO_BUILD_NAV ) )
         {
-            // In the case where no satellite has been detected, it is still ok
-            // to fetch the results
+            // In the case where no satellite has been detected, or not enough satellites have been detected, it is
+            // still ok to fetch the results
             return true;
         }
         else
@@ -410,6 +359,11 @@ demo_gnss_error_t DemoTransceiverGnssInterface::GetHostErrorFromResult( const de
             error = DEMO_GNSS_BASE_ERROR_ALMANAC_TOO_OLD;
             break;
         }
+        case LR1110_GNSS_HOST_NOT_ENOUGH_SV_DETECTED_TO_BUILD_A_NAV_MESSAGE:
+        {
+            error = DEMO_GNSS_BASE_ERROR_NO_ENOUGH_SATTELITE_TO_BUILD_NAV;
+            break;
+        }
         default:
         {
             error = DEMO_GNSS_BASE_ERROR_UNKNOWN;
@@ -463,18 +417,21 @@ lr1110_gnss_search_mode_t DemoTransceiverGnssInterface::TransceiverSearchModeFro
 lr1110_gnss_scan_mode_t DemoTransceiverGnssInterface::TransceiverScanModeFromDemo(
     const demo_gnss_scan_mode_t& demo_scan_mode )
 {
-    lr1110_gnss_scan_mode_t transceiver_scan_mode = LR1110_GNSS_SINGLE_SCAN_MODE;
+    lr1110_gnss_scan_mode_t transceiver_scan_mode = LR1110_GNSS_SCAN_MODE_0_SINGLE_SCAN_LEGACY;
     switch( demo_scan_mode )
     {
-    case DEMO_GNSS_SINGLE_SCAN_MODE:
+    case DEMO_GNSS_SCAN_MODE_0:
     {
-        transceiver_scan_mode = LR1110_GNSS_SINGLE_SCAN_MODE;
+        transceiver_scan_mode = LR1110_GNSS_SCAN_MODE_0_SINGLE_SCAN_LEGACY;
         break;
     }
-
-    case DEMO_GNSS_DOUBLE_SCAN_MODE:
+    case DEMO_GNSS_SCAN_MODE_3:
     {
-        transceiver_scan_mode = LR1110_GNSS_DOUBLE_SCAN_MODE;
+        transceiver_scan_mode = LR1110_GNSS_SCAN_MODE_3_SINGLE_SCAN_AND_5_FAST_SCANS;
+        break;
+    }
+    default:
+    {
         break;
     }
     }

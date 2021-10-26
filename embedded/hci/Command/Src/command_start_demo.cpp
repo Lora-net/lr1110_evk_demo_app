@@ -205,8 +205,8 @@ bool CommandStartDemo::ConfigureGnss( demo_gnss_settings_t* gnss_setting, const 
         // Check capture mode value
         switch( gnss_capture_mode )
         {
-        case DEMO_GNSS_SINGLE_SCAN_MODE:
-        case DEMO_GNSS_DOUBLE_SCAN_MODE:
+        case DEMO_GNSS_SCAN_MODE_0:
+        case DEMO_GNSS_SCAN_MODE_3:
         {
             gnss_setting->capture_mode = ( demo_gnss_scan_mode_t ) gnss_capture_mode;
             break;

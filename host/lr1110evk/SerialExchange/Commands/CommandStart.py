@@ -40,8 +40,8 @@ class GnssOption(Enum):
 
 @unique
 class GnssCaptureMode(Enum):
-    single = b"\x00"
-    dual = b"\x01"
+    mode_0_legacy = b"\x00"
+    mode_3_with_5_fast = b"\x01"
 
 
 @unique

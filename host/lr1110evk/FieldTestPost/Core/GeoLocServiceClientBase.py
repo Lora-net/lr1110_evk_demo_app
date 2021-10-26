@@ -59,8 +59,10 @@ class GeoLocServiceBadResponseStatus(GeoLocServiceClientBaseException):
         self.erroneous_response = erroneous_response
 
     def __str__(self):
-        return "Bad response status from geo loc service: '{}'. Got reason: '{}'".format(
-            self.bad_http_code_text, self.erroneous_response.failure_reason
+        return (
+            "Bad response status from geo loc service: '{}'. Got reason: '{}'".format(
+                self.bad_http_code_text, self.erroneous_response.failure_reason
+            )
         )
 
 
@@ -235,6 +237,66 @@ class GeoLocServiceClientGnss(GeoLocServiceClientBase):
         return GeoLocServiceClientGnss(url, authentication_token)
 
 
+class GeoLocServiceClientMultiFrameGnss(GeoLocServiceClientGnss):
+    DEFAULT_PATH_URL = "solve/gnss_lr1110_multiframe"
+
+    def get_log_message_from_warning(self, response_dict):
+        LOG_MESSAGE_KEY = "warnings"
+        return response_dict[LOG_MESSAGE_KEY]
+
+    def get_log_message_from_error(self, response_dict):
+        ERROR_MESSAGE_KEY = "errors"
+        return response_dict[ERROR_MESSAGE_KEY]
+
+    def build_response(self, http_code, response_text):
+        response_dict = loads(response_text)
+
+        try:
+            coordinates, loc_accuracy = self.get_coordinate_accuracy_from_result(
+                response_dict
+            )
+        except TypeError as err:
+            if "NoneType" in str(err):
+                failure_text = "errors: {}, warnings: {}".format(
+                    self.get_log_message_from_error(response_dict),
+                    self.get_log_message_from_warning(response_dict),
+                )
+                response = ResponseFailureBase(
+                    http_code=http_code,
+                    raw_response=response_text,
+                    failure_reason_from_server=failure_text,
+                )
+                return response
+            raise err
+        except KeyError:
+            failure_text = "errors: {}".format(
+                self.get_log_message_from_error(response_dict),
+            )
+            response = ResponseFailureBase(
+                http_code=http_code,
+                raw_response=response_text,
+                failure_reason_from_server=failure_text,
+            )
+            return response
+
+        response = ResponseSuccessBase(
+            http_code=http_code,
+            raw_response=response_text,
+            estimated_coordinate=coordinates,
+            accuracy=loc_accuracy,
+        )
+        return response
+
+    @classmethod
+    def from_token_and_url_info(
+        cls, authentication_token, baseUrl, port, version, path
+    ):
+        url = "{base}:{port}/api/{version}/{path}".format(
+            base=baseUrl, port=port, path=path, version=version
+        )
+        return GeoLocServiceClientMultiFrameGnss(url, authentication_token)
+
+
 class GeoLocServiceClientWifi(GeoLocServiceClientBase):
     DEFAULT_PATH_URL = "loraWifi"
     DEFAULT_COMPATIBLE_VERSION_URL = "api/v2"
@@ -310,7 +372,9 @@ class GeoLocServiceClientReverseGeoCoding(GeoLocServiceClientBase):
         url_request = "{}?latitude={}&longitude={}".format(
             self.server_address, request_data.latitude, request_data.longitude
         )
-        response = requests.get(url=url_request,)
+        response = requests.get(
+            url=url_request,
+        )
         return response
 
     def build_response(self, http_code, response_text):

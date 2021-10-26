@@ -3,11 +3,12 @@
     "scan_interval": 10,
     "jobs": [
         {
-            "name": "GPS and Beidou assisted single",
+            "name": "GPS and Beidou assisted legacy NAV single",
             "n_iterations": 1,
+            "n_scan_iteration": 1,
             "reset_before_job_start": false,
             "gnss_assisted_option": "best_effort",
-            "gnss_assisted_capture_mode": "single",
+            "gnss_assisted_capture_mode": "mode_0_legacy",
             "gnss_assisted_nb_satellite": 0,
             "gnss_assisted_antenna_selection": "no_selection",
             "gnss_assisted_constellations": [

@@ -28,13 +28,6 @@ Define KML file exporter class
 """
 
 import xml.etree.cElementTree as ET
-from lr1110evk.BaseTypes import Coordinate, ScannedMacAddress, ScannedGnss
-from lr1110evk.BaseTypes.WifiChannels import WifiChannel
-from lr1110evk.NavParserFile import (
-    NavMessageParser,
-    GpsModulationType,
-    BeidouModulationType,
-)
 import os
 
 
@@ -69,7 +62,10 @@ class kmlOutput:
     def _create_file(self, filename):
         self._kml = ET.Element("kml")
         self._doc = ET.SubElement(self._kml, "Document")
-        self._folder_top = self._add_kml_folder(self._doc, "Localisations",)
+        self._folder_top = self._add_kml_folder(
+            self._doc,
+            "Localisations",
+        )
         self._folder_reference = self._add_kml_folder(self._folder_top, "References")
         self._folder_wifi = self._add_kml_folder(self._folder_top, "Wi-Fi")
         self._folder_gnss = self._add_kml_folder(self._folder_top, "GNSS")
@@ -152,33 +148,27 @@ class kmlOutput:
         elif localization_type == kmlOutput.SCAN_TYPE_GNSS:
             extended_data = ET.Element("ExtendedData")
             if metadata:
-                gps_sv = beidou_sv = 0
-                date = metadata.instant_scan.strftime("%Y-%m-%d %H:%M:%S")
-                nav_message = metadata.nav_message
-                nav_message = NavMessageParser.parse(nav_message)
-                for constellation in nav_message.constellation_results:
-                    modulation = constellation.modulation_type
-                    if modulation == GpsModulationType:
-                        gps_sv = len(constellation.satellites)
-                    elif modulation == BeidouModulationType:
-                        beidou_sv = len(constellation.satellites)
-                    else:
-                        raise NotImplementedError(
-                            "Constellation modulation '{}' is not implemented".format(
-                                modulation
-                            )
-                        )
-
-                # extended_data = ET.Element("ExtendedData")
+                date = metadata[0].instant_scan.strftime("%Y-%m-%d %H:%M:%S")
                 data = ET.SubElement(extended_data, "Data", name="date")
                 ET.SubElement(data, "value").text = "{}".format(date)
-                data = ET.SubElement(extended_data, "Data", name="gps_sv")
-                ET.SubElement(data, "value").text = "{}".format(gps_sv)
-                data = ET.SubElement(extended_data, "Data", name="beidou_sv")
-                ET.SubElement(data, "value").text = "{}".format(beidou_sv)
-                data = ET.SubElement(extended_data, "Data", name="nav")
-                ET.SubElement(data, "value").text = "{}".format(metadata.nav_message)
-                timestamp = metadata.instant_scan
+                data = ET.SubElement(extended_data, "Data", name="count")
+                ET.SubElement(data, "value").text = "{}".format(len(metadata))
+                for index, nav in enumerate(metadata):
+                    data = ET.SubElement(
+                        extended_data,
+                        "Data",
+                        id="gnss_{}".format(index),
+                        name="data",
+                    )
+                    ET.SubElement(data, "value").text = "{}".format(
+                        ",".join(
+                            "{}-{}: {}dB".format(
+                                sat.constellation, sat.satellite_id, sat.snr
+                            )
+                            for sat in nav.satellite_details
+                        )
+                    )
+                timestamp = metadata[0].instant_scan
             else:
                 timestamp = None
             self.__add_kml_point(

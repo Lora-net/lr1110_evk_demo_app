@@ -29,7 +29,7 @@ Define Wi-Fi channel and Wi-Fi channel list classes
 
 
 class WifiChannel:
-    """ Wifi Channel
+    """Wifi Channel
 
     Represents a wifi channel with its name and frequency
 
@@ -51,9 +51,7 @@ class WifiChannel:
 
 
 class WifiChannelsException(Exception):
-    """ Base exception for WifiChannel class
-
-    """
+    """Base exception for WifiChannel class"""
 
     pass
 
@@ -74,7 +72,7 @@ class WifiChannelsNameUnknownException(WifiChannelsException):
 
 
 class WifiChannels:
-    """ Lists all wifi channels
+    """Lists all wifi channels
 
     Attributes:
         WIFI_CHANNELS ([WifiChannel]): The list of all Wifi channels
@@ -87,7 +85,7 @@ class WifiChannels:
 
     @staticmethod
     def get_channel_from_name(name):
-        """ Search a channel object from its name
+        """Search a channel object from its name
 
         Raises a WifiChannelsNameUnknownException exception if name
         cannot be found.

@@ -45,8 +45,6 @@ typedef enum
     DEMO_GNSS_BASE_INIT,
     DEMO_GNSS_BASE_SCAN,
     DEMO_GNSS_BASE_WAIT_FOR_SCAN,
-    DEMO_GNSS_BASE_WAIT_AND_EXECUTE_SECOND_SCAN,
-    DEMO_GNSS_BASE_WAIT_FOR_SECOND_SCAN,
     DEMO_GNSS_BASE_GET_RESULTS,
     DEMO_GNSS_BASE_TERMINATED,
     DEMO_GNSS_BASE_ERROR,
@@ -138,9 +136,7 @@ class DemoTransceiverGnssInterface : public DemoTransceiverInterface
     demo_gnss_state_t         state;
     demo_gnss_all_results_t   result;
     demo_gnss_settings_t      settings;
-    uint8_t                   inter_capture_delay_s;
     uint16_t                  instant_start_capture_ms;
-    uint16_t                  instant_second_capture_ms;
     AntennaSelectorInterface* antenna_selector;
 };
 

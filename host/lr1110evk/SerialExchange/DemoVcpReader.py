@@ -27,8 +27,15 @@ Define serial VCP-like reader for demo class
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-from threading import Thread
+from threading import Thread, local
+from collections import namedtuple
 import serial
+
+from lr1110evk.BaseTypes.MultiFrameGnss import (
+    GroupingMultiFrameGnss,
+    GroupingMultiFrameNotEnoughNavException,
+    SlidingMultiFrameGnss,
+)
 from ..Job.GnssDateLocBuilder import GnssDateLocBuilder
 from lr1110evk.BaseTypes import (
     ScannedGnss,
@@ -92,6 +99,9 @@ class LocalizationResult:
         )
 
 
+ResultWithKml = namedtuple("ResultWithKml", ["localization_result", "kml_metadata"])
+
+
 class VcpReader:
 
     SERIAL_TIMEOUT_S = 0.1
@@ -102,6 +112,7 @@ class VcpReader:
         self.__device = configuration.device_address
         self.__baud = configuration.device_baud
         self.geo_loc_service_gnss = configuration.gnss_server
+        self.geo_loc_service_gnss_multiframe = configuration.gnss_multiframe_server
         self.geo_loc_service_wifi = configuration.wifi_server
         self.approximated_coordinate_gnss_lr1110 = (
             configuration.approximate_gnss_lr1110_localization
@@ -124,20 +135,25 @@ class VcpReader:
             "RESULT": self.GetResultCommandHandler,
         }
         self.storage = list()
+        self.next_send_command = None
         self.localization_result = None
         self.result = None
         self.embedded_version = None
 
     def FlushDataCommandHandler(self):
         self.storage.clear()
+        self.next_send_command = None
 
     def SendGnssDataToServer(self):
-        request = self.request_sender.build_gnss_requests(self.storage)
+        request = self.request_sender.build_gnss_requests_from_strategy()
         if self.embedded_version:
             request.embedded_versions = self.embedded_version
         self.print_if_verbose(
             "Request to send to server '{}': {}".format(
-                self.geo_loc_service_gnss.server_address, request.to_json()
+                self.request_sender.get_geo_loc_service_for_request(
+                    request
+                ).server_address,
+                request.to_json(),
             )
         )
         if self.__configuration.dry_run:
@@ -147,7 +163,16 @@ class VcpReader:
         self.print_if_verbose(
             "Response from server: '{}'".format(response.raw_response)
         )
-        return response
+        result = self.ProduceResultFromResponseAndConfiguration(response)
+
+        result_with_kml: ResultWithKml = ResultWithKml(
+            localization_result=result,
+            kml_metadata=(
+                kmlOutput.SCAN_TYPE_GNSS,
+                self.__configuration.gnss_solver_strategy.get_container().get_navs(),
+            ),
+        )
+        return result_with_kml
 
     def SendWiFiDataToServer(self):
         request = self.request_sender.build_wifi_requests(self.storage)
@@ -165,13 +190,24 @@ class VcpReader:
         self.print_if_verbose(
             "Response from server: '{}'".format(response.raw_response)
         )
-        return response
+        result = self.ProduceResultFromResponseAndConfiguration(response)
+
+        result_with_kml: ResultWithKml = ResultWithKml(
+            localization_result=result,
+            kml_metadata=(
+                kmlOutput.SCAN_TYPE_WIFI,
+                [data for data in self.storage if isinstance(data, ScannedMacAddress)],
+            ),
+        )
+        return result_with_kml
 
     def ProduceResultWithReverseGeoLoc(self, geo_loc_response):
         reverse_geo_coding_client = GeoLocServiceClientReverseGeoCoding.from_default()
-        reverse_geo_loc_response = reverse_geo_coding_client.call_service_and_get_response(
-            geo_loc_response.estimated_coordinates
-        ).reverse_geo_loc
+        reverse_geo_loc_response = (
+            reverse_geo_coding_client.call_service_and_get_response(
+                geo_loc_response.estimated_coordinates
+            ).reverse_geo_loc
+        )
         self.print_if_verbose("{}".format(reverse_geo_loc_response))
         result = LocalizationResult.from_response_and_geocoding(
             geo_loc_response, reverse_geo_loc_response
@@ -215,39 +251,31 @@ class VcpReader:
         start_time = time.perf_counter()
         # Erase self.result if it exists
         self.result = None
-        try:
-            response = self.SendGnssDataToServer()
-        except NoNavMessageException:
-            response = self.SendWiFiDataToServer()
-            kml_scan_type = kmlOutput.SCAN_TYPE_WIFI
-            data = [
-                data for data in self.storage if isinstance(data, ScannedMacAddress)
-            ]
-            self.result = self.ProduceResultFromResponseAndConfiguration(response)
-        except SolverContactException as solver_exception:
-            print(
-                "Exception when trying to contact solver: '{}'".format(solver_exception)
-            )
-            self.result = None
+
+        if self.next_send_command:
+            try:
+                self.result, (kml_scan_type, data) = self.next_send_command(self)
+            except SolverContactException as solver_exception:
+                print(
+                    "Exception when trying to contact solver: '{}'".format(
+                        solver_exception
+                    )
+                )
+                self.result = None
+            except GroupingMultiFrameNotEnoughNavException as not_enough_nav_block_multiframe_except:
+                self.print_if_verbose(
+                    "Not enough NAV messages available for multiframe: has {}, needs {}".format(
+                        not_enough_nav_block_multiframe_except.n_nav,
+                        not_enough_nav_block_multiframe_except.n_nav_excepted,
+                    )
+                )
+                self.result = None
         else:
-            kml_scan_type = kmlOutput.SCAN_TYPE_GNSS
-            data = [data for data in self.storage if isinstance(data, ScannedGnss)]
-            if not data:
-                self.print_if_verbose("No GNSS data")
-                return
-            if len(data) > 1:
-                self.print_if_verbose("Too many GNSS data")
-                return
-            data = data[0]
-            self.result = self.ProduceResultFromResponseAndConfiguration(response)
+            self.result = None
 
         if self.result:
             print("Result from server:")
             print(self.result)
-        else:
-            print("No result available from server")
-
-        if self.result:
             kml = kmlOutput("LR1110", "test.kml")
             date = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -258,9 +286,12 @@ class VcpReader:
                     date,
                     kmlOutput.SCAN_TYPE_REFERENCE_COORDINATES,
                     self.__configuration.actual_coordinate,
-                    self.storage,
+                    date,
                 )
             kml.save()
+        else:
+            print("No result available from server")
+
         end_time = time.perf_counter()
         self.print_if_verbose(
             "Elapsed time for sending data: {} seconds".format(end_time - start_time)
@@ -288,7 +319,12 @@ class VcpReader:
                 ",".join(
                     [
                         str(token)
-                        for token in [gps_second, altitude, latitude, longitude,]
+                        for token in [
+                            gps_second,
+                            altitude,
+                            latitude,
+                            longitude,
+                        ]
                     ]
                 )
             )
@@ -332,7 +368,6 @@ class VcpReader:
                 self.print_if_verbose(
                     "Embedded version: {}".format(self.embedded_version)
                 )
-                self.request_sender.device_eui = self.embedded_version.chip_uid
             except VersionException as version_exception:
                 print("Failed to interpret version: '{}'".format(version_exception))
             return
@@ -353,13 +388,18 @@ class VcpReader:
                 )
             else:
                 self.storage.append(element_to_store)
+                self.next_send_command = VcpReader.SendGnssDataToServer
+                self.__configuration.gnss_solver_strategy.get_container().push_nav_message(
+                    element_to_store
+                )
                 self.print_if_verbose("Stored GNSS '{}'".format(element_to_store))
         else:
             self.storage.append(element_to_store)
+            self.next_send_command = VcpReader.SendWiFiDataToServer
             self.print_if_verbose("Stored MAC '{}'".format(element_to_store))
 
     def handle_read_data(self, data):
-        """ Main handler for data comming from VCP
+        """Main handler for data comming from VCP
 
         Any single line received from VCP goes through this handler.
         The actual implementation does nothing, and classes inheriting
@@ -383,7 +423,7 @@ class VcpReader:
             print("Unknown line: {}".format(data))
 
     def read_vcp_forever(self):
-        """ Runtime VCP reader
+        """Runtime VCP reader
 
         This method continuously read the VCP. Each line received
         triggers a call to VcpInterpreter.handle_read_data.
@@ -403,7 +443,7 @@ class VcpReader:
             time.sleep(0.01)
 
     def start_read_vcp(self):
-        """ Start the thread to read VCP
+        """Start the thread to read VCP
 
         This method sets the variable self.keep_reading_vcp to True and
         starts the thread.
@@ -415,7 +455,7 @@ class VcpReader:
         # self.thread.start()
 
     def stop_read_vcp(self):
-        """ Stop the thread that read VCP
+        """Stop the thread that read VCP
 
         This method sets the variable self.keep_reading_vcp to False and
         wait for the thread to join, therefore blocking the execution
@@ -427,7 +467,7 @@ class VcpReader:
 
     @property
     def device(self):
-        """ Return the device address of the VCP
+        """Return the device address of the VCP
 
         Returns:
             string: Device address (eg. '/dev/ttyACM0')
@@ -437,7 +477,7 @@ class VcpReader:
 
     @property
     def baud(self):
-        """ Return the device baud of the VCP
+        """Return the device baud of the VCP
 
         Returns:
             int: Device baud (eg. 9600)

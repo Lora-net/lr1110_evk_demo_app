@@ -1,7 +1,15 @@
-from .BaseTypes import Coordinate
+from .BaseTypes import (
+    Coordinate,
+)
 from .FieldTestPost.Core.GeoLocServiceClientBase import (
     GeoLocServiceClientGnss,
+    GeoLocServiceClientMultiFrameGnss,
     GeoLocServiceClientWifi,
+)
+from .FieldTestPost.Core import (
+    GnssMultiFrameGroupingStrategy,
+    GnssMultiFrameSlidingStrategy,
+    GnssSingleSolvingStrategy,
 )
 from datetime import datetime
 
@@ -24,10 +32,12 @@ class WrongDateFormat(AppConfigurationException):
 class AppConfigurationBase:
     def __init__(self):
         self.gnss_server = None
+        self.gnss_multiframe_server = None
         self.wifi_server = None
         self.dry_run = False
         self.verbosity = False
         self.approximate_gnss_server_localization = None
+        self.gnss_solver_strategy = None
 
     def _set_from_arguments(self, args):
         self.gnss_server = GeoLocServiceClientGnss.from_token_and_url_info(
@@ -36,6 +46,15 @@ class AppConfigurationBase:
             args.gnss_server_port,
             GeoLocServiceClientGnss.get_default_url_version(),
             GeoLocServiceClientGnss.get_default_url_path(),
+        )
+        self.gnss_multiframe_server = (
+            GeoLocServiceClientMultiFrameGnss.from_token_and_url_info(
+                args.glsAuthenticationToken,
+                args.gnss_server_base_url,
+                args.gnss_server_port,
+                GeoLocServiceClientMultiFrameGnss.get_default_url_version(),
+                GeoLocServiceClientMultiFrameGnss.get_default_url_path(),
+            )
         )
         self.wifi_server = GeoLocServiceClientWifi.from_token_and_url_info(
             args.glsAuthenticationToken,
@@ -49,6 +68,16 @@ class AppConfigurationBase:
         self.approximate_gnss_server_localization = Coordinate.from_string(
             args.approximateGnssServerLocalization
         )
+        if args.multi_frame_sliding:
+            self.gnss_solver_strategy = GnssMultiFrameSlidingStrategy(
+                depth=args.multi_frame_sliding
+            )
+        elif args.multi_frame_grouping:
+            self.gnss_solver_strategy = GnssMultiFrameGroupingStrategy(
+                max_length=args.multi_frame_grouping
+            )
+        else:
+            self.gnss_solver_strategy = GnssSingleSolvingStrategy()
 
     @classmethod
     def from_arg_parser(cls, args):
@@ -61,13 +90,13 @@ class DemoAppConfiguration(AppConfigurationBase):
     PARSE_DATE_FORMAT = "%Y/%m/%d-%H:%M:%S"
 
     def __init__(self):
+        super().__init__()
         self.fake_date = None
         self.device_address = None
         self.device_baud = None
         self.actual_coordinate = None
         self.approximate_gnss_lr1110_localization = None
         self.request_reverse_geo_coding = False
-        self.fake_date = None
 
     def _set_from_arguments(self, args):
         super()._set_from_arguments(args)

@@ -38,7 +38,7 @@ class GnssDateLocBuilder:
 
     @staticmethod
     def get_delay_due_to_leap_second():
-        """ Return the delay due to leap second at the time of writing this function..."""
+        """Return the delay due to leap second at the time of writing this function..."""
         return datetime.timedelta(seconds=18)
 
     @staticmethod

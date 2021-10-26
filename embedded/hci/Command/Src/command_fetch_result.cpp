@@ -159,7 +159,7 @@ void CommandFetchResult::SendGnssResult( const demo_gnss_all_results_t& gnss_res
 {
     const uint32_t local_measurement_delay =
         this->environment.GetLocalTimeSeconds( ) - gnss_result.local_instant_measurement;
-    const uint16_t gnss_result_buffer_size = ( 3 * 4 ) + gnss_result.nav_message.size;
+    const uint16_t gnss_result_buffer_size = ( 3 * 4 ) + 2 + gnss_result.nav_message.size + ( gnss_result.nb_result * 4 );
 
     uint8_t  gnss_result_buffer[512] = { 0 };
     uint16_t buffer_index            = 0;
@@ -175,10 +175,34 @@ void CommandFetchResult::SendGnssResult( const demo_gnss_all_results_t& gnss_res
     buffer_index +=
         CommandFetchResult::AppendValueAtIndex( gnss_result_buffer, buffer_index, gnss_result.timings.computation_ms );
 
-    // 4. All the NAV message (size is variable)
+    // 4. Two bytes holding the length of NAV message
+    buffer_index +=
+        CommandFetchResult::AppendValueAtIndex( gnss_result_buffer, buffer_index, gnss_result.nav_message.size );
+
+    // 5. All the NAV message (size is variable)
     for( uint16_t index_nav_message = 0; index_nav_message < gnss_result.nav_message.size; index_nav_message++ )
     {
         gnss_result_buffer[buffer_index + index_nav_message] = gnss_result.nav_message.message[index_nav_message];
+    }
+    buffer_index += gnss_result.nav_message.size;
+
+    // 6. The details per satellites
+    for( uint8_t result_sat_index = 0; result_sat_index < gnss_result.nb_result; result_sat_index++ )
+    {
+        const demo_gnss_single_result_t& local_result = gnss_result.result[result_sat_index];
+
+        // 6.1 One byte sat index
+        buffer_index +=
+            CommandFetchResult::AppendValueAtIndex( gnss_result_buffer, buffer_index, local_result.satellite_id );
+
+        // 6.2 One byte constellation
+        buffer_index += CommandFetchResult::AppendValueAtIndex(
+            gnss_result_buffer, buffer_index,
+            CommandFetchResult::ConvertGnssConstellationToSerial( local_result.constellation ) );
+
+        // 6.3 Two bytes SNR
+        buffer_index +=
+            CommandFetchResult::AppendValueAtIndex( gnss_result_buffer, buffer_index, ( uint16_t ) local_result.snr );
     }
 
     hci.SendResponse( resp_code, gnss_result_buffer, gnss_result_buffer_size );
@@ -192,6 +216,21 @@ uint8_t CommandFetchResult::AppendValueAtIndex( uint8_t* array, const uint16_t i
     array[index + 3] = ( uint8_t )( ( value & 0xFF000000 ) >> 24 );
 
     return 4;
+}
+
+uint8_t CommandFetchResult::AppendValueAtIndex( uint8_t* array, const uint16_t index, const uint16_t value )
+{
+    array[index + 0] = ( uint8_t )( ( value & 0x00FF ) >> 0 );
+    array[index + 1] = ( uint8_t )( ( value & 0xFF00 ) >> 8 );
+
+    return 2;
+}
+
+uint8_t CommandFetchResult::AppendValueAtIndex( uint8_t* array, const uint16_t index, const uint8_t value )
+{
+    array[index] = value;
+
+    return 1;
 }
 
 uint8_t CommandFetchResult::ConvertWifiTypeToSerial( const demo_wifi_signal_type_t& wifi_result_type )
@@ -215,6 +254,31 @@ uint8_t CommandFetchResult::ConvertWifiTypeToSerial( const demo_wifi_signal_type
     {
         value = 2;
         break;
+    }
+    }
+    return value;
+}
+
+uint8_t CommandFetchResult::ConvertGnssConstellationToSerial( const demo_gnss_constellation_t& constellation )
+{
+    uint8_t value = 0;
+    switch( constellation )
+    {
+    case DEMO_GNSS_CONSTELLATION_GPS:
+    {
+        value = 1;
+        break;
+    }
+
+    case DEMO_GNSS_CONSTELLATION_BEIDOU:
+    {
+        value = 2;
+        break;
+    }
+
+    default:
+    {
+        value = 0;
     }
     }
     return value;

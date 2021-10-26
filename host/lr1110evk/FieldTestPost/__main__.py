@@ -178,20 +178,26 @@ def post_analyzis_fetch_results():
         default=None,
     )
     parser.add_argument(
-        "-i",
-        "--chip-id",
-        help="Force the Chip ID value when calling solver. (The chip ID is read from the version line in resultFile. If there is no version line and this flag is not used, then the default value is set to {})".format(
-            FileReader.DEFAULT_CHIP_UID_VERSION
-        ),
-        action="store",
-        default=None,
-    )
-    parser.add_argument(
         "-f",
         "--filter-job-id",
         help="Job ID to keep. It is possible indicate several job ids to keep by specifying this flag several time",
         action="append",
         default=None,
+    )
+    multi_frame_arg_group = parser.add_mutually_exclusive_group()
+    multi_frame_arg_group.add_argument(
+        "--multi-frame-sliding",
+        action="store",
+        help="Enable multi-frame sliding strategy for GNSS solving and configure the depth. Default strategy for GNSS solving is single solve",
+        default=None,
+        type=int,
+    )
+    multi_frame_arg_group.add_argument(
+        "--multi-frame-grouping",
+        action="store",
+        help="Enable multi-frame grouping strategy for GNSS solving and configure the max length. Default strategy for GNSS solving is single solve",
+        default=None,
+        type=int,
     )
     parser.add_argument(
         "--verbose", "-v", help="Verbose", action="store_true", default=False
@@ -207,26 +213,29 @@ def post_analyzis_fetch_results():
     # Handle the filtering of jobs
     if args.filter_job_id:
         list_of_ids_to_keep = [int(job_id_str) for job_id_str in args.filter_job_id]
-        scan_results = [scan for scan in scan_results if scan.job_id in list_of_ids_to_keep]
-
-    if args.chip_id:
-        request_sender.device_eui = args.chip_id
-    else:
-        request_sender.device_eui = version.chip_uid
+        scan_results = [
+            scan for scan in scan_results if scan.job_id in list_of_ids_to_keep
+        ]
 
     output_file = args.outputFile
 
-    scan_request_iterator = request_sender.build_request_group_iterator_from_result_lines(
-        scan_results
+    scan_request_iterator = (
+        request_sender.build_request_group_iterator_from_result_lines(scan_results)
     )
 
     urls_push = {
         "Wi-Fi": configuration.wifi_server.server_address,
         "GNSS": configuration.gnss_server.server_address,
+        "GNSS multi-frame": configuration.gnss_multiframe_server.server_address,
     }
     with open(output_file, "a") as f:
         for request, url in urls_push.items():
             f.write("# {}: {}\n".format(request, url))
+        f.write(
+            "# GNSS solving strategy: {}\n".format(
+                configuration.gnss_solver_strategy.get_container()
+            )
+        )
 
     kml_file = args.kml_file
 
@@ -336,7 +345,7 @@ def store_result_to_kml(scan_info, date, kml: kmlOutput, result):
             data[kmlOutput.SCAN_TYPE_WIFI] = data.get(kmlOutput.SCAN_TYPE_WIFI, [])
             data[kmlOutput.SCAN_TYPE_WIFI].append(scan.scan_info)
         elif type(scan.scan_info) == BaseTypes.ScannedGnss:
-            data[kmlOutput.SCAN_TYPE_GNSS] = scan.scan_info
+            data[kmlOutput.SCAN_TYPE_GNSS] = [scan.scan_info]
         elif type(scan.scan_info) == ExternalCoordinate:
             kml.add_point(
                 date_str,

@@ -49,7 +49,6 @@ ResultLine = namedtuple("ResultLine", ["date", "job_counter", "job_id", "scan_in
 
 
 class FileReader:
-    DEFAULT_CHIP_UID_VERSION = "ff-ff-ff-ff-ff-ff-ff-ff"
     DATE_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
     VERSION_TOKEN = "# version:"
     REGEXP_LOG = re.compile(
